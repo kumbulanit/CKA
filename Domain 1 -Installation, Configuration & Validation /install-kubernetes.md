@@ -47,6 +47,60 @@ Verify Installation
 
 kubectl version --client
 ```
+
+To install Docker on Ubuntu, follow these steps:
+
+1. **Update the package list:**
+   ```sh
+   sudo apt-get update
+   ```
+
+2. **Install prerequisite packages:**
+   ```sh
+   sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+   ```
+
+3. **Add Docker’s official GPG key:**
+   ```sh
+   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+   ```
+
+4. **Set up the Docker repository:**
+   ```sh
+   sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+   ```
+
+5. **Update the package list again to include Docker’s repository:**
+   ```sh
+   sudo apt-get update
+   ```
+
+6. **Install Docker:**
+   ```sh
+   sudo apt-get install -y docker-ce
+   ```
+
+7. **Check Docker version to verify installation:**
+   ```sh
+   docker --version
+   ```
+
+8. **(Optional) Allow your user to run Docker commands without `sudo`:**
+   ```sh
+   sudo usermod -aG docker $USER
+   ```
+
+   Log out and back in so that your group membership is re-evaluated, or you can run:
+   ```sh
+   newgrp docker
+   ```
+
+9. **Verify Docker installation by running the hello-world image:**
+   ```sh
+   docker run hello-world
+   ```
+
+This should display a message confirming that Docker is installed correctly.
 5. Start Minikube
 Start Minikube with VirtualBox
 ```sh
