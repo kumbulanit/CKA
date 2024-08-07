@@ -76,19 +76,78 @@ In this section we will take a look at **`services`** in kubernetes
       
       #### To access the application from CLI instead of web browser
       ```
-      $ curl http://192.168.1.2:30008
-      ```
-      
-      ![srvnp2](../../images/srvnp2.PNG)
+      To access a Kubernetes application exposed using a NodePort service, follow these steps:
 
-      #### A service with multiple pods
-      
-      ![srvnp3](../../images/srvnp3.PNG)
-      
-      #### When Pods are distributed across multiple nodes
-     
-      ![srvnp4](../../images/srvnp4.PNG)
-     
+
+### 4. Accessing the Application
+
+To access the application, you need the external IP address of one of your nodes and the NodePort assigned to your service.
+
+#### Find the NodePort
+
+If you didn't specify a `nodePort` in your YAML file, Kubernetes will assign one automatically. You can find the NodePort by describing the service:
+
+```sh
+kubectl get service <my-app-service>
+```
+
+This will output something like:
+
+```
+NAME             TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+my-app-service   NodePort    10.96.0.1     <none>        80:30008/TCP   5m
+```
+
+Here, `30008` is the NodePort.
+
+#### Find the Node IP
+
+The IP addresses of the nodes can be obtained using:
+
+```sh
+kubectl get nodes -o wide
+```
+
+This will output something like:
+
+```
+NAME           STATUS   ROLES    AGE   VERSION   INTERNAL-IP    EXTERNAL-IP
+node1          Ready    <none>   30d   v1.21.0   192.168.1.1    34.123.45.67
+node2          Ready    <none>   30d   v1.21.0   192.168.1.2    34.123.45.68
+```
+
+Use the `EXTERNAL-IP` of any of the nodes. If your nodes don't have an external IP, you might need to use the internal IP, depending on your network configuration.
+
+### 5. Access the Application
+
+Open a browser or use a tool like `curl` to access the application:
+
+```sh
+curl http://<NodeIP>:<NodePort>
+```
+
+For example, if your Node's external IP is `34.123.45.67` and the NodePort is `30008`, you can access the application at:
+
+```sh
+http://34.123.45.67:30007
+```
+
+### Note
+
+- Ensure your cluster nodes have firewall rules allowing traffic on the NodePort range (default is 30000-32767).
+- If you are running Kubernetes locally (e.g., with Minikube), you can use Minikube's IP:
+
+```sh
+minikube ip
+```
+
+Then access your application at:
+
+```sh
+http://<minikube-ip>:<NodePort>
+```
+
+By following these steps, you should be able to access your application exposed using a NodePort service in Kubernetes.
             
  1. ClusterIP
     - In this case the service creates a **`Virtual IP`** inside the cluster to enable communication between different services such as a set of frontend servers to a set of backend servers.
