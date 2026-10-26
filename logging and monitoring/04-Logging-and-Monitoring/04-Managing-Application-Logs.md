@@ -5,9 +5,7 @@ In this section, we will take a look at managing application logs
 
 #### Let us start with logging in docker
 
-![ld](../../images/ld.PNG)
  
-![ld1](../../images/ld1.PNG)
  
 #### Logs - Kubernetes
 ```
@@ -20,20 +18,27 @@ spec:
   - name: event-simulator
     image: kodekloud/event-simulator
 ```
- ![logs-k8s](../../images/logs-k8s.png)
  
 - To view the logs
   ```
   $ kubectl logs -f event-simulator-pod
   ```
+- Logs of the previous (crashed) container, and of every container in the pod
+  ```
+  $ kubectl logs event-simulator-pod --previous
+  $ kubectl logs event-simulator-pod --all-containers
+  ```
+- The `kodekloud/event-simulator` image is built for amd64 only. On an arm64 machine (e.g. Apple Silicon), use busybox to simulate events:
+  ```
+  $ kubectl run event-simulator-pod --image=busybox:1.37 -- sh -c 'while true; do echo "$(date) INFO USER1 logged in"; sleep 2; done'
+  ```
 - If there are multiple containers in a pod then you must specify the name of the container explicitly in the command.
   ```
-  $ kubectl logs -f <pod-name> <container-name>
-  $ kubectl logs -f even-simulator-pod event-simulator
+  $ kubectl logs -f <pod-name> -c <container-name>
+  $ kubectl logs -f event-simulator-pod -c event-simulator
   ```
 
-  ![logs1](../../images/logs1.PNG)
   
 #### K8s Reference Docs
-- https://kubernetes.io/blog/2015/06/cluster-level-logging-with-kubernetes/
+- https://kubernetes.io/docs/concepts/cluster-administration/logging/
  

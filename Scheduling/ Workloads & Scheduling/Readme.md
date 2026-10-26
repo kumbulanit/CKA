@@ -1,6 +1,6 @@
 # Domain - Workloads & Scheduling
 
-The code mentioned in this document are used in the Certified Kubernetes Administrator 2023 course.
+The code mentioned in this document is used in the Certified Kubernetes Administrator course.
 
 https://www.udemy.com/course/certified-kubernetes-administrator/?referralCode=700DA06BF8A30E27AC7E
 
@@ -9,32 +9,18 @@ https://www.udemy.com/course/certified-kubernetes-administrator/?referralCode=70
 
 | Sr No | Document Link |
 | ------ | ------ |
-| 1 | [Implementing Labels and Selectors][PlDa] |
-| 2 | [Creating our first ReplicaSet][PlDb] |
-| 3 | [Creating our first Deployment][PlDc]
-| 4 | [Rolling Back Deployments][PlDc]
-| 5 | [maxSurge and maxUnavailable][PlDc]
-| 6 | [Important Pointers - Deployments][PlDc]
-| 4 | [Generating Deployment Manifests via CLI][PlDd] |
-| 5 | [Understanding DaemonSets][PlDe] |
-| 6 | [Overview of NodeSelector][PlDf] |
-| 7 | [Understanding Node Affinity][PlDg] |
-| 8 | [Resource Limits][PlDi] |
-| 9 | [Scheduling Pods without a Scheduler][PlDj] |
-| 10 | [Taints and Tolerations][PlDk] |
-| 11 | [Adapter Pattern][PlDl] |
-
-
-[PlDa]: <./labels.yaml>
-[PlDb]: <./replicaset.yaml>
-[PlDc]: <./deployment.md>
-[PlDc]: <./rollback-deployment.md>
-[PlDd]: <./manifest-cli.md>
-[PlDe]: <./daemonset.yaml>
-[PlDf]: <./nodeSelector.yaml>
-[PlDg]: <./node-affinity-combined.md>
-[PlDh]: <./podaffinity-required.yaml>
-[PlDi]: <./requests-limits.yaml>
-[PlDj]: <./pod-without-scheduler.md>
-[PlDk]: <./taints-tolerations.md>
-[PlDl]: <./adapter.yaml>
+| 1 | [Implementing Labels and Selectors](./labels.md) |
+| 2 | [Creating our first ReplicaSet](./replicaset.md) |
+| 3 | [Creating our first Deployment](./deployment.md) |
+| 4 | [Rolling Back Deployments](./rollback-deployment.md) |
+| 5 | [Important Pointers - Deployments](./imp-dep-commands.md) |
+| 6 | [Generating Deployment Manifests via CLI](./deployment-cli.md) and [manifest-cli](./manifest-cli.md) |
+| 7 | [Understanding DaemonSets](./daemonset.yaml) |
+| 8 | [Overview of NodeSelector](./nodeSelector.md) |
+| 9 | [Understanding Node Affinity](./node-affinity.md) ([combined](./node-affinity-combined.md), [pod affinity](./podaffinity-required.yaml)) |
+| 10 | [Resource Limits](./requests-limits.yaml) |
+| 11 | [Scheduling Pods without a Scheduler](./pod-without-scheduler.md) |
+| 12 | [Taints and Tolerations](./taints-tolerations.md) |
+| 13 | [Adapter Pattern](./adapter.yaml) |
+| 14 | [Jobs](./jobs.yaml) and [CronJobs](./cronjob.yaml) |
+| 15 | [Liveness](./livenessprobe.yaml) ([HTTP](./liveness-http.yaml)) and [Readiness Probes](./readinessprobe.md) |

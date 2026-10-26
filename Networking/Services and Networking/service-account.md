@@ -23,11 +23,13 @@ ls
 cat token
 ```
 #### Connect to Kubernetes Cluster using Token
+Still inside the pod, call the API server with the token. Inside the cluster the API server is always reachable as `https://kubernetes.default.svc`:
 ```sh
 token=$(cat token)
 echo $token
 
-kubectl cluster-info (from outside of Pod)
-
-curl -k -H "Authorization: Bearer $token" https://control-plane-url-here/api/v1
+curl --cacert ca.crt -H "Authorization: Bearer $token" https://kubernetes.default.svc/api/v1
 ```
+From outside the pod, `kubectl cluster-info` shows the API server address.
+
+The token in the pod is short-lived (about an hour) and is renewed by the kubelet. Since v1.24, service accounts no longer get a long-lived token Secret; to get a token outside a pod, run `kubectl create token default`.

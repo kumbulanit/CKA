@@ -3,6 +3,7 @@
 https://kubernetes.io/docs/reference/access-authn-authz/authorization/
 
 #### Step 1: Verify Current Permissions Through CURL Command
+Use a token of the `external` service account from the authentication lesson (`kubectl create token external`). Kubernetes sees it as the user `system:serviceaccount:default:external`, which is the subject the RoleBinding below grants access to.
 
 ```sh
 curl -k <K8S-SERVER-URL>/api/v1 --header "Authorization: Bearer <TOKEN-HERE>"
@@ -44,7 +45,7 @@ metadata:
   namespace: default
 subjects:
 - kind: User
-  name: zeal
+  name: system:serviceaccount:default:external
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: Role

@@ -23,14 +23,12 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
      ```sh
      kubectl get nodes
      ```
-   - **Output**:
+   - **Output** (after `kubectl cordon node01`):
      ```plaintext
-     NAME         STATUS   ROLES    AGE   VERSION
-     node1        Ready    <none>   30d   v1.21.0
-     node2        Ready    <none>   30d   v1.21.0
-     node3        Ready    <none>   30d   v1.21.0
-     node4        Ready    <none>   30d   v1.21.0
-     node5        Ready    <none>   30d   v1.21.0
+     NAME           STATUS                     ROLES           AGE   VERSION
+     controlplane   Ready                      control-plane   30d   v1.36.5
+     node01         Ready,SchedulingDisabled   <none>          30d   v1.36.5
+     node02         Ready                      <none>          30d   v1.36.5
      ```
 
 **Diagram: Cordoning Nodes**
@@ -60,11 +58,11 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
    - Use the `kubectl drain` command to evict all pods from the node. This command will also handle DaemonSets and local data, which are not evicted by default.
    - **Command**:
      ```sh
-     kubectl drain <node-name> --ignore-daemonsets --delete-local-data
+     kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
      ```
    - **Options**:
      - `--ignore-daemonsets`: Ignores DaemonSets, which run on all nodes. DaemonSets will continue to run on the node.
-     - `--delete-local-data`: Deletes local data if any exists.
+     - `--delete-emptydir-data`: Allows evicting pods that use `emptyDir` volumes; that data is lost. (This flag replaced `--delete-local-data`, which no longer exists.)
 
 2. **Verify Pods Eviction**:
    - Check the status of the node to ensure that it is successfully drained and that all pods are rescheduled or removed.
@@ -74,12 +72,10 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
      ```
    - **Output**:
      ```plaintext
-     NAME         STATUS                     ROLES    AGE   VERSION
-     node1        Ready                      <none>   30d   v1.21.0
-     node2        Ready                      <none>   30d   v1.21.0
-     node3        Ready                      <none>   30d   v1.21.0
-     node4        Ready                      <none>   30d   v1.21.0
-     node5        SchedulingDisabled         <none>   30d   v1.21.0
+     NAME           STATUS                     ROLES           AGE   VERSION
+     controlplane   Ready                      control-plane   30d   v1.36.5
+     node01         Ready,SchedulingDisabled   <none>          30d   v1.36.5
+     node02         Ready                      <none>          30d   v1.36.5
      ```
 
 3. **Reboot or Maintain Node**:
@@ -130,25 +126,25 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
 
 1. **Cordoning the Node**:
    ```sh
-   kubectl cordon node1
+   kubectl cordon node01
    ```
 
 2. **Draining the Node**:
    ```sh
-   kubectl drain node1 --ignore-daemonsets --delete-local-data
+   kubectl drain node01 --ignore-daemonsets --delete-emptydir-data
    ```
 
 3. **Perform Upgrade or Maintenance**:
-   - Perform required operations on `node1`.
+   - Perform required operations on `node01`.
 
-4. **Reboot Node**:
+4. **Reboot Node** (on node01, for example after `ssh node01`):
    ```sh
    sudo reboot
    ```
 
 5. **Uncordon the Node**:
    ```sh
-   kubectl uncordon node1
+   kubectl uncordon node01
    ```
 
 6. **Verify Node Readiness**:

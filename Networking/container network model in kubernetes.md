@@ -39,6 +39,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: nginx-pod
+  labels:
+    app: nginx
 spec:
   containers:
   - name: nginx-container
@@ -125,14 +127,14 @@ Kubernetes supports various network plugins to manage Pod networking. These plug
 #### **3.1. Flannel**
 
 - **Definition**: A simple and popular network overlay solution for Kubernetes.
-- **Configuration**: Uses a VXLAN overlay to provide networking between Pods.
+- **Configuration**: Uses a VXLAN overlay to provide networking between Pods. It expects the pod network `10.244.0.0/16` (`kubeadm init --pod-network-cidr=10.244.0.0/16`) and does not enforce Network Policies.
 
 **Example**:
 
 Install Flannel:
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 ```
 
 #### **3.2. Calico**
@@ -145,21 +147,24 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 Install Calico:
 
 ```sh
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml
 ```
 
-#### **3.3. Weave**
+#### **3.3. Cilium**
 
-- **Definition**: A network plugin that provides automatic network setup and high-performance network operations.
-- **Configuration**: Uses a weave network bridge to connect Pods.
+- **Definition**: An eBPF-based network plugin with Network Policies and observability (Hubble).
+- **Configuration**: Installed with the `cilium` CLI or Helm.
 
 **Example**:
 
-Install Weave:
+Install Cilium with Helm:
 
 ```sh
-kubectl apply -f https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')
+helm repo add cilium https://helm.cilium.io/
+helm install cilium cilium/cilium --namespace kube-system
 ```
+
+(Weave Net, which older material lists here, is no longer maintained: Weaveworks shut down in 2024 and `cloud.weave.works` no longer exists.)
 
 ---
 
@@ -193,10 +198,11 @@ spec:
 
 - **Verification**:
 
-Create a Pod in the same namespace:
+Expose the deployment and call it from one of its pods:
 
 ```sh
-kubectl exec -it <nginx-pod> -- curl http://nginx-service
+kubectl expose deployment nginx-deployment --name nginx-service --port=80
+kubectl exec -it deploy/nginx-deployment -- curl http://nginx-service
 ```
 
 #### **4.2. Service Exposure**
@@ -268,5 +274,3 @@ The Kubernetes networking model provides a robust framework for communication be
 **Additional Resources**:
 - **Kubernetes Networking Overview**: [https://kubernetes.io/docs/concepts/services-networking/](https://kubernetes.io/docs/concepts/services-networking/)
 - **CNI Plugins**: [https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
-
-Feel free to include this detailed explanation and examples in your training materials and presentations.

@@ -10,24 +10,33 @@ In this section, we will take a look at **Storage Class**
 
 #### Static Provisioning
 
-![class-18](../../images/class18.PNG)
 
 
 #### Dynamic Provisioning
 
-![class-19](../../images/class19.PNG)
 
 - Now we have a Storage Class, So we no longer to define Persistent Volume. It will create automatically when a Storage Class is created. It's called **Dynamic Provisioning**. 
 
-```
-sc-definition.yaml
+`sc-definition.yaml`:
 
+```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
    name: google-storage
-provisioner: kubernetes.io/gce-pd
+provisioner: pd.csi.storage.gke.io
 ```
+
+The provisioner is the cloud's CSI driver (`pd.csi.storage.gke.io` on Google Cloud, `ebs.csi.aws.com` on AWS, `disk.csi.azure.com` on Azure). The old in-tree names such as `kubernetes.io/gce-pd` no longer exist.
+
+**On a kubeadm cluster on your own machines** there is no cloud disk. To practise dynamic provisioning there, install the local-path provisioner, which creates volumes in a folder on the node:
+
+```
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.37/deploy/local-path-storage.yaml
+kubectl get storageclass
+```
+
+Then use `storageClassName: local-path` in the claim below.
 
 #### Create a Storage Class
 
@@ -41,14 +50,16 @@ storageclass.storage.k8s.io/google-storage created
 ```
 $ kubectl get sc
 NAME             PROVISIONER            RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
-google-storage   kubernetes.io/gce-pd   Delete          Immediate           false                  20s
+google-storage   pd.csi.storage.gke.io  Delete          Immediate           false                  20s
 ```
 
 #### Create a Persistent Volume Claim
 
-```
-pvc-definition.yaml
+If `mypod` and `myclaim` from *Using PVC in PODs* are still there, delete them first (`kubectl delete pod mypod`, then `kubectl delete pvc myclaim`): a claim's storage class cannot be changed.
 
+`pvc-definition.yaml`:
+
+```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -66,9 +77,9 @@ $ kubectl create -f pvc-definition.yaml
 ```
 #### Create a Pod
 
-```
-pod-definition.yaml
+`pod-definition.yaml`:
 
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -90,7 +101,6 @@ $ kubectl create -f pod-definition.yaml
 ```
 #### Provisioner
 
-![class-20](../../images/class20.PNG)
 
 #### Kubernetes Storage Class Reference Docs
 

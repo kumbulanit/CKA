@@ -10,9 +10,9 @@ In this section, we will take a look at **Using PVC in PODs**
 
 #### Create the Persistent Volume
 
-```
-pv-definition.yaml
+`pv-definition.yaml`:
 
+```yaml
 kind: PersistentVolume
 apiVersion: v1
 metadata:
@@ -31,9 +31,9 @@ $ kubectl create -f pv-definition.yaml
 
 #### Create the Persistent Volume Claim
 
-```
-pvc-definition.yaml
+`pvc-definition.yaml`:
 
+```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -50,9 +50,9 @@ $ kubectl create -f pvc-definition.yaml
 
 #### Create a Pod
 
-```
-pod-definition.yaml
+`pod-definition.yaml`:
 
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:

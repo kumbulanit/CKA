@@ -1,26 +1,26 @@
+# Setting up Prometheus
+
 Step 1: Install Prometheus Using Helm
 Helm is a package manager for Kubernetes that simplifies the deployment of applications. The Prometheus Helm chart is widely used to deploy Prometheus in a Kubernetes cluster.
 
 Add the Prometheus Helm repository:
 
-sh
-```
+```sh
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 ```
 Install Prometheus using Helm:
 
-sh
+```sh
+helm install prometheus prometheus-community/prometheus \
+  --set server.persistentVolume.enabled=false --set alertmanager.persistence.enabled=false
 ```
-helm install prometheus prometheus-community/prometheus
-```
-This command installs Prometheus with default configurations. You can customize the installation by modifying the Helm values.
+This command installs Prometheus with default configurations, except that its server and Alertmanager keep their data on the pod instead of a PersistentVolume: a kubeadm cluster has no default StorageClass, so their claims would stay Pending. (With a default StorageClass, leave out the two `--set` options.) You can customize the installation further by modifying the Helm values.
 
 Verify the installation:
 
-sh
-```
-kubectl get pods -l app=prometheus
+```sh
+kubectl get pods -l app.kubernetes.io/instance=prometheus
 ```
 Ensure that the Prometheus server and its components are running correctly.
 
@@ -28,8 +28,7 @@ Step 2: Configure Service Discovery
 Prometheus will automatically discover Kubernetes services and pods based on annotations or labels. However, you can configure specific scraping rules by editing the prometheus.yml configuration file.
 
 Example configuration for scraping Kubernetes nodes:
-yaml
-```
+```yaml
 scrape_configs:
   - job_name: 'kubernetes-nodes'
     kubernetes_sd_configs:
@@ -43,15 +42,13 @@ To access the Prometheus UI, you need to expose the Prometheus service.
 
 Expose Prometheus using a LoadBalancer or NodePort:
 
-sh
-```
-kubectl expose deployment prometheus-server --type=NodePort --name=prometheus-service
+```sh
+kubectl expose deployment prometheus-server --type=NodePort --name=prometheus-service --port=9090
 ```
 Or, for a LoadBalancer:
 
-sh
-```
-kubectl expose deployment prometheus-server --type=LoadBalancer --name=prometheus-service
+```sh
+kubectl expose deployment prometheus-server --type=LoadBalancer --name=prometheus-service --port=9090
 ```
 Access Prometheus UI:
 
@@ -62,8 +59,7 @@ Prometheus includes a basic alerting mechanism that evaluates rules and sends no
 Define alerting rules:
 
 Create a file named alerts.yml and define your alerting rules. For example:
-yaml
-```
+```yaml
 groups:
 - name: example
   rules:
@@ -84,13 +80,14 @@ Grafana is a popular open-source platform for monitoring and observability, whic
 
 Install Grafana using Helm:
 
-sh
-```
+```sh
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
 helm install grafana grafana/grafana
 ```
 Connect Prometheus to Grafana:
 
-In Grafana, add Prometheus as a data source. Use the Prometheus service URL (http://prometheus-service:9090) as the data source URL.
+In Grafana, add Prometheus as a data source. Use the Prometheus service URL as the data source URL: the chart's own service, `http://prometheus-server.default.svc.cluster.local` (port 80), or the NodePort service created above, `http://prometheus-service:9090`.
 Create dashboards:
 
 Create Grafana dashboards to visualize the metrics collected by Prometheus. Grafana offers pre-built dashboards for Kubernetes, which you can import and customize.
@@ -100,8 +97,7 @@ Prometheus metrics can be used for more advanced autoscaling scenarios beyond ba
 Install the Prometheus Adapter:
 
 The Prometheus Adapter allows Kubernetes to use custom Prometheus metrics for autoscaling.
-sh
-```
+```sh
 helm install prometheus-adapter prometheus-community/prometheus-adapter
 ```
 Create a custom metric:
@@ -110,9 +106,8 @@ Define a custom metric in Prometheus (e.g., request latency) and configure the P
 Use custom metrics in HPA:
 
 Configure an HPA to scale based on the custom Prometheus metric.
-yaml
-```
-apiVersion: autoscaling/v2beta2
+```yaml
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: custom-metric-hpa
@@ -126,7 +121,8 @@ spec:
   metrics:
   - type: Pods
     pods:
-      metricName: custom_metric_name
+      metric:
+        name: custom_metric_name
       target:
         type: AverageValue
         averageValue: 100m

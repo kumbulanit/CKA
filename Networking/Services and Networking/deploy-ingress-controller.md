@@ -1,3 +1,5 @@
+> **Note:** the ingress-nginx project has been retired and its repository archived, so it gets no more fixes. It still installs and works for learning Ingress, which is what this lesson uses it for. For new work, use another Ingress controller or the Gateway API (https://gateway-api.sigs.k8s.io/), which the current CKA curriculum also covers.
+
 #### Documentation Referred:
 
 https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/
@@ -7,8 +9,10 @@ https://kubernetes.github.io/ingress-nginx/deploy/
 
 #### Step 1: Install Nginx Ingress Controller:
 ```sh
-helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
+helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace \
+  --set controller.service.type=NodePort --set controller.service.nodePorts.http=30080
 ```
+On a cloud cluster you can leave out the two `--set` options: the controller then gets a cloud load balancer. A kubeadm cluster on your own machines has no load balancer, so we expose the controller on node port 30080 instead.
 
 #### Step 2: Verify the Ingress Controller Resource
 ```sh
@@ -16,7 +20,7 @@ helm list --all-namespaces
 kubectl get ingressclass
 kubectl get service -n ingress-nginx
 ```
-Verify if a new load balancer is created in Digital Ocean.
+The `ingress-nginx-controller` service should be of type `NodePort` with port `80:30080`.
 
 #### Step 3: Modify Ingress Resource to Add Controller Data
 
@@ -30,19 +34,15 @@ kubectl apply -f ingress.yaml
 ```
 
 #### Step 4: Verify the Ingress Controller Setup
+From controlplane, send requests to the controller's node port with each host name:
 ```sh
-kubectl exec -it frontend-pod -- bash
+curl -H "Host: website01.example.internal" http://node01:30080
+curl -H "Host: website02.example.internal" http://node01:30080
 ```
+Or add the names to `/etc/hosts` on controlplane (use node01's IP address) and use them directly:
 ```sh
-nano /etc/hosts
-```
-```sh
-<ADD-LOAD-BALANCER-IP> website01.example.internal website02.example.internal
-```
-
-```sh
-curl website01.example.internal
-curl website02.example.internal
+echo "<NODE01-IP> website01.example.internal website02.example.internal" | sudo tee -a /etc/hosts
+curl http://website01.example.internal:30080
 ```
 
 #### Step 5: Change the Default Nginx Page for Each Service
@@ -61,9 +61,8 @@ echo "This is Website 2" > index.html
 #### Step 6: Verification
 
 ```sh
-kubectl exec -it frontend-pod -- bash
-curl website01.example.internal
-curl website02.example.internal
+curl -H "Host: website01.example.internal" http://node01:30080
+curl -H "Host: website02.example.internal" http://node01:30080
 ```
 #### Step 7: Delete All Resource
 

@@ -10,9 +10,10 @@ In this section, we will take a look at **Docker storage**.
 
 ## Docker Storage
 
+> A kubeadm cluster runs containers with **containerd**, not Docker, so on the cluster nodes you will not find `/var/lib/docker` (containerd keeps its data in `/var/lib/containerd`, and `crictl` replaces the `docker` commands). The ideas below (image layers, copy-on-write, volumes) are the same in containerd; Docker is just the easiest place to see them.
+
 - There are two concepts comes into the docker, Storage drivers and Volume drivers plugins. 
 
-![class-1](../../images/class1.PNG)
 
 #### We will first discuss about Storage drivers.
 

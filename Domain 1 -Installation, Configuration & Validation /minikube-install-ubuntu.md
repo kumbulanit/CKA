@@ -1,13 +1,13 @@
 ### Installing a Standalone Kubernetes Cluster on Ubuntu
 
-Installing a standalone Kubernetes cluster on Ubuntu involves setting up Kubernetes components on a single machine. This setup is suitable for development, testing, or learning purposes. The following guide uses `kubeadm` for installation, which simplifies the process of setting up Kubernetes clusters.
+Installing a standalone Kubernetes cluster on Ubuntu involves setting up Kubernetes components on a single machine. This setup is suitable for development, testing, or learning purposes. The following guide uses `kubeadm` for installation, which simplifies the process of setting up Kubernetes clusters. (For the 3-node cluster the practicals use, see [Kubernetes installation using kubeadm](./Kubernetes%20installation%20using%20kubeadm.md).)
 
 ---
 
 ### **Prerequisites**
 
-- **Operating System**: Ubuntu 20.04 or later.
-- **Hardware**: Minimum of 2 GB RAM and 2 CPUs (recommended).
+- **Operating System**: Ubuntu 24.04 LTS (amd64 or arm64).
+- **Hardware**: Minimum of 2 GB RAM and 2 CPUs.
 - **User**: Non-root user with `sudo` privileges.
 - **Network**: Ensure the machine has internet access.
 
@@ -27,54 +27,71 @@ sudo apt-get upgrade -y
 **1.2. Install Required Packages**
 
 ```sh
-sudo apt-get install -y apt-transport-https ca-certificates curl
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
 ```
 
 **1.3. Disable Swap**
 
-Kubernetes requires swap to be disabled for optimal performance.
+The kubelet does not start while swap is on (unless you configure it to allow swap).
 
 ```sh
 sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 ```
 
-To permanently disable swap, comment out or remove the swap entry from `/etc/fstab`.
+**1.4. Load Kernel Modules and Network Settings**
 
 ```sh
-sudo nano /etc/fstab
-```
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+sudo modprobe overlay
+sudo modprobe br_netfilter
 
-Comment out the swap line, save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`).
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+sudo sysctl --system
+```
 
 ---
 
-### **2. Install Docker**
+### **2. Install the Container Runtime (containerd)**
 
-Kubernetes uses Docker as the default container runtime.
+Kubernetes no longer uses Docker Engine directly (dockershim was removed in v1.24). It uses a CRI runtime such as containerd.
 
-**2.1. Install Docker**
+**2.1. Install containerd**
 
 ```sh
-sudo apt-get install -y docker.io
+sudo apt-get install -y containerd
 ```
 
-**2.2. Start and Enable Docker**
+**2.2. Configure containerd for the systemd cgroup driver**
 
 ```sh
-sudo systemctl start docker
-sudo systemctl enable docker
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml > /dev/null
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+sudo systemctl restart containerd
+sudo systemctl enable containerd
 ```
 
-**2.3. Add Kubernetes Repository**
+**2.3. Add the Kubernetes Repository Key**
+
+The old `apt.kubernetes.io` repository was shut down in 2024; packages now come from `pkgs.k8s.io`, one repository per minor version.
 
 ```sh
-sudo curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 ```
 
 **2.4. Add the Kubernetes APT Repository**
 
 ```sh
-echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 ```
 
 **2.5. Update APT Package Index**
@@ -91,6 +108,7 @@ sudo apt-get update
 
 ```sh
 sudo apt-get install -y kubeadm kubelet kubectl
+sudo systemctl enable --now kubelet
 ```
 
 **3.2. Hold the Packages at the Current Version**
@@ -119,11 +137,21 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-**4.3. Verify the Cluster Status**
+**4.3. Allow Pods on the Control Plane Node**
+
+A single-node cluster has no worker nodes, so remove the taint that keeps ordinary pods off the control plane:
+
+```sh
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+```
+
+**4.4. Verify the Cluster Status**
 
 ```sh
 kubectl get nodes
 ```
+
+The node shows `NotReady` until the pod network is installed.
 
 ---
 
@@ -134,7 +162,7 @@ Kubernetes requires a network solution to enable communication between pods. Fla
 **5.1. Apply the Flannel Network Plugin**
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 ```
 
 **5.2. Verify the Network Plugin Installation**
@@ -143,7 +171,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 kubectl get pods --all-namespaces
 ```
 
-Wait until the `kube-flannel-ds` pods are in the `Running` state.
+Wait until the `kube-flannel-ds` pods (in the `kube-flannel` namespace) are in the `Running` state.
 
 ---
 
@@ -175,36 +203,17 @@ kubectl get services
 
 ---
 
-### **7. Optional: Enable Kubernetes Dashboard**
+### **7. Optional: A Web UI**
 
-**7.1. Deploy the Kubernetes Dashboard**
+The Kubernetes Dashboard project has been archived and is no longer maintained, so this guide does not install it. If you want a web UI, use [Headlamp](https://headlamp.dev/), a Kubernetes SIG UI project.
 
-```sh
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.5.1/aio/deploy/recommended.yaml
-```
-
-**7.2. Access the Dashboard**
-
-Create a Service Account and ClusterRoleBinding for dashboard access.
+Service account tokens are no longer stored in Secrets automatically (since v1.24). To get a token for a UI or a script, create one on demand:
 
 ```sh
 kubectl create serviceaccount dashboard-admin-sa
 kubectl create clusterrolebinding dashboard-admin-sa --clusterrole=cluster-admin --serviceaccount=default:dashboard-admin-sa
+kubectl create token dashboard-admin-sa
 ```
-
-Get the access token.
-
-```sh
-kubectl -n default get secret $(kubectl -n default get sa/dashboard-admin-sa -o=jsonpath='{.secrets[0].name}') -o=jsonpath='{.data.token}' | base64 --decode
-```
-
-Start the kubectl proxy.
-
-```sh
-kubectl proxy
-```
-
-Access the dashboard via [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
 
 ---
 
@@ -218,7 +227,7 @@ Access the dashboard via [http://localhost:8001/api/v1/namespaces/kubernetes-das
          |
          v
 +--------+---------+
-|  Install Docker  |
+| Install containerd|
 |  and Kubernetes  |
 +--------+---------+
          |
@@ -251,4 +260,4 @@ You now have a standalone Kubernetes cluster set up on Ubuntu, suitable for deve
 
 **Additional Resources**:
 - **Kubernetes Documentation**: [https://kubernetes.io/docs/](https://kubernetes.io/docs/)
-- **Flannel Documentation**: [https://github.com/coreos/flannel](https://github.com/coreos/flannel)
+- **Flannel Documentation**: [https://github.com/flannel-io/flannel](https://github.com/flannel-io/flannel)

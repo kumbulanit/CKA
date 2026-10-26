@@ -3,7 +3,7 @@
 Connect the linux box with existing K8s setup.
 
 ```sh
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$(dpkg --print-architecture)/kubectl"
 
 chmod +x kubectl
 
@@ -13,7 +13,7 @@ Make sure to also copy the contents of your kubeconfig file from local laptop to
 ```sh
 mkdir ~/.kube
 nano ~/.kube/config
-````
+```
 ```sh
 kubectl get pods
 ```
@@ -65,13 +65,15 @@ kubectl certificate approve zeal-csr
 ```sh
 kubectl get csr zeal-csr -o jsonpath='{.status.certificate}' | base64 -d > zeal.crt
 ```
-#### Step 7: Create a new context
+#### Step 7: Add the user to your kubeconfig
 ```sh
 kubectl config set-credentials zeal --client-certificate=zeal.crt --client-key=zeal.key
 ```
+`kubectl config get-clusters` lists the cluster names; on a kubeadm cluster it is `kubernetes`.
+
 #### Step 8: Set new Context
 ```sh
-kubectl config set-context zeal-context --cluster [YOUR-CLUSTER-HERE] --user=zeal
+kubectl config set-context zeal-context --cluster kubernetes --user=zeal
 ```
 #### Step 9: Use Context to Verify
 ```sh
@@ -99,6 +101,7 @@ kubectl apply -f role.yaml
 ```
 
 #### Step 11: Create a New Role Binding
+If the RoleBinding `read-pods` from the ClusterRole lesson is still there, delete it first (`kubectl delete -f clusterrole-to-rolebinding.yaml`): a RoleBinding's `roleRef` cannot be changed, so applying this file over it fails.
 ```sh
 nano rolebinding.yaml
 ```

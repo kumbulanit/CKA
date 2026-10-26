@@ -1,3 +1,5 @@
+Both pods use the secret `firstsecret` from *secret-data.md* (`kubectl create secret generic firstsecret --from-literal=dbpassword=mypassword123`).
+
 ##### secretpod.yaml
 
 ```sh
@@ -37,6 +39,6 @@ spec:
         valueFrom:
           secretKeyRef:
             name: firstsecret
-            key: dbpass
+            key: dbpassword
   restartPolicy: Never
 ```

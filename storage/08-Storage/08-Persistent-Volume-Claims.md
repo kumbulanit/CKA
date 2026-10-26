@@ -9,13 +9,12 @@ In this section, we will take a look at **Persistent Volume Claim**
 - Once the Persistent Volume Claim created, Kubernetes binds the Persistent Volumes to claim based on the request and properties set on the volume.
 
 
-![class-17](../../images/class17.PNG)
 
 - If properties not matches or Persistent Volume is not available for the Persistent Volume Claim then it will display the pending state.
 
-```
-pvc-definition.yaml
+`pvc-definition.yaml`:
 
+```yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -27,9 +26,9 @@ spec:
      storage: 1Gi
 ```
 
-```
-pv-definition.yaml
+`pv-definition.yaml`:
 
+```yaml
 kind: PersistentVolume
 apiVersion: v1
 metadata:
@@ -86,5 +85,4 @@ $ kubectl delete pv pv-vol1
 #### Kubernetes Persistent Volume Claims Reference Docs
 
 - https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims
-- https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#persistentvolumeclaim-v1-core
-- https://docs.cloud.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcreatingpersistentvolumeclaim.htm
+- https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/

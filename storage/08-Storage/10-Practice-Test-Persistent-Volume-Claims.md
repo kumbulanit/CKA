@@ -2,6 +2,29 @@
 
   - Take me to [Practice Test](https://kodekloud.com/topic/practice-test-persistent-volume-claims/)
 
+#### Practice setup (your own cluster)
+
+The test starts with a pod `webapp` that writes its log inside the container only, and a folder `/var/log/webapp` on the workers. Create both first:
+
+```
+for n in node01 node02; do ssh $n mkdir -p /var/log/webapp; done
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp
+spec:
+  containers:
+  - name: event-simulator
+    image: kodekloud/event-simulator
+    env:
+    - name: LOG_HANDLERS
+      value: file
+EOF
+```
+
+Then: (4) recreate `webapp` with a hostPath volume `/var/log/webapp` mounted at `/log`; (5) create the PV `pv-log`; (6) create the PVC `claim-log-1` and see why it stays Pending; (10) fix it; (12) make `webapp` use the claim; (15–19) delete the claim, see it stuck in Terminating while the pod uses it, delete the pod, and check the PV's status.
+
 #### Solution
 
   1. Check the Solution

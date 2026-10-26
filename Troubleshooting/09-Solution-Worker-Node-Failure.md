@@ -135,15 +135,15 @@
          ```yaml
          apiVersion: kubelet.config.k8s.io/v1beta1
          authentication:
-         anonymous:
-           enabled: false
-         webhook:
-           cacheTTL: 0s
-           enabled: true
-         x509:
-           clientCAFile: /etc/kubernetes/pki/WRONG-CA-FILE.crt # <- Fix this
+           anonymous:
+             enabled: false
+           webhook:
+             cacheTTL: 0s
+             enabled: true
+           x509:
+             clientCAFile: /etc/kubernetes/pki/WRONG-CA-FILE.crt # <- Fix this
          authorization:
-         mode: Webhook
+           mode: Webhook
          ```
 
          Note that you can perform the same edit with a single `sed` command. This is quicker than editing in vi.
@@ -246,23 +246,23 @@
          apiVersion: v1
          clusters:
          - cluster:
-            certificate-authority-data: REDACTED
-            server: https://controlplane:6553  # <- Fix this
-         name: default-cluster
+             certificate-authority-data: REDACTED
+             server: https://controlplane:6553  # <- Fix this
+           name: default-cluster
          contexts:
          - context:
-            cluster: default-cluster
-            namespace: default
-            user: default-auth
-         name: default-context
+             cluster: default-cluster
+             namespace: default
+             user: default-auth
+           name: default-context
          current-context: default-context
          kind: Config
          preferences: {}
          users:
          - name: default-auth
-         user:
-            client-certificate: /var/lib/kubelet/pki/kubelet-client-current.pem
-            client-key: /var/lib/kubelet/pki/kubelet-client-current.pem
+           user:
+             client-certificate: /var/lib/kubelet/pki/kubelet-client-current.pem
+             client-key: /var/lib/kubelet/pki/kubelet-client-current.pem
          ```
 
          Note that you can perform the same edit with a single `sed` command. This is quicker than editing in vi.

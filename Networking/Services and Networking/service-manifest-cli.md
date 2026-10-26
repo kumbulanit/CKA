@@ -35,18 +35,20 @@ kubectl expose pod nginx --name nginx-service --port=80 --target-port=80 --dry-r
 
 kubectl expose pod nginx --name nginx-service --port=80 --target-port=80 --dry-run=client -o yaml > service-01.yaml
 
-kubectl describe service nginx-svc
+kubectl apply -f service-01.yaml
+kubectl describe service nginx-service
 ```
 #### Step 2: Generate NodePort Service Manifest - POD
 ```sh
 kubectl expose pod nginx --name nginx-nodeport-service --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml
 
+kubectl expose pod nginx --name nginx-nodeport-service --port=80 --target-port=80 --type=NodePort
 kubectl get service
 ```
 
 #### Step 3: Generate  Service Manifest - Deployment
 ```sh
-kubectl expose deployment kplabs-deployment --name nginx-deployment-service --port=80 --target-port=8000
+kubectl expose deployment kplabs-deployment --name nginx-deployment-service --port=80 --target-port=80
 
 kubectl describe service nginx-deployment-service
 ```

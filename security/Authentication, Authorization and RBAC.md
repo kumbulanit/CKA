@@ -18,7 +18,7 @@ Kubernetes supports several authentication methods:
 
 3. **OpenID Connect (OIDC)**: Kubernetes can integrate with external identity providers (such as Google or Microsoft) using OIDC for user authentication.
 
-4. **Basic Authentication**: Users provide a username and password. This method is not recommended for production environments due to security concerns.
+4. **Static passwords (Basic Authentication)**: Removed in Kubernetes v1.19 (`--basic-auth-file` no longer exists). Kubernetes has no built-in username/password login.
 
 5. **Webhook Authentication**: Kubernetes can use external services (webhooks) to authenticate users. The external service validates the credentials and returns an authentication result.
 
@@ -26,21 +26,28 @@ Kubernetes supports several authentication methods:
 
 **Client Certificate Authentication Example**:
 
-Generate a client certificate and key:
+Generate a client key and certificate signing request. The certificate's CN is the user name and O is the group:
 
 ```sh
 openssl genrsa -out client.key 2048
-openssl req -new -key client.key -out client.csr -subj "/CN=client"
-openssl x509 -req -in client.csr -signkey client.key -out client.crt
+openssl req -new -key client.key -out client.csr -subj "/CN=client/O=dev"
 ```
 
-Add the certificate to Kubernetes:
+The certificate must be signed by the cluster's CA, otherwise the API server rejects it. On a kubeadm cluster, sign it on `controlplane` with the cluster CA (or use the CertificateSigningRequest API, see *Domain 4 - Security/certificate-steps.md*):
+
+```sh
+sudo openssl x509 -req -in client.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out client.crt -days 30
+```
+
+Add the user to your kubeconfig:
 
 ```sh
 kubectl config set-credentials client --client-certificate=client.crt --client-key=client.key
-kubectl config set-context my-context --user=client
+kubectl config set-context my-context --cluster=kubernetes --user=client
 kubectl config use-context my-context
 ```
+
+The user can log in but can do nothing until RBAC gives them permissions (section 3). Switch back with `kubectl config use-context kubernetes-admin@kubernetes`.
 
 ---
 
@@ -52,7 +59,7 @@ kubectl config use-context my-context
 
 2. **Attribute-Based Access Control (ABAC)**: Uses policies defined in JSON or YAML to control access based on attributes of the request and resource.
 
-3. **Node Authorization**: This is a built-in authorization mode that allows Nodes to access resources within their namespace.
+3. **Node Authorization**: A special-purpose mode that lets each kubelet read and update only the objects it needs for the pods scheduled on its own node.
 
 4. **Webhook Authorization**: Similar to authentication webhooks, Kubernetes can use external services to make authorization decisions.
 

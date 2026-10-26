@@ -49,17 +49,32 @@ metadata:
   name: kplabs-service
 subsets:
   - addresses:
-      - ip: 10.244.0.23
+      - ip: <BACKEND-POD-1-IP>
     ports:
       - port: 80
 ```
 ```sh
 kubectl apply -f endpoint.yaml
 ```
+Since Kubernetes v1.33 the `Endpoints` API is deprecated in favour of `EndpointSlice`, so kubectl prints a warning; it still works. The same thing as an EndpointSlice:
+```sh
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: kplabs-service-1
+  labels:
+    kubernetes.io/service-name: kplabs-service
+addressType: IPv4
+ports:
+  - port: 80
+endpoints:
+  - addresses:
+      - <BACKEND-POD-1-IP>
+```
 #### Step 6: Test the Connection
 ```sh
 kubectl exec -it frontend-pod -- bash
-curl <SERVICE-IP:8080>
+curl <SERVICE-IP>:8080
 ```
 
 #### Step 7: Delete the Created Resources

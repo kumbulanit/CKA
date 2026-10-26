@@ -11,36 +11,33 @@
   - If they are **`NotReady`** then check the **`LastHeartbeatTime`** of the node to find out the time when node might have crashed
 
     ```
-    kubectl describe node worker-1
+    kubectl describe node node01
     ```
 
-    ![wrk](../../images/wrk.PNG)
 
 
-  - Check the possible **`CPU`** and **`MEMORY`**  using **`top`** and **`df -h`** 
+  - Log in to the node (`ssh node01`) and check the possible **`CPU`**, **`MEMORY`** and disk usage using **`top`**, **`free -m`** and **`df -h`** 
 
  
-    ![mem](../../images/mem.PNG)
 
 
   - Check the status and the logs of the **`kubelet`** for the possible issues.
 
     ```
-    serivce kubelet status
+    service kubelet status
     ```
 
     ```
     sudo journalctl -u kubelet
     ```
-    ![kublet](../../images/kublet.PNG)
   
     
   - Check the **`kubelet`** Certificates, they are not expired, and in the right group and issued by the right CA.
 
     ```
-    openssl x509 -in /var/lib/kubelet/worker-1.crt -text
+    sudo openssl x509 -in /var/lib/kubelet/pki/kubelet-client-current.pem -noout -subject -issuer -dates
+    sudo openssl x509 -in /var/lib/kubelet/pki/kubelet.crt -noout -subject -issuer -dates
     ```
 
-    ![cert](../../images/cert.PNG)
 
 

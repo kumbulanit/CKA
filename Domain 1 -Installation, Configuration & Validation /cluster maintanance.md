@@ -13,26 +13,50 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
    - Review Kubernetes release notes and documentation for new features and breaking changes.
    - Test the upgrade process in a staging environment before applying it to production.
 
-2. **Upgrade Control Plane**:
-   - **Kubeadm**: Use `kubeadm upgrade` to upgrade control plane components.
+2. **Upgrade the Control Plane Node** (on `controlplane`; this example upgrades v1.36 to v1.37):
+   - Point the package repository at the next minor version (`pkgs.k8s.io` has one repository per minor version):
      ```sh
-     kubeadm upgrade apply v1.23.0
+     sudo sed -i 's|/v1.36/|/v1.37/|' /etc/apt/sources.list.d/kubernetes.list
+     sudo apt update
+     apt-cache madison kubeadm
+     ```
+   - Upgrade kubeadm, check the plan, and apply it:
+     ```sh
+     sudo apt-mark unhold kubeadm && sudo apt install -y kubeadm='1.37.1-1.1' && sudo apt-mark hold kubeadm
+     sudo kubeadm upgrade plan
+     sudo kubeadm upgrade apply v1.37.1
+     ```
+   - Drain the node, upgrade kubelet and kubectl, then make it schedulable again:
+     ```sh
+     kubectl drain controlplane --ignore-daemonsets
+     sudo apt-mark unhold kubelet kubectl && sudo apt install -y kubelet='1.37.1-1.1' kubectl='1.37.1-1.1' && sudo apt-mark hold kubelet kubectl
+     sudo systemctl daemon-reload && sudo systemctl restart kubelet
+     kubectl uncordon controlplane
      ```
    - **Managed Services**: Use cloud provider tools or console for managed Kubernetes services.
 
-3. **Upgrade Nodes**:
-   - Drain the node:
+3. **Upgrade Worker Nodes** (one at a time):
+   - On the worker (`ssh node01`), switch the repository and upgrade kubeadm as above, then:
      ```sh
-     kubectl drain <node-name> --ignore-daemonsets --delete-local-data
+     sudo kubeadm upgrade node
      ```
-   - Upgrade the node software and Kubernetes components.
-   - Rejoin the node to the cluster:
+   - From controlplane, drain the node:
      ```sh
-     kubectl uncordon <node-name>
+     kubectl drain node01 --ignore-daemonsets --delete-emptydir-data
      ```
+   - On the worker, upgrade kubelet and kubectl and restart the kubelet:
+     ```sh
+     sudo apt-mark unhold kubelet kubectl && sudo apt install -y kubelet='1.37.1-1.1' kubectl='1.37.1-1.1' && sudo apt-mark hold kubelet kubectl
+     sudo systemctl daemon-reload && sudo systemctl restart kubelet
+     ```
+   - From controlplane, make it schedulable again:
+     ```sh
+     kubectl uncordon node01
+     ```
+   - Repeat for node02. You can only upgrade one minor version at a time (v1.36 to v1.37, not v1.36 to v1.38).
 
 4. **Upgrade Add-ons**:
-   - Upgrade add-ons like CoreDNS, metrics server, and storage classes.
+   - Upgrade add-ons like the network plugin (Calico), the metrics server and storage provisioners. kubeadm upgrades CoreDNS and kube-proxy for you.
 
 5. **Verify Upgrade**:
    - Check the status of nodes and pods.
@@ -48,13 +72,13 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
 |   Old Control     |                |   New Control     |
 |   Plane Version   |                |   Plane Version   |
 |                   |                |                   |
-|  (e.g., v1.22.0)  |                |  (e.g., v1.23.0)  |
+|  (e.g., v1.36.5)  |                |  (e.g., v1.37.1)  |
 +--------+----------+                +--------+----------+
          |                                  |
          v                                  v
 +--------+----------+                +--------+----------+
 |   Old Nodes       |                |   New Nodes       |
-|   (e.g., v1.22.0) |                |   (e.g., v1.23.0) |
+|   (e.g., v1.36.5) |                |   (e.g., v1.37.1) |
 +--------+----------+                +--------+----------+
 ```
 
@@ -67,7 +91,7 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
 **Steps**:
 1. **Monitor Resource Usage**:
    - Use monitoring tools like Prometheus and Grafana to track resource utilization.
-   - Check resource usage with `kubectl top`:
+   - Check resource usage with `kubectl top` (needs the metrics server, see *logging and monitoring*):
      ```sh
      kubectl top nodes
      kubectl top pods
@@ -76,7 +100,7 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
 2. **Scale Resources**:
    - **Horizontal Pod Autoscaling**: Automatically scale the number of pod replicas based on CPU or memory usage.
      ```yaml
-     apiVersion: autoscaling/v2beta2
+     apiVersion: autoscaling/v2
      kind: HorizontalPodAutoscaler
      metadata:
        name: my-app-hpa
@@ -200,10 +224,20 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
    - Regularly back up etcd data to prevent data loss.
    - Use etcd’s built-in snapshot capabilities.
 
-   **Example Backup Command**:
+   **Example Backup Command** (on `controlplane`; install the client first with `sudo apt install -y etcd-client`):
    ```sh
-   etcdctl snapshot save snapshot.db
+   sudo ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
+     --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+     --cert=/etc/kubernetes/pki/etcd/server.crt \
+     --key=/etc/kubernetes/pki/etcd/server.key \
+     snapshot save /opt/etcd-backup.db
    ```
+
+   Check the snapshot:
+   ```sh
+   sudo etcdutl snapshot status /opt/etcd-backup.db --write-out=table
+   ```
+   (If `etcdutl` is not installed, `sudo ETCDCTL_API=3 etcdctl snapshot status /opt/etcd-backup.db --write-out=table` works with older clients.)
 
 2. **Backup Kubernetes Resources**:
    - Use tools like Velero to back up Kubernetes resources and volumes.
@@ -289,9 +323,7 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
    - name: example
      rules:
      - alert: HighMemoryUsage
-       expr: container_memory_usage_bytes / container_spec_memory_limit_bytes
-
- > 0.9
+       expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9
        for: 5m
        annotations:
          summary: "High memory usage detected"

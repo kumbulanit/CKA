@@ -5,6 +5,7 @@ https://kubernetes.io/docs/reference/access-authn-authz/authorization/
 ##### Step 1: Delete Role and Role Binding
 ```sh
 kubectl delete -f role.yaml
+kubectl delete -f rolebinding.yaml
 ```
 ##### Step 2: Create a Cluster Role
 ```sh
@@ -47,7 +48,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 ```sh
-kubectl cluster-role-binding.yaml
+kubectl apply -f cluster-role-binding.yaml
 ```
 ```sh
 kubectl get clusterrolebinding
@@ -67,7 +68,7 @@ curl -k <K8S-SERVER-URL>/api/v1/namespaces/external/pods --header "Authorization
 
 ##### Step 6: Delete Cluster Role Binding
 ```sh
-kubectl delete -f clusterrolebinding list-pods-global
+kubectl delete clusterrolebinding list-pods-global
 ```
 Verify if you receive forbidden error.
 ```sh

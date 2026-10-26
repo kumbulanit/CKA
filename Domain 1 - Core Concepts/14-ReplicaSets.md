@@ -9,9 +9,7 @@ In this section, we will take a look at the below
 
 ## What is a Replica and Why do we need a replication controller?
 
-  ![rc](../../images/rc.PNG)
   
-  ![rc1](../../images/rc1.PNG)
   
 ## Difference between ReplicaSet and Replication Controller
 - **`Replication Controller`** is the older technology that is being replaced by a **`ReplicaSet`**.
@@ -21,7 +19,6 @@ In this section, we will take a look at the below
 
 ## Replication Controller Definition File
   
-   ![rc2](../../images/rc2.PNG)
   
 ```
     apiVersion: v1
@@ -56,13 +53,11 @@ In this section, we will take a look at the below
     ```
     $ kubectl get pods
     ```
-    ![rc3](../../images/rc3.PNG)
     
 ## Creating a ReplicaSet
   
 ## ReplicaSet Definition File
 
-   ![rs](../../images/rs.PNG)
 
 ```
     apiVersion: apps/v1
@@ -103,12 +98,10 @@ In this section, we will take a look at the below
     $ kubectl get pods
     ```
    
-    ![rs1](../../images/rs1.PNG)
     
 ## Labels and Selectors
 #### What is the deal with Labels and Selectors? Why do we label pods and objects in kubernetes?
 
-  ![labels](../../images/labels.PNG)
   
 ## How to scale replicaset
 - There are multiple ways to scale replicaset
@@ -149,7 +142,6 @@ In this section, we will take a look at the below
   ```
   $ kubectl scale --replicas=6 replicaset myapp-replicaset
   ```
-  ![rs2](../../images/rs2.PNG)
 
 #### K8s Reference Docs:
 - https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/

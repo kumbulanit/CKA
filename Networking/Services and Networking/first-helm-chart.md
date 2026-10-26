@@ -25,18 +25,29 @@ helm list
 helm uninstall my-jenkins
 ```
 
-## Deploying WordPress Helm Chart (Run this in Big Node)
+## Deploying Grafana Helm Chart
 
-https://artifacthub.io/packages/helm/bitnami/wordpress
+https://artifacthub.io/packages/helm/grafana/grafana
 
-##### Step 1. Configure and Install Wordpress Helm Chart
+(This used to be the Bitnami WordPress chart. Bitnami stopped publishing free versioned images in 2025, so that chart no longer installs without a subscription.)
+
+##### Step 1. Configure and Install Grafana Helm Chart
 
 ```sh
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install my-release bitnami/wordpress
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install my-release grafana/grafana
 ```
 
-##### Step 2. Uninstall Wordpress Helm Chart
+##### Step 2. Check the Release and its Values
+
+```sh
+helm list
+helm status my-release
+helm get values my-release --all | head -30
+```
+
+##### Step 3. Uninstall Grafana Helm Chart
 
 ```sh
 helm uninstall my-release

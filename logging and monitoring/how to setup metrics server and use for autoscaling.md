@@ -7,10 +7,8 @@ The Metrics Server is essential for enabling Kubernetes' autoscaling features li
 
 ```
 minikube addons enable metrics-server
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
- kubectl top nodes
- kubectl get deployment metrics-server -n kube-system
- kubectl top nodes
+kubectl get deployment metrics-server -n kube-system
+kubectl top nodes
 ```
 
 
@@ -18,20 +16,18 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 **on other kubernetes use the below**
 
 
-1. **Clone the Metrics Server repository**:
-   - The Metrics Server is available as a deployment in the official Kubernetes GitHub repository.
+1. **Apply the release manifest**:
+   - The Metrics Server project publishes one manifest with the Deployment, Service, and Role-based Access Control (RBAC) configurations it needs.
    ```sh
-   git clone https://github.com/kubernetes-sigs/metrics-server.git
-   cd metrics-server/deploy/kubernetes
+   kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
    ```
 
-2. **Apply the deployment manifest**:
-   - Use `kubectl` to deploy the Metrics Server.
+2. **Allow the kubelets' self-signed certificates (kubeadm clusters)**:
+   - kubeadm gives each kubelet a self-signed serving certificate, which the Metrics Server refuses by default (its pod stays `0/1` with `x509` errors in its logs). For a lab cluster, tell it to skip that check:
    ```sh
-   kubectl apply -f metrics-server.yaml
+   kubectl -n kube-system patch deployment metrics-server --type=json \
+     -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
    ```
-
-   The `metrics-server.yaml` file includes the necessary components such as the Deployment, Service, and Role-based Access Control (RBAC) configurations needed to run the Metrics Server in your cluster.
 
 3. **Verify the installation**:
    - Check if the Metrics Server is running correctly.
@@ -61,9 +57,10 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 The Horizontal Pod Autoscaler (HPA) automatically scales the number of pod replicas based on observed CPU or memory utilization, using the metrics provided by the Metrics Server.
 
 1. **Create a sample deployment**:
-   - Deploy a sample application (e.g., an NGINX deployment).
+   - Deploy a sample application (e.g., an NGINX deployment). The HPA calculates utilisation as a percentage of the CPU **request**, so the containers must have one:
    ```sh
    kubectl create deployment nginx --image=nginx
+   kubectl set resources deployment nginx --requests=cpu=50m
    ```
 
 2. **Expose the deployment**:
@@ -94,9 +91,9 @@ The Horizontal Pod Autoscaler (HPA) automatically scales the number of pod repli
 
    Example:
    ```sh
-   kubectl run -i --tty load-generator --image=busybox /bin/sh
-   while true; do wget -q -O- http://nginx.default.svc.cluster.local; done
+   kubectl run -i --tty load-generator --rm --image=busybox:1.37 --restart=Never -- /bin/sh -c "while true; do wget -q -O- http://nginx.default.svc.cluster.local; done"
    ```
+   Press Ctrl+C to stop the load (the pod is deleted when it exits).
 
 2. **Observe the scaling behavior**:
    - As the CPU utilization increases due to the simulated load, the HPA should automatically scale the number of replicas of the NGINX deployment.

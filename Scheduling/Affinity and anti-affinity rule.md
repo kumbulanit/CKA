@@ -97,20 +97,24 @@ spec:
   affinity:
     podAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-              - key: app
-                operator: In
-                values:
-                  - backend
-          weight: 1
-          preference:
-            matchExpressions:
-              - key: role
-                operator: In
-                values:
-                  - cache
-          weight: 2
+        - weight: 1
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - backend
+            topologyKey: kubernetes.io/hostname
+        - weight: 2
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: role
+                  operator: In
+                  values:
+                    - cache
+            topologyKey: kubernetes.io/hostname
 ```
 
 In this example:
@@ -224,5 +228,3 @@ Affinity and Anti-Affinity rules in Kubernetes provide powerful mechanisms for c
 **Additional Resources**:
 - **Kubernetes Affinity and Anti-Affinity Documentation**: [https://kubernetes.io/docs/concepts/scheduling-eviction/affinity/](https://kubernetes.io/docs/concepts/scheduling-eviction/affinity/)
 - **Pod Affinity and Anti-Affinity Examples**: [https://kubernetes.io/docs/concepts/scheduling-eviction/affinity/#examples](https://kubernetes.io/docs/concepts/scheduling-eviction/affinity/#examples)
-
-Feel free to include this detailed explanation and examples in your training materials and presentations.

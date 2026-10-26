@@ -9,7 +9,7 @@ spec:
   - name: frontend
     image: nginx
   nodeSelector:
-    kubernetes.io/hostname: kplabs-demo-ri0f
+    kubernetes.io/hostname: node01
 
 ---
 apiVersion: v1
@@ -23,4 +23,4 @@ spec:
   - name: frontendpod
     image: nginx
   nodeSelector:
-    kubernetes.io/hostname: kplabs-demo-ri0y
+    kubernetes.io/hostname: node02

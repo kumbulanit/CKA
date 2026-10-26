@@ -31,16 +31,24 @@ Note that this lab is sequential. You must solve test 1 completely before you ca
 
    No - so we need to install networking support.
 
-   Let's install `Weave`
+   Let's install `Calico`, the network plugin this course's cluster uses (the original lab installed Weave Net, which is no longer maintained):
 
    ```
-   kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+   kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml
    ```
 
    Now wait for a minute or so for it to initialize, then check the application pods
 
    ```
    kubectl get pods -n triton
+   ```
+
+   Pods that were already running when the network plugin was removed (CoreDNS, for example) keep their old addresses, which the new plugin does not route. If the application still cannot reach `mysql-service`, restart CoreDNS so it gets a Calico address:
+
+   ```
+   kubectl -n kube-system rollout restart deployment coredns
+   kubectl -n kube-system rollout status deployment coredns
+   curl http://node01:30081
    ```
 
    </details>

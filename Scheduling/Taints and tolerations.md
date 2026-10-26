@@ -32,10 +32,16 @@ kubectl taint nodes <node-name> key=value:effect
 **Example**:
 
 ```sh
-kubectl taint nodes node-1 environment=production:NoSchedule
+kubectl taint nodes node01 environment=production:NoSchedule
 ```
 
-In this example, the Node `node-1` is tainted so that only Pods with a matching toleration can be scheduled on it. Pods without the appropriate toleration will not be scheduled.
+In this example, the Node `node01` is tainted so that only Pods with a matching toleration can be scheduled on it. Pods without the appropriate toleration will not be scheduled.
+
+To remove a taint, run the same command with a `-` at the end:
+
+```sh
+kubectl taint nodes node01 environment=production:NoSchedule-
+```
 
 #### **1.3. Viewing Taints on Nodes**
 
@@ -48,7 +54,7 @@ kubectl describe node <node-name>
 **Example Output**:
 
 ```plaintext
-Name:               node-1
+Name:               node01
 ...
 Taints:             environment=production:NoSchedule
 ```
@@ -163,7 +169,7 @@ You might have dedicated Nodes for specific workloads or environments. Taints an
 **Example**:
 
 ```sh
-kubectl taint nodes node-1 dedicated=database:NoSchedule
+kubectl taint nodes node01 dedicated=database:NoSchedule
 ```
 
 **Pod Specification**:
@@ -193,7 +199,7 @@ Taints with the `NoExecute` effect can be used to evict Pods from Nodes under ma
 **Example**:
 
 ```sh
-kubectl taint nodes node-1 maintenance=true:NoExecute
+kubectl taint nodes node01 maintenance=true:NoExecute
 ```
 
 **Pod Specification**:
@@ -224,5 +230,3 @@ Taints and tolerations provide a robust mechanism for controlling Pod scheduling
 **Additional Resources**:
 - **Kubernetes Taints and Tolerations Documentation**: [https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)
 - **Taints and Tolerations Examples**: [https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/#examples](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/#examples)
-
-Feel free to include this detailed explanation and examples in your training materials and presentations.

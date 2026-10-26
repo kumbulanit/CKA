@@ -4,6 +4,8 @@
 
 ### Solution
 
+On KodeKloud the application opens in an **App** tab. On your own cluster, open it with `curl` from controlplane: the web application is the `web-service` NodePort service on port 30081, e.g. `curl http://node01:30081`.
+
 1.  <details>
     <summary>A simple 2 tier application is deployed in the <code>alpha</code> namespace. It must display a green web page on success. Click on the <code>App</code> tab at the top of your terminal to view your application. It is currently failed. Troubleshoot and fix the issue.</summary>
 

@@ -5,7 +5,7 @@ kubectl create deployment my-deployment --image=nginx --dry-run=client -o yaml
 ```
 #### Create Simple Deployment Manifest with 3 Replicas
 ```sh
-kubectl create deployment my-deployment --image=nginx --replicas 3--dry-run=client -o yaml
+kubectl create deployment my-deployment --image=nginx --replicas 3 --dry-run=client -o yaml
 ```
 #### Create Deployment using CLI Command
 ```sh

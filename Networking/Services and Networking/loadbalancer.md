@@ -27,7 +27,9 @@ kubectl apply -f elb-service.yaml
 #### Step 3: Verify Service Logs
 ```sh
 kubectl describe service kplabs-loadbalancer
+kubectl get service kplabs-loadbalancer
 ```
+On a cloud cluster the cloud provider creates a load balancer and fills in `EXTERNAL-IP`. On a kubeadm cluster on your own machines nothing provides load balancers, so `EXTERNAL-IP` stays `<pending>` (add-ons such as MetalLB can provide them). A LoadBalancer service is also a NodePort service, so `curl http://node01:<NODEPORT>` still works.
 
 #### Step 4: Delete the Resources
 ```sh

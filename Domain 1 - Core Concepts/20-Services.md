@@ -6,7 +6,6 @@ In this section we will take a look at **`services`** in kubernetes
 ## Services
 - Kubernetes Services enables communication between various components within and outside of the application.
 
-  ![srv1](../../images/srv1.PNG)
   
 #### Let's look at some other aspects of networking
 
@@ -16,18 +15,15 @@ In this section we will take a look at **`services`** in kubernetes
 
   - From the node (Able to reach the application as expected)
   
-    ![srv2](../../images/srv2.PNG)
     
   - From outside world (This should be our expectation, without something in the middle it will not reach the application)
   
-    ![srv3](../../images/srv3.PNG)
    
     
  ## Service Types
  
  #### There are 3 types of service types in kubernetes
  
-   ![srv-types](../../images/srv-types.PNG)
  
  1. NodePort
     - Where the service makes an internal port accessible on a port on the NODE.
@@ -37,13 +33,12 @@ In this section we will take a look at **`services`** in kubernetes
       metadata:
        name: myapp-service
       spec:
-       types: NodePort
+       type: NodePort
        ports:
        - targetPort: 80
          port: 80
          nodePort: 30008
       ```
-     ![srvnp](../../images/srvnp.PNG)
       
       #### To connect the service to the pod
       ```
@@ -62,7 +57,6 @@ In this section we will take a look at **`services`** in kubernetes
          type: front-end
        ```
 
-    ![srvnp1](../../images/srvnp1.PNG)
       
       #### To create the service
       ```
@@ -75,8 +69,8 @@ In this section we will take a look at **`services`** in kubernetes
       ```
       
       #### To access the application from CLI instead of web browser
-      ```
-      To access a Kubernetes application exposed using a NodePort service, follow these steps:
+
+To access a Kubernetes application exposed using a NodePort service, follow these steps:
 
 
 ### 4. Accessing the Application
@@ -88,14 +82,14 @@ To access the application, you need the external IP address of one of your nodes
 If you didn't specify a `nodePort` in your YAML file, Kubernetes will assign one automatically. You can find the NodePort by describing the service:
 
 ```sh
-kubectl get service <my-app-service>
+kubectl get service myapp-service
 ```
 
 This will output something like:
 
 ```
-NAME             TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
-my-app-service   NodePort    10.96.0.1     <none>        80:30008/TCP   5m
+NAME            TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+myapp-service   NodePort   10.104.13.27   <none>        80:30008/TCP   5m
 ```
 
 Here, `30008` is the NodePort.
@@ -111,12 +105,13 @@ kubectl get nodes -o wide
 This will output something like:
 
 ```
-NAME           STATUS   ROLES    AGE   VERSION   INTERNAL-IP    EXTERNAL-IP
-node1          Ready    <none>   30d   v1.21.0   192.168.1.1    34.123.45.67
-node2          Ready    <none>   30d   v1.21.0   192.168.1.2    34.123.45.68
+NAME           STATUS   ROLES           AGE   VERSION   INTERNAL-IP     EXTERNAL-IP
+controlplane   Ready    control-plane   30d   v1.36.5   192.168.56.10   <none>
+node01         Ready    <none>          30d   v1.36.5   192.168.56.11   <none>
+node02         Ready    <none>          30d   v1.36.5   192.168.56.12   <none>
 ```
 
-Use the `EXTERNAL-IP` of any of the nodes. If your nodes don't have an external IP, you might need to use the internal IP, depending on your network configuration.
+Use the `EXTERNAL-IP` of any of the nodes. If your nodes don't have an external IP (as on a kubeadm cluster on your own VMs), use the `INTERNAL-IP`. From any node you can also use the node name, for example `curl http://node01:30008`.
 
 ### 5. Access the Application
 
@@ -126,10 +121,10 @@ Open a browser or use a tool like `curl` to access the application:
 curl http://<NodeIP>:<NodePort>
 ```
 
-For example, if your Node's external IP is `34.123.45.67` and the NodePort is `30008`, you can access the application at:
+For example, if your node's IP is `192.168.56.11` and the NodePort is `30008`:
 
 ```sh
-http://34.123.45.67:30007
+curl http://192.168.56.11:30008
 ```
 
 ### Note

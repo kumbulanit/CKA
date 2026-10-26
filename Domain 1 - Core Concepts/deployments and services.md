@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: webapp:1.0
+        image: nginx:1.27
         ports:
         - containerPort: 80
 ```
@@ -86,7 +86,7 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: webapp:1.0
+        image: nginx:1.27
         ports:
         - containerPort: 80
 ```
@@ -150,8 +150,8 @@ version: 0.1.0
 ```yaml
 replicaCount: 3
 image:
-  repository: webapp
-  tag: 1.0
+  repository: nginx
+  tag: "1.27"
 service:
   type: ClusterIP
   port: 80
@@ -241,7 +241,7 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: webapp:1.0
+        image: nginx:1.27
         ports:
         - containerPort: 80
 ```

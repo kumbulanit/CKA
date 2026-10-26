@@ -21,7 +21,7 @@ spec:
 
 #### Create the file at the readiness probe path
 ```sh
-kubectl exec -it readiness touch /tmp/healthy
+kubectl exec readiness -- touch /tmp/healthy
 ```
 #### Verify if POD is ready:
 ```sh

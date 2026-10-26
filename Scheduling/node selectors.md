@@ -34,10 +34,10 @@ kubectl label nodes <node-name> <key>=<value>
 **Example Command**:
 
 ```sh
-kubectl label nodes node-1 environment=production
+kubectl label nodes node01 environment=production
 ```
 
-This command labels `node-1` with the key `environment` and the value `production`.
+This command labels `node01` with the key `environment` and the value `production`.
 
 #### **2.2. Using Node Selectors in Pod Specifications**
 
@@ -74,8 +74,8 @@ This command lists all nodes along with their labels.
 
 ```plaintext
 NAME      STATUS   ROLES    AGE   VERSION   LABELS
-node-1    Ready    <none>   5d    v1.23.4   kubernetes.io/hostname=node-1,environment=production
-node-2    Ready    <none>   5d    v1.23.4   kubernetes.io/hostname=node-2,environment=staging
+node01    Ready    <none>   5d    v1.36.5   kubernetes.io/hostname=node01,environment=production
+node02    Ready    <none>   5d    v1.36.5   kubernetes.io/hostname=node02,environment=staging
 ```
 
 ---
@@ -104,7 +104,7 @@ spec:
     - name: gpu-container
       image: gpu-image
   nodeSelector:
-    gpu: true
+    gpu: "true"     # label values are strings, so quote true
 ```
 
 #### **3.2. Environment Separation**

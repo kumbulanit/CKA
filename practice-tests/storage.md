@@ -1,8 +1,8 @@
-### Question 1: Secrets and Enviornement Variables
+### Question 1: Secrets and Environment Variables
 <details><summary>Expand The Question </summary>
 <p>
 
-Andrew works as a database administrator and has generated set of credentials that will be used by the application to connect to the database. Instead of giving the credentials to developers to hard-code in their application, he has requested security team to create a secret and mount it as enviornement variable to the application containers.
+Andrew works as a database administrator and has generated set of credentials that will be used by the application to connect to the database. Instead of giving the credentials to developers to hard-code in their application, he has requested security team to create a secret and mount it as environment variable to the application containers.
 
 a. Create a secret name db-creds which has following data: 
        user: dbreadonly
@@ -10,7 +10,7 @@ a. Create a secret name db-creds which has following data:
        
 b. Create a pod from nginx image.
 
-c. Mount the secret to the POD in such a way that the contents of database user is available in form of DB_USER enviornement variable and database password is available in form of DB_PASSWORD enviornement variable inside the container.
+c. Mount the secret to the POD in such a way that the contents of database user is available in form of DB_USER environment variable and database password is available in form of DB_PASSWORD environment variable inside the container.
 
 </details>
 

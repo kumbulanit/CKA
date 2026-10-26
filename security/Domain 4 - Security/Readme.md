@@ -1,6 +1,6 @@
 # Domain - Security
 
-The code mentioned in this document are used in the Certified Kubernetes Administrator 2023 course.
+The code mentioned in this document is used in the Certified Kubernetes Administrator course.
 
 https://www.udemy.com/course/certified-kubernetes-administrator/?referralCode=700DA06BF8A30E27AC7E
 
@@ -15,6 +15,7 @@ https://www.udemy.com/course/certified-kubernetes-administrator/?referralCode=70
 | 4 | [Creating TLS Certificate for Authentication][PlDd] |
 | 8 | [Kubernetes Secrets][PlDe] |
 | 9 | [Mounting Secrets Inside Pods][PlDf] |
+| 10 | [Security Context and Network Policy][PlDg] |
 
 
 
@@ -25,3 +26,4 @@ https://www.udemy.com/course/certified-kubernetes-administrator/?referralCode=70
    [PlDd]: <./certificate-steps.md>
    [PlDe]: <./secret-data.md>
    [PlDf]: <./mounting-secrets.md>
+   [PlDg]: <./security-context-and-network-policy.md>

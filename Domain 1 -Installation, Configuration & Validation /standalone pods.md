@@ -11,16 +11,17 @@ metadata:
   name: command
 spec:
   containers:
-  -  image: count
-     name: busybox
+  -  image: busybox
+     name: count
 ```
 ```sh
 kubectl apply -f commands.yaml
 ```
 ```sh
 kubectl get pods
-kubectl exec -it command -- bash
+kubectl describe pod command
 ```
+busybox's default command (`sh`) exits straight away when it has no terminal, so this pod keeps restarting (`CrashLoopBackOff`) and you cannot `exec` into it. That is why the next examples give the container a command that keeps running.
 
 #### Create POD with Command
 
@@ -33,8 +34,8 @@ metadata:
   name: command2
 spec:
   containers:
-  -  image: count
-     name: busybox
+  -  image: busybox
+     name: count
      command: ["sleep","3600"]
 ```
 ```sh
@@ -56,8 +57,8 @@ metadata:
   name: command3
 spec:
   containers:
-  -  image: count
-     name: busybox
+  -  image: busybox
+     name: count
      command: ["sleep"]
      args: ["3600"]
 ```
@@ -79,8 +80,8 @@ metadata:
   name: command4
 spec:
   containers:
-  -  image: count
-     name: busybox
+  -  image: busybox
+     name: count
      args: ["sleep","3600"]
 ```
 ```sh

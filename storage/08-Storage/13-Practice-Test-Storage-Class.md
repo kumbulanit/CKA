@@ -2,6 +2,52 @@
   
   - Take me to [Practice Test](https://kodekloud.com/topic/practice-test-storage-class-2/)
 
+#### Practice setup (your own cluster)
+
+The test starts with two storage classes and a local PersistentVolume on node01. Create them first:
+
+```
+ssh node01 mkdir -p /opt/vol1
+cat <<EOF | kubectl apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: portworx-io-priority-high
+provisioner: kubernetes.io/portworx-volume
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-pv
+spec:
+  capacity:
+    storage: 500Mi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /opt/vol1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node01
+EOF
+```
+
+Then: (7) create the PVC `local-pvc`; (8–10) see why it stays Pending; (11) create the pod `nginx` that uses it; (12) create the storage class `delayed-volume-sc`.
+
 #### Solution
 
   1. Check the Solution

@@ -15,11 +15,11 @@ Create a deployment named kplabs-service. The deployment should have three repli
 Create a deployment named deployment-manual. Launch 3 replicas of nginx image. Create a service named service-manual. Create an endpoint with the IP address of all the pods of deployment-manual and associate it with service-manual. Verify the endpoints of the service to check if IP addresses have been populated.
 </details>
 
-### Question 3: Load Balanacer Service
+### Question 3: Load Balancer Service
 
 <details><summary>Expand The Question </summary>
 <p>
 
-Create a deployment named kplabs-dmz. There should be 2 replicas of nginx image as part of the deployment. Create a service name service-elb and it should be based on LoadBalancer type. The Load Balancer should list on Port 80. Once launched, verify that the nginx default page load when you open the Load Balancer IP in browser.
+Create a deployment named kplabs-dmz. There should be 2 replicas of nginx image as part of the deployment. Create a service name service-elb and it should be based on LoadBalancer type. The Load Balancer should list on Port 80. Once launched, verify that the nginx default page loads when you open the Load Balancer IP in a browser. (On a kubeadm cluster on your own machines there is no load balancer, so `EXTERNAL-IP` stays `<pending>`; use the service's node port instead.)
 
 </details>

@@ -2,14 +2,14 @@
 ### Step 1: Verify the Label of Node
 ```sh
 kubectl get nodes
-kubectl describe node <node-name>
+kubectl describe node node01
 ```
 
 ### Step 2: Label Worker Node
 ```sh
-kubectl label node <node-1> disk=hdd
-kubectl label node <node-2> disk=ssd
-kubectl label node <node-3> disk=hdd
+kubectl label node controlplane disk=hdd
+kubectl label node node01 disk=ssd
+kubectl label node node02 disk=hdd
 ```
 
 ### Step 3: Create NodeSelector Configuration

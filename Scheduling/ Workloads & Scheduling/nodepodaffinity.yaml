@@ -11,16 +11,17 @@ spec:
     metadata:
       labels:
         app: hello-kubernetes-second
- spec:
-   affinity:
-     podAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app
-            operator: NotIn
-            values:
-            - frontend
-   containers:
-   - name: with-node-anti-affinity
-     image: nginx
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: NotIn
+                values:
+                - frontend
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: with-node-anti-affinity
+        image: nginx

@@ -5,22 +5,26 @@ metadata:
 data:
   fluentd.conf: |
     <source>
-      type tail
-      format none
+      @type tail
       path /var/log/1.log
       pos_file /var/log/1.log.pos
       tag PHP
+      <parse>
+        @type none
+      </parse>
     </source>
     <source>
-      type tail
-      format none
+      @type tail
       path /var/log/2.log
       pos_file /var/log/2.log.pos
       tag JAVA
+      <parse>
+        @type none
+      </parse>
     </source>
     <match **>
-       @type file
-       path /var/log/fluent/access
+      @type file
+      path /var/log/fluent/access
     </match>
 ---
 apiVersion: v1
@@ -47,10 +51,8 @@ spec:
     - name: varlog
       mountPath: /var/log
   - name: count-agent
-    image: k8s.gcr.io/fluentd-gcp:1.30
-    env:
-    - name: FLUENTD_ARGS
-      value: -c /etc/fluentd-config/fluentd.conf
+    image: fluent/fluentd:v1.20-1
+    command: ["fluentd", "-c", "/etc/fluentd-config/fluentd.conf"]
     volumeMounts:
     - name: varlog
       mountPath: /var/log

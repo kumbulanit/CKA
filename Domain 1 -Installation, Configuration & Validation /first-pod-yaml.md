@@ -1,7 +1,7 @@
 
 ###  Documentation Link for Resources Discussed in Video
 
-https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/
+https://kubernetes.io/docs/reference/kubernetes-api/
 
 https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#metadata
 

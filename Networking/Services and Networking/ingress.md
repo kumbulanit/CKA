@@ -21,8 +21,8 @@ kubectl get services
 kubectl run frontend-pod --image=ubuntu --command -- sleep 36000
 kubectl exec -it frontend-pod -- bash
 apt-get update && apt-get -y install curl nano
-curl <SERVER-1-IP>
-curl <SERVER-1-IP>
+curl <SERVICE-1-IP>
+curl <SERVICE-2-IP>
 ```
 
 #### Step 4: Create Ingress Resource
@@ -61,5 +61,5 @@ spec:
 ```sh
 kubectl apply -f ingress.yaml
 kubectl get ingress
-kubectl describe ingress name-virtual-host-ingress created
+kubectl describe ingress name-virtual-host-ingress
 ```

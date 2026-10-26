@@ -92,7 +92,7 @@ HPA automatically scales the number of Pods in a Deployment or StatefulSet based
 **Example: Create an HPA**
 
 ```yaml
-apiVersion: autoscaling/v1
+apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: my-hpa
@@ -103,8 +103,16 @@ spec:
     name: my-deployment
   minReplicas: 2
   maxReplicas: 10
-  targetCPUUtilizationPercentage: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
 ```
+
+The HPA needs the metrics server, and the deployment's containers need CPU requests (`resources.requests.cpu`).
 
 **Apply HPA**
 
@@ -124,8 +132,10 @@ VPA adjusts the resource requests and limits of Pods based on their usage.
 
 **Example: Create a VPA**
 
+The VPA is an add-on: install it first from https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler.
+
 ```yaml
-apiVersion: "v1"
+apiVersion: "autoscaling.k8s.io/v1"
 kind: "VerticalPodAutoscaler"
 metadata:
   name: my-vpa
@@ -194,8 +204,10 @@ Ingress controllers provide HTTP and HTTPS routing and load balancing for servic
 **Example: Install NGINX Ingress Controller**
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
 ```
+
+The ingress-nginx project has been retired (no more fixes). It still works for learning; see *Services and Networking/deploy-ingress-controller.md*. For new setups, look at the Gateway API: https://gateway-api.sigs.k8s.io/
 
 **Example: Create an Ingress Resource**
 
@@ -205,6 +217,7 @@ kind: Ingress
 metadata:
   name: my-ingress
 spec:
+  ingressClassName: nginx
   rules:
   - host: my-app.example.com
     http:
@@ -268,5 +281,3 @@ Kubernetes provides comprehensive support for service discovery, scaling, and lo
 - **Kubernetes Service Discovery**: [https://kubernetes.io/docs/concepts/services-networking/service/](https://kubernetes.io/docs/concepts/services-networking/service/)
 - **Horizontal Pod Autoscaler**: [https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 - **Ingress Controllers**: [https://kubernetes.io/docs/concepts/services-networking/ingress/](https://kubernetes.io/docs/concepts/services-networking/ingress/)
-
-Feel free to include this detailed explanation and examples in your training materials and presentations.

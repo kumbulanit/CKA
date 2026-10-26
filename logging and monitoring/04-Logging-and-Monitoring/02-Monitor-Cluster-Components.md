@@ -4,32 +4,27 @@
 In this section, we will take a look at monitoring kubernetes cluster
 
 #### How do you monitor resource consumption in kubernetes? or more importantly, what would you like to monitor?
-  ![mon](../../images/mon.PNG)
  
 ## Heapster vs Metrics Server
 - Heapster is now deprecated and a slimmed down version was formed known as the **`metrics server`**.
 
-  ![hpms](../../images/hpms.PNG)
   
 ## Metrics Server
 
-  ![ms1](../../images/ms1.PNG)
 
 #### How are the metrics generated for the PODs on these nodes?
 
-  ![ca](../../images/ca.PNG)
   
 ## Metrics Server - Getting Started
 
-  ![msg](../../images/msg.PNG)
   
-- Clone the metric server from github repo
+- Deploy the metrics server from its latest release (the old `kubernetes-incubator/metrics-server` repository and its `deploy/1.8+` folder no longer exist)
   ```
-  $ git clone https://github.com/kubernetes-incubator/metrics-server.git
+  $ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
   ```
-- Deploy the metric server
+- On a kubeadm cluster, let it accept the kubelets' self-signed certificates (see *how to setup metrics server and use for autoscaling.md*)
   ```
-  $ kubectl create -f metric-server/deploy/1.8+/
+  $ kubectl -n kube-system patch deployment metrics-server --type=json -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
   ```
   
 - View the cluster performance
@@ -41,6 +36,5 @@ In this section, we will take a look at monitoring kubernetes cluster
   $ kubectl top pod
   ```
   
-  ![view](../../images/view.PNG)
   
   

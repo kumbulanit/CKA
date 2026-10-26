@@ -8,103 +8,85 @@ Here's a detailed guide on configuring TLS access to the Kubernetes API server:
 
 ### **1. Understanding TLS in Kubernetes**
 
-Kubernetes API server communicates with clients (e.g., `kubectl`, other Kubernetes components) over HTTPS using TLS. By default, the Kubernetes API server is configured with a self-signed certificate, but you can replace this with your own certificate to enhance security and trust.
+The Kubernetes API server communicates with clients (e.g., `kubectl`, the kubelets, the controller manager) only over HTTPS. On a kubeadm cluster, `kubeadm init` creates a cluster **certificate authority (CA)** in `/etc/kubernetes/pki/` and uses it to sign every certificate the cluster needs:
 
-### **2. Generating Certificates**
+| File in `/etc/kubernetes/pki/` | Used for |
+| --- | --- |
+| `ca.crt`, `ca.key` | The cluster CA. Clients trust the API server because its certificate is signed by this CA. |
+| `apiserver.crt`, `apiserver.key` | The API server's serving certificate. |
+| `apiserver-kubelet-client.crt` | The API server's client certificate when it talks to kubelets. |
+| `etcd/ca.crt`, `etcd/server.crt` | etcd's own CA and server certificate. |
+| `front-proxy-ca.crt` | The CA for the aggregation layer (e.g. metrics server). |
 
-To configure TLS access, you'll need a certificate authority (CA) certificate, a server certificate, and a private key. These can be generated using tools like OpenSSL.
+### **2. Inspecting the API Server Certificate**
 
-#### **2.1. Generate a Certificate Authority (CA) Certificate**
-
-**Example Command**:
-
-```sh
-openssl genrsa -out ca.key 2048
-openssl req -x509 -new -nodes -key ca.key -sha256 -days 1024 -out ca.crt -subj "/CN=k8s-ca"
-```
-
-#### **2.2. Generate a Server Certificate**
-
-**Example Command**:
+The certificate's **Subject Alternative Names (SANs)** list every name and IP address clients may use to reach the API server. A client that connects with a name not in the list gets a TLS error.
 
 ```sh
-openssl genrsa -out server.key 2048
-openssl req -new -key server.key -out server.csr -subj "/CN=k8s-api-server"
-openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 1024 -sha256
+sudo openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout -text | grep -A1 "Subject Alternative Name"
+sudo openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout -subject -issuer -dates
 ```
 
-In this example:
-- `server.key` is the private key for the API server.
-- `server.csr` is the certificate signing request.
-- `server.crt` is the signed server certificate.
+The manifest shows which files the API server uses:
 
-### **3. Configuring the API Server**
-
-Update the Kubernetes API server configuration to use the generated certificates. This is typically done by modifying the API server manifest file.
-
-#### **3.1. Locate the API Server Manifest**
-
-For kubeadm-managed clusters, the API server configuration is usually found in a manifest file located at `/etc/kubernetes/manifests/kube-apiserver.yaml`.
-
-#### **3.2. Update the Manifest**
-
-Modify the `kube-apiserver` manifest to include the paths to your certificates and keys:
+```sh
+sudo grep -E "tls-cert-file|tls-private-key-file|client-ca-file" /etc/kubernetes/manifests/kube-apiserver.yaml
+```
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: kube-apiserver
-  namespace: kube-system
-spec:
-  containers:
-    - name: kube-apiserver
-      image: k8s.gcr.io/kube-apiserver:v1.21.0
-      command:
-        - kube-apiserver
-        - --cert-dir=/etc/kubernetes/pki
-        - --tls-cert-file=/etc/kubernetes/pki/server.crt
-        - --tls-private-key-file=/etc/kubernetes/pki/server.key
-        - --client-ca-file=/etc/kubernetes/pki/ca.crt
-      volumeMounts:
-        - name: pki
-          mountPath: /etc/kubernetes/pki
-      ...
-  volumes:
-    - name: pki
-      hostPath:
-        path: /etc/kubernetes/pki
+    - --client-ca-file=/etc/kubernetes/pki/ca.crt
+    - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
+    - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
 ```
 
-Ensure that the certificates are placed in the specified directory (`/etc/kubernetes/pki` in this example).
+### **3. Checking and Renewing Certificates**
 
-#### **3.3. Apply Changes**
-
-For clusters managed by kubeadm, changes to the API server manifest are automatically detected, and the API server will be restarted with the new configuration.
-
-For other clusters, you might need to manually restart the API server or follow the specific instructions for your cluster management tool.
-
-### **4. Verifying TLS Configuration**
-
-#### **4.1. Verify API Server Connection**
-
-Use `curl` or a similar tool to test the API server's TLS connection:
+kubeadm certificates are valid for one year (the CA for ten). Check them:
 
 ```sh
-curl -k https://<api-server-ip>:6443
+sudo kubeadm certs check-expiration
 ```
 
-If everything is correctly configured, you should get a valid response from the API server.
-
-#### **4.2. Check Certificates**
-
-Ensure that the certificates are correctly recognized by checking the API server logs:
+Renew all of them (a `kubeadm upgrade` also renews them):
 
 ```sh
-kubectl logs -n kube-system kube-apiserver-<node-name>
+sudo kubeadm certs renew all
 ```
 
-Look for any errors related to certificate validation or file paths.
+Then restart the control plane static pods so they load the new certificates: move the manifests out of `/etc/kubernetes/manifests/` and back after about 20 seconds, or restart the kubelet. Copy the renewed `/etc/kubernetes/admin.conf` to `~/.kube/config`.
+
+### **4. Adding a Name or IP to the API Server Certificate**
+
+Do not replace `apiserver.crt` with a certificate you made yourself: if it is not signed by the cluster CA or misses a SAN, kubectl, the kubelets and the controllers can no longer connect. To add a name (for example a load balancer's DNS name), let kubeadm regenerate the certificate:
+
+```sh
+kubectl -n kube-system get configmap kubeadm-config -o jsonpath='{.data.ClusterConfiguration}' > kubeadm.yaml
+```
+
+Add the names under `apiServer.certSANs` in `kubeadm.yaml`:
+
+```yaml
+apiServer:
+  certSANs:
+  - controlplane
+  - k8s.example.internal
+  - 192.168.56.100
+```
+
+Move the old certificate away and generate a new one:
+
+```sh
+sudo mv /etc/kubernetes/pki/apiserver.{crt,key} ~/
+sudo kubeadm init phase certs apiserver --config kubeadm.yaml
+```
+
+The kubelet restarts the API server with the new certificate. Verify the SANs again with the `openssl` command from section 2.
+
+**Verify the API server connection** with the cluster CA (no `-k` needed):
+
+```sh
+curl --cacert /etc/kubernetes/pki/ca.crt https://controlplane:6443/version
+```
 
 ### **5. Configuring Client Access**
 
@@ -114,7 +96,7 @@ Clients (such as `kubectl`) need to be configured to trust the CA certificate an
 
 Update the `kubeconfig` file to use the CA certificate and client certificates:
 
-**Example `kubeconfig` Entries**:
+**Example `kubeconfig` Entries** (`kubectl config view --raw` shows yours; kubeadm embeds the files as `certificate-authority-data` and `client-certificate-data`):
 
 ```yaml
 apiVersion: v1
@@ -174,8 +156,9 @@ spec:
 
 ### **7. Conclusion**
 
-Configuring TLS access to the Kubernetes API ensures secure communication between clients and the API server. By generating and applying your own certificates, updating the API server configuration, and configuring client access, you can enhance the security of your Kubernetes cluster.
+Configuring TLS access to the Kubernetes API ensures secure communication between clients and the API server. On a kubeadm cluster, kubeadm manages the CA and certificates: inspect them with `openssl`, renew them with `kubeadm certs renew`, and add names through `certSANs` rather than replacing certificates by hand.
 
 **Additional Resources**:
-- **Kubernetes TLS Documentation**: [https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data-at-rest/](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data-at-rest/)
+- **PKI certificates and requirements**: [https://kubernetes.io/docs/setup/best-practices/certificates/](https://kubernetes.io/docs/setup/best-practices/certificates/)
+- **Certificate management with kubeadm**: [https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/)
 - **Kubernetes API Server Configuration**: [https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/)

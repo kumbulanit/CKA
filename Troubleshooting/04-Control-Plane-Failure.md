@@ -22,11 +22,19 @@
     kubectl get pods -n kube-system
     ```
 
-    ![node](../../images/node.PNG)
 
-  - If the Control Plane components are deployed as services then check the status of all the components
+  - If the API server itself is down, `kubectl` cannot answer. On a kubeadm cluster, look at the containers directly on `controlplane` with `crictl` (containerd's CLI; `docker ps` does not exist on these nodes):
 
-    ![cp](../../images/cp.PNG)
+    ```
+    sudo crictl ps -a | grep -E "kube-apiserver|etcd|scheduler|controller"
+    sudo crictl logs <container-id>
+    sudo ls /var/log/pods/
+    ```
+
+  - Static pod manifests are in `/etc/kubernetes/manifests/` on controlplane. The kubelet restarts a component whenever its manifest changes.
+
+  - If the Control Plane components are deployed as services (not with kubeadm) then check the status of all the components
+
 
   - To check the status of **`kube-apiserver`** 
 
@@ -46,7 +54,6 @@
     service kube-scheduler status
     ```
 
-    ![cp1](../../images/cp1.PNG)
 
   - To check the status of **`kubelet`** 
 
@@ -63,10 +70,9 @@
   - To check the logs of the Control Plane components deployed as Pods:
 
     ```
-    kubectl logs kube-apiserver-master -n kube-system
+    kubectl logs kube-apiserver-controlplane -n kube-system
     ```
 
-    ![logs](../../images/logs.PNG)
 
   - To check the logs of the Control Plane components deployed as SystemD Service
 

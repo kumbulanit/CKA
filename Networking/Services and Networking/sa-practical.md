@@ -26,4 +26,5 @@ spec:
 ```
 ```sh
 kubectl apply -f custom-pod-sa.yaml
-``````
+kubectl get pod custom-pod -o jsonpath='{.spec.serviceAccountName}'
+```

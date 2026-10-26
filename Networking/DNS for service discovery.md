@@ -91,17 +91,15 @@ spec:
 
 **DNS Records**:
 
-For Pods in the headless service, DNS records are in the format:
-
-- **DNS Name**: `pod-ip-address.my-headless-service.default.svc.cluster.local`
-
-**Example Usage**:
-
-A Pod can access another Pod directly using its DNS name:
+For a headless service, the service name resolves to the IP addresses of all its ready Pods (one A record each) instead of one ClusterIP:
 
 ```sh
-curl http://<pod-ip>.my-headless-service.default.svc.cluster.local
+nslookup my-headless-service.default.svc.cluster.local
 ```
+
+Pods that set `hostname` and `subdomain` (as StatefulSet pods do) also get their own record:
+
+- **DNS Name**: `<pod-hostname>.my-headless-service.default.svc.cluster.local`, for example `web-0.my-headless-service.default.svc.cluster.local`
 
 ---
 
@@ -137,7 +135,7 @@ View the CoreDNS ConfigMap:
 kubectl get configmap coredns -n kube-system -o yaml
 ```
 
-**Sample ConfigMap Configuration**:
+**Default ConfigMap on a kubeadm cluster**:
 
 ```yaml
 apiVersion: v1
@@ -149,22 +147,41 @@ data:
   Corefile: |
     .:53 {
         errors
-        cache 30
-        forward . /etc/resolv.conf
-        prometheus :9153
-        health
-        rewrite name expander kube-dns.kube-system.svc.cluster.local kube-dns.kube-system.svc.cluster.local
+        health {
+           lameduck 5s
+        }
         ready
-        k8s_external
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           fallthrough in-addr.arpa ip6.arpa
+           ttl 30
+        }
+        prometheus :9153
+        forward . /etc/resolv.conf {
+           max_concurrent 1000
+        }
+        cache 30
+        loop
+        reload
+        loadbalance
     }
 ```
 
+The `kubernetes` block is what answers queries for services and pods; never remove it.
+
 **Applying Changes**:
 
-After modifying the ConfigMap, apply the changes:
+Edit the ConfigMap in place. CoreDNS's `reload` plugin picks up the change within about two minutes; to apply it at once, restart CoreDNS:
 
 ```sh
-kubectl apply -f corefile-configmap.yaml
+kubectl -n kube-system edit configmap coredns
+kubectl -n kube-system rollout restart deployment coredns
+```
+
+**Testing DNS** from a temporary pod:
+
+```sh
+kubectl run dnstest --image=busybox:1.37 --rm -it --restart=Never -- nslookup kubernetes.default
 ```
 
 ---
@@ -218,5 +235,3 @@ Kubernetes uses DNS to simplify service discovery and communication within the c
 **Additional Resources**:
 - **Kubernetes DNS Overview**: [https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
 - **CoreDNS Documentation**: [https://coredns.io/manual/toc/](https://coredns.io/manual/toc/)
-
-Feel free to include this detailed explanation and examples in your training materials and presentations.

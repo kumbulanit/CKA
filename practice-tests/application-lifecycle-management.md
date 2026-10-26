@@ -23,7 +23,7 @@ Create a deployment named ```kplabs-deployment```. The deployment should be laun
 <details><summary>Expand The Question </summary>
 <p>
 
-Create a deployment named ```kplabs-update```. The deployment should be launched from ```nginx``` image. There should be two  replicas. Verify the status of the deployment. As part of rolling update, update the image to ```nginx2:alpine```. Verify the status of deployment. Perform a rollback to the previous versio. Verify the status of deployment.
+Create a deployment named ```kplabs-update```. The deployment should be launched from ```nginx``` image. There should be two  replicas. Verify the status of the deployment. As part of rolling update, update the image to ```nginx2:alpine```. Verify the status of deployment. Perform a rollback to the previous version. Verify the status of deployment.
 </details>
 
 ### Question 4: Readiness Probe
@@ -48,6 +48,6 @@ Create a deployment named ```kplabs-selector```. The pods should be launched fro
 <details><summary>Expand The Question </summary>
 <p>
   
-Create a job named ```kplabs-job```. The job should run every minute and should print out the current date.
+Create a CronJob named ```kplabs-job```. The job should run every minute and should print out the current date.
 
 </details>

@@ -6,6 +6,8 @@
 
 Create a pod with the name of kplabs-nginx. The pod should be launched from an image of ``` mykplabs/kubernetes:nginx``` . The name of the container should be mycontainer
 
+(`mykplabs/kubernetes:nginx` is built for amd64 only. On an arm64 machine, such as an Apple Silicon Mac, use `nginx` instead.)
+
 </details>
 
 ### Question 2: Multi-Container Pods
