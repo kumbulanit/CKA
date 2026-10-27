@@ -11,19 +11,47 @@ Notes and hands-on practicals for the CKA course. Every practical runs on the sa
 
 Build it with [Kubernetes installation using kubeadm](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20/Kubernetes%20installation%20using%20kubeadm.md). Use the same host names: lessons such as troubleshooting refer to the nodes by name.
 
+## Scripts
+
+**Install the whole cluster** with [scripts/install-cluster.sh](./scripts/install-cluster.sh). It runs the same steps as the installation guide (containerd, kubeadm v1.36, Calico) and also installs `helm` and `etcd-client` on controlplane. Copy the repository to each machine, then run it as root, controlplane first, with your three IP addresses:
+
+```sh
+sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.168.56.12
+```
+
+At the end it prints the command to run on node01 and node02, with the join command included.
+
+**Catch up when a lab runs out of time.** Each day has a script that creates what that day's labs leave in the cluster, as at the end of each lab. Run it on controlplane as root, for one lab or for the whole day:
+
+```sh
+./scripts/catch-up/day1.sh --list        # the labs of the day
+./scripts/catch-up/day1.sh services      # one lab
+./scripts/catch-up/day2.sh               # the whole day
+```
+
+| Day | Topics | Script |
+| --- | --- | --- |
+| 1 | Core concepts; installation, configuration and validation (modules 1–2) | [day1.sh](./scripts/catch-up/day1.sh) |
+| 2 | Workloads and scheduling; services and networking; security (modules 3–5) | [day2.sh](./scripts/catch-up/day2.sh) |
+| 3 | Storage; logging and monitoring; troubleshooting (modules 6–8) | [day3.sh](./scripts/catch-up/day3.sh) |
+
+The scripts can be run again safely. They leave out what changes the machines rather than the cluster (installing, adding node03, the v1.37 upgrade, draining), and the troubleshooting labs, which set themselves up with [00-Practice-Setup.md](./Troubleshooting/00-Practice-Setup.md).
+
 ## Course outline
 
-| # | Topic | Folder |
-| --- | --- | --- |
-| 1 | Core concepts: pods, ReplicaSets, Deployments, Namespaces, Services | [Domain 1 - Core Concepts](./Domain%201%20-%20Core%20Concepts) |
-| 2 | Installation, configuration and validation: kubeadm, adding nodes, upgrades, drain, etcd backup | [Domain 1 -Installation, Configuration & Validation](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20) |
-| 3 | Workloads and scheduling | [Scheduling](./Scheduling) |
-| 4 | Services and networking | [Networking](./Networking) |
-| 5 | Security | [security](./security) |
-| 6 | Storage | [storage](./storage/08-Storage) |
-| 7 | Logging and monitoring | [logging and monitoring](./logging%20and%20monitoring) |
-| 8 | Troubleshooting (set up the broken scenarios with [00-Practice-Setup.md](./Troubleshooting/00-Practice-Setup.md)) | [Troubleshooting](./Troubleshooting) |
-| | Practice questions | [practice-tests](./practice-tests) |
+Each module has a step-by-step guide in [lab-guides](./lab-guides): every command, what it does, the output it printed on the practice cluster, what to check when you see something else, and a diagram of the idea. The [images](./images) folder has the diagrams (made by `images/diagrams.py`).
+
+| # | Topic | Folder | Step-by-step guide |
+| --- | --- | --- | --- |
+| 1 | Core concepts: pods, ReplicaSets, Deployments, Namespaces, Services | [Domain 1 - Core Concepts](./Domain%201%20-%20Core%20Concepts) | [Module 1](./lab-guides/01-core-concepts.md) |
+| 2 | Installation, configuration and validation: kubeadm, adding nodes, upgrades, drain, etcd backup | [Domain 1 -Installation, Configuration & Validation](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20) | [Module 2](./lab-guides/02-installation.md) |
+| 3 | Workloads and scheduling | [Scheduling](./Scheduling) | [Module 3](./lab-guides/03-scheduling.md) |
+| 4 | Services and networking | [Networking](./Networking) | [Module 4](./lab-guides/04-networking.md) |
+| 5 | Security | [security](./security) | [Module 5](./lab-guides/05-security.md) |
+| 6 | Storage | [storage](./storage/08-Storage) | [Module 6](./lab-guides/06-storage.md) |
+| 7 | Logging and monitoring | [logging and monitoring](./logging%20and%20monitoring) | [Module 7](./lab-guides/07-logging-monitoring.md) |
+| 8 | Troubleshooting (set up the broken scenarios with [00-Practice-Setup.md](./Troubleshooting/00-Practice-Setup.md)) | [Troubleshooting](./Troubleshooting) | [Module 8](./lab-guides/08-troubleshooting.md) |
+| | Practice questions | [practice-tests](./practice-tests) | |
 
 ## Conventions
 
