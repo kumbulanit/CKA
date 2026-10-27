@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: command4
+spec:
+  containers:
+  -  image: busybox
+     name: count
+     args: ["sleep","3600"]

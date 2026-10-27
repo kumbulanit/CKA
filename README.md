@@ -63,7 +63,7 @@ sudo ./scripts/one-server.sh delete        # remove them
 | 2 | Workloads and scheduling; services and networking; security (modules 3–5) | [day2.sh](./scripts/catch-up/day2.sh) |
 | 3 | Storage; logging and monitoring; troubleshooting (modules 6–8) | [day3.sh](./scripts/catch-up/day3.sh) |
 
-The scripts can be run again safely. They leave out what changes the machines rather than the cluster (installing, adding node03, the v1.37 upgrade, draining), and the troubleshooting labs, which set themselves up with [00-Practice-Setup.md](./Troubleshooting/00-Practice-Setup.md).
+The scripts can be run again safely. They leave out what changes the machines rather than the cluster (installing, adding node03, the v1.37 upgrade, draining), and the troubleshooting labs, which set themselves up with [00-Practice-Setup.md](./08-troubleshooting/00-Practice-Setup.md).
 
 ## Course outline
 
@@ -73,12 +73,12 @@ Each module has a step-by-step guide in [lab-guides](./lab-guides): every comman
 | --- | --- | --- | --- |
 | 1 | Core concepts: pods, ReplicaSets, Deployments, Namespaces, Services | [01-core-concepts](./01-core-concepts) | [Module 1](./lab-guides/01-core-concepts.md) |
 | 2 | Installation, configuration and validation: kubeadm, adding nodes, upgrades, drain, etcd backup | [02-installation](./02-installation) | [Module 2](./lab-guides/02-installation.md) |
-| 3 | Workloads and scheduling | [Scheduling](./Scheduling) | [Module 3](./lab-guides/03-scheduling.md) |
-| 4 | Services and networking | [Networking](./Networking) | [Module 4](./lab-guides/04-networking.md) |
-| 5 | Security | [security](./security) | [Module 5](./lab-guides/05-security.md) |
-| 6 | Storage | [storage](./storage/08-Storage) | [Module 6](./lab-guides/06-storage.md) |
-| 7 | Logging and monitoring | [logging and monitoring](./logging%20and%20monitoring) | [Module 7](./lab-guides/07-logging-monitoring.md) |
-| 8 | Troubleshooting (set up the broken scenarios with [00-Practice-Setup.md](./Troubleshooting/00-Practice-Setup.md)) | [Troubleshooting](./Troubleshooting) | [Module 8](./lab-guides/08-troubleshooting.md) |
+| 3 | Workloads and scheduling | [03-scheduling](./03-scheduling) | [Module 3](./lab-guides/03-scheduling.md) |
+| 4 | Services and networking | [04-networking](./04-networking) | [Module 4](./lab-guides/04-networking.md) |
+| 5 | Security | [05-security](./05-security) | [Module 5](./lab-guides/05-security.md) |
+| 6 | Storage | [06-storage](./06-storage) | [Module 6](./lab-guides/06-storage.md) |
+| 7 | Logging and monitoring | [07-logging-monitoring](./07-logging-monitoring) | [Module 7](./lab-guides/07-logging-monitoring.md) |
+| 8 | Troubleshooting (set up the broken scenarios with [00-Practice-Setup.md](./08-troubleshooting/00-Practice-Setup.md)) | [08-troubleshooting](./08-troubleshooting) | [Module 8](./lab-guides/08-troubleshooting.md) |
 | | Practice questions | [practice-tests](./practice-tests) | |
 
 ## Conventions
@@ -86,6 +86,7 @@ Each module has a step-by-step guide in [lab-guides](./lab-guides): every comman
 - Commands that start with `$` show the prompt; type them without the `$`.
 - `kubectl` commands run on `controlplane` unless a step says `ssh node01` first.
 - Files such as `newpod.yaml` are created in your current folder; use `vi` or `nano`.
+- Every YAML example is also saved as a file in the same folder as its lesson, and the line under each example names it. Go to that folder and apply it instead of typing it, for example `cd ~/CKA/01-core-concepts`, then `kubectl apply -f newpod.yaml`. Where a lesson already gives the file a name, the file has that name.
 - Images used here run on both amd64 and arm64 unless a lesson says otherwise.
 
 Last reviewed: October 2026 (Kubernetes v1.36/v1.37).

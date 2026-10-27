@@ -37,6 +37,8 @@ spec:
         - containerPort: 80
 ```
 
+This is also the file [`webapp-deployment.yaml`](./webapp-deployment.yaml) in this folder: `kubectl apply -f webapp-deployment.yaml`
+
 **Service YAML**:
 ```yaml
 apiVersion: v1
@@ -52,6 +54,8 @@ spec:
     targetPort: 80
   type: ClusterIP
 ```
+
+This is also the file [`webapp-service.yaml`](./webapp-service.yaml) in this folder: `kubectl apply -f webapp-service.yaml`
 
 **Commands**:
 ```sh
@@ -91,6 +95,8 @@ spec:
         - containerPort: 80
 ```
 
+This is also the file [`webapp-deployment.yaml`](./webapp-deployment.yaml) in this folder: `kubectl apply -f webapp-deployment.yaml`
+
 **Base Service YAML**:
 ```yaml
 apiVersion: v1
@@ -106,6 +112,8 @@ spec:
     targetPort: 80
   type: ClusterIP
 ```
+
+This is also the file [`webapp-service.yaml`](./webapp-service.yaml) in this folder: `kubectl apply -f webapp-service.yaml`
 
 **Kustomization YAML**:
 ```yaml
@@ -246,6 +254,8 @@ spec:
         - containerPort: 80
 ```
 
+This is also the file [`deployments-and-services-webapp.yaml`](./deployments-and-services-webapp.yaml) in this folder: `kubectl apply -f deployments-and-services-webapp.yaml`
+
 **base/service.yaml**:
 ```yaml
 apiVersion: v1
@@ -261,6 +271,8 @@ spec:
     targetPort: 80
   type: ClusterIP
 ```
+
+This is also the file [`deployments-and-services-webapp-2.yaml`](./deployments-and-services-webapp-2.yaml) in this folder: `kubectl apply -f deployments-and-services-webapp-2.yaml`
 
 **overlays/production/kustomization.yaml**:
 ```yaml
@@ -345,6 +357,8 @@ spec:
         - containerPort: 80
 ```
 
+This is also the file [`deployments-and-services-webapp-3.yaml`](./deployments-and-services-webapp-3.yaml) in this folder: `kubectl apply -f deployments-and-services-webapp-3.yaml`
+
 **k8s/service.yaml**:
 ```yaml
 apiVersion: v1
@@ -360,6 +374,8 @@ spec:
     targetPort: 80
   type: ClusterIP
 ```
+
+This is also the file [`deployments-and-services-webapp-2.yaml`](./deployments-and-services-webapp-2.yaml) in this folder: `kubectl apply -f deployments-and-services-webapp-2.yaml`
 
 **Diagram**:
 ![CI/CD Diagram](https://about.gitlab.com/images/press/logo/png/gitlab-logo-gray-stacked-rgb.png)

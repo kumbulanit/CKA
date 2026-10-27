@@ -24,7 +24,7 @@ The steps below use the node names of the lessons. On minikube, `controlplane` i
 
 ### What you will do
 
-Follow [06-Volumes.md](https://github.com/kumbulanit/CKA/blob/main/storage/08-Storage/06-Volumes.md):
+Follow [06-Volumes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/06-Volumes.md):
 
 1. Write and apply **random-number-generator.yaml**: a pod **random-number-generator** (`alpine`)
    that writes a random number to `/opt/number.out`, with `/opt` on a `hostPath` volume at `/data`
@@ -162,9 +162,9 @@ You should see something like:
 
 ### What you will do
 
-Follow [07-Persistent-Volumes.md](https://github.com/kumbulanit/CKA/blob/main/storage/08-Storage/07-Persistent-Volumes.md),
-[08-Persistent-Volume-Claims.md](https://github.com/kumbulanit/CKA/blob/main/storage/08-Storage/08-Persistent-Volume-Claims.md) and
-[09-Using-PVC-in-PODs.md](https://github.com/kumbulanit/CKA/blob/main/storage/08-Storage/09-Using-PVC-in-PODs.md):
+Follow [07-Persistent-Volumes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/07-Persistent-Volumes.md),
+[08-Persistent-Volume-Claims.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/08-Persistent-Volume-Claims.md) and
+[09-Using-PVC-in-PODs.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/09-Using-PVC-in-PODs.md):
 
 1. Write **pv-definition.yaml** (PersistentVolume **pv-vol1**, 1Gi, ReadWriteOnce, hostPath
    `/tmp/data`) and **pvc-definition.yaml** (claim **myclaim**, ReadWriteOnce, 1Gi).
@@ -397,7 +397,7 @@ persistentvolume/pv-vol1   1Gi        RWO            Retain           Bound    d
 
 ### What you will do
 
-Work through [10-Practice-Test-Persistent-Volume-Claims.md](https://github.com/kumbulanit/CKA/blob/main/storage/08-Storage/10-Practice-Test-Persistent-Volume-Claims.md).
+Work through [10-Practice-Test-Persistent-Volume-Claims.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/10-Practice-Test-Persistent-Volume-Claims.md).
 The pod **webapp** writes its log to `/log/app.log` inside the container only.
 
 1. Recreate webapp with a `hostPath` volume `/var/log/webapp` (type Directory) mounted at `/log`.
@@ -747,7 +747,7 @@ pv-log   100Mi      RWX            Retain           Released   default/claim-log
 
 ### What you will do
 
-Follow [12-Storage-Class.md](https://github.com/kumbulanit/CKA/blob/main/storage/08-Storage/12-Storage-Class.md).
+Follow [12-Storage-Class.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/12-Storage-Class.md).
 First delete mypod and myclaim from task 6.2. Then:
 
 1. Install the local-path provisioner (v0.0.37) and list the storage classes.
@@ -972,7 +972,7 @@ persistentvolume/pvc-896d0afd-a0f2-4be1-95db-d414b2b28437   500Mi      RWO      
 
 ### What you will do
 
-Work through [13-Practice-Test-Storage-Class.md](https://github.com/kumbulanit/CKA/blob/main/storage/08-Storage/13-Practice-Test-Storage-Class.md).
+Work through [13-Practice-Test-Storage-Class.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/13-Practice-Test-Storage-Class.md).
 The cluster now has the storage classes **local-storage** and **portworx-io-priority-high**, and a
 PersistentVolume **local-pv** on node01.
 

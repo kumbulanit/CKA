@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp-2
+spec:
+  containers:
+  - name: simple-webapp
+    image: busybox:1.37
+    command: ["sh", "-c", "i=0; while true; do i=$((i+1)); echo \"$(date) INFO USER$((i % 4 + 1)) is viewing page2\"; [ $((i % 5)) -eq 0 ] && echo \"$(date) WARNING USER30 Order failed as the item is OUT OF STOCK.\"; sleep 2; done"]
+  - name: db
+    image: busybox:1.37
+    command: ["sh", "-c", "while true; do echo \"$(date) INFO db ready\"; sleep 5; done"]

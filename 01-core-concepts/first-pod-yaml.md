@@ -17,6 +17,9 @@ spec:
   -  image: nginx
      name: democontainer
 ```
+
+This is also the file [`newpod.yaml`](./newpod.yaml) in this folder: `kubectl apply -f newpod.yaml`
+
 ```sh
 kubectl apply -f newpod.yaml
 ```

@@ -18,6 +18,9 @@ spec:
      ports:
        - containerPort: 8080
 ```
+
+This is also the file [`pod-expose-port.yaml`](./pod-expose-port.yaml) in this folder: `kubectl apply -f pod-expose-port.yaml`
+
 ```sh
 kubectl apply -f pod-expose-port.yaml
 ```

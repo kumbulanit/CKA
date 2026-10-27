@@ -25,8 +25,8 @@ The steps below use the node names of the lessons. On minikube, `controlplane` i
 
 ### What you will do
 
-Follow [02-Monitor-Cluster-Components.md](https://github.com/kumbulanit/CKA/blob/main/logging%20and%20monitoring/04-Logging-and-Monitoring/02-Monitor-Cluster-Components.md)
-and steps 1 and 2 of [how to setup metrics server and use for autoscaling.md](https://github.com/kumbulanit/CKA/blob/main/logging%20and%20monitoring/how%20to%20setup%20metrics%20server%20and%20use%20for%20autoscaling.md):
+Follow [02-Monitor-Cluster-Components.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/02-Monitor-Cluster-Components.md)
+and steps 1 and 2 of [how to setup metrics server and use for autoscaling.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/how%20to%20setup%20metrics%20server%20and%20use%20for%20autoscaling.md):
 
 1. Apply the Metrics Server's latest release manifest.
 2. Patch its deployment with `--kubelet-insecure-tls`, so it accepts the kubelets' self-signed
@@ -154,7 +154,7 @@ local-path-storage   local-path-provisioner-56c4685b7c-r6s2n   2m           8Mi
 
 ### What you will do
 
-Work through [03-Practice-Test-Monitor-Cluster-Components.md](https://github.com/kumbulanit/CKA/blob/main/logging%20and%20monitoring/04-Logging-and-Monitoring/03-Practice-Test-Monitor-Cluster-Components.md).
+Work through [03-Practice-Test-Monitor-Cluster-Components.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/03-Practice-Test-Monitor-Cluster-Components.md).
 The pods **elephant**, **lion** and **rabbit** are running workloads.
 
 1. Download the Metrics Server manifest into **kubernetes-metrics-server/components.yaml** and
@@ -345,7 +345,7 @@ lion
 
 ### What you will do
 
-Follow [04-Managing-Application-Logs.md](https://github.com/kumbulanit/CKA/blob/main/logging%20and%20monitoring/04-Logging-and-Monitoring/04-Managing-Application-Logs.md):
+Follow [04-Managing-Application-Logs.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/04-Managing-Application-Logs.md):
 
 1. Create the pod **event-simulator-pod** from the document (image `kodekloud/event-simulator`, or
    the busybox version it gives for arm64 machines).
@@ -496,7 +496,7 @@ You should see something like:
 
 ### What you will do
 
-Work through [06-Practice-Test-Managing-Application-Logs.md](https://github.com/kumbulanit/CKA/blob/main/logging%20and%20monitoring/04-Logging-and-Monitoring/06-Practice-Test-Managing-Application-Logs.md).
+Work through [06-Practice-Test-Managing-Application-Logs.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/06-Practice-Test-Managing-Application-Logs.md).
 The pods **webapp-1** and **webapp-2** are running.
 
 1. Inspect webapp-1's logs. Which user is locked out? Write it to `/opt/answers/webapp-1-user`.
@@ -627,7 +627,7 @@ USER30
 
 ### What you will do
 
-Follow steps 3 and 4 of [how to setup metrics server and use for autoscaling.md](https://github.com/kumbulanit/CKA/blob/main/logging%20and%20monitoring/how%20to%20setup%20metrics%20server%20and%20use%20for%20autoscaling.md):
+Follow steps 3 and 4 of [how to setup metrics server and use for autoscaling.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/how%20to%20setup%20metrics%20server%20and%20use%20for%20autoscaling.md):
 
 1. Create the deployment **nginx** from `nginx`, give it a CPU request of `50m`, and expose it on
    port 80.
@@ -796,7 +796,7 @@ pod "load-generator" deleted from default namespace
 
 ### What you will do
 
-Follow steps 1, 3 and 5 of [setting up promtheus.md](https://github.com/kumbulanit/CKA/blob/main/logging%20and%20monitoring/setting%20up%20promtheus.md):
+Follow steps 1, 3 and 5 of [setting up promtheus.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/setting%20up%20promtheus.md):
 
 1. Add the `prometheus-community` Helm repository and install the chart
    `prometheus-community/prometheus` as **prometheus**, with the two `--set` options from the

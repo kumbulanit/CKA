@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+    - name: my-container
+      image: nginx
+      volumeMounts:
+        - name: tls-secret
+          mountPath: /etc/tls
+  volumes:
+    - name: tls-secret
+      secret:
+        secretName: my-tls-secret

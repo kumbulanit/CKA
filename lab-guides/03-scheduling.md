@@ -33,7 +33,7 @@ The steps below use the node names of the lessons. On minikube, `controlplane` i
 
 ### What you will do
 
-Follow [labels.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/labels.md):
+Follow [labels.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/labels.md):
 
 1. Create the pods **pod-1**, **pod-2** and **pod-3** from `nginx` and show their labels.
 2. Label them `env=dev`, `env=stage` and `env=prod`, then list the pods with `-l env=dev` and `-l env!=dev`.
@@ -326,7 +326,7 @@ pod "pod-3" deleted from default namespace
 
 ### What you will do
 
-Follow [replicaset.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/replicaset.md):
+Follow [replicaset.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/replicaset.md):
 
 1. Write **replicaset.yaml**: a ReplicaSet **kplabs-replicaset** with **5** replicas, selector
    `tier: frontend`, and a container `php-redis` from `nginx`. Apply it.
@@ -469,8 +469,8 @@ replicaset.apps "kplabs-replicaset" deleted from default namespace
 
 ### What you will do
 
-Follow [deployment.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/deployment.md)
-and [rollback-deployment.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/rollback-deployment.md):
+Follow [deployment.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/deployment.md)
+and [rollback-deployment.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/rollback-deployment.md):
 
 1. Write **deployment.yaml**: a Deployment **kplabs-deployment** with **5** replicas, selector
    `tier: frontend`, and a container `php-redis` from `nginx`. Apply it and list the ReplicaSets.
@@ -771,7 +771,7 @@ REVISION  CHANGE-CAUSE
 
 ### What you will do
 
-Follow [imp-dep-commands.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/imp-dep-commands.md).
+Follow [imp-dep-commands.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/imp-dep-commands.md).
 First delete the deployment from the last task: `kubectl delete -f deployment.yaml`. Then:
 
 1. Create the deployment **kplabs-deployment** from `nginx` with `kubectl create deployment`.
@@ -1062,8 +1062,8 @@ deployment.apps "kplabs-deployment" deleted from default namespace
 
 ### What you will do
 
-Follow [deployment-cli.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/deployment-cli.md)
-and [manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/manifest-cli.md):
+Follow [deployment-cli.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/deployment-cli.md)
+and [manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/manifest-cli.md):
 
 1. Print the manifest of a deployment **my-deployment** from `nginx`, first with 1 replica, then with
    3 replicas, without creating anything (`--dry-run=client -o yaml`).
@@ -1223,7 +1223,7 @@ deployment.apps "my-deployment" deleted from default namespace
 
 ### What you will do
 
-Apply [daemonset.yaml](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/daemonset.yaml):
+Apply [daemonset.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/daemonset.yaml):
 a DaemonSet **kplabs-daemonset** with selector `name: kplabs-all-pods` and a container `kplabs-pods`
 from `nginx`. Save it as **daemonset.yaml**, apply it, and look at which nodes its pods run on
 (`kubectl get pods -o wide`). Leave it running.
@@ -1324,7 +1324,7 @@ kplabs-deployment-7d98d64667-x2dpp   1/1     Terminating   0          26s   10.2
 
 ### What you will do
 
-Follow [nodeSelector.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/nodeSelector.md):
+Follow [nodeSelector.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/nodeSelector.md):
 
 1. Describe node01 to see its labels.
 2. Label the nodes: controlplane `disk=hdd`, node01 `disk=ssd`, node02 `disk=hdd`.
@@ -1508,7 +1508,7 @@ pod "service-pod" deleted from default namespace
 
 ### What you will do
 
-Follow [node-affinity.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/node-affinity.md)
+Follow [node-affinity.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/node-affinity.md)
 (it uses the `disk` labels from the last task):
 
 1. Write **nodeAffinity-required.yaml**: a pod **kplabs-node-affinity** from `nginx` that requires
@@ -1518,7 +1518,7 @@ Follow [node-affinity.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling
    `Pending`. Delete it.
 4. Write **nodeAffinity-preferred.yaml**: a pod **kplabs-node-affinity-preferred** that prefers
    `memory In [high, medium]`. Apply it, see where it runs, and delete it.
-5. Apply [podaffinity-required.yaml](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/podaffinity-required.yaml)
+5. Apply [podaffinity-required.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/podaffinity-required.yaml)
    (pod **kplabs-pod-affinity**), see where it runs, and delete it.
 
 ### Step by step
@@ -1962,7 +1962,7 @@ pod "kplabs-pod-affinity" deleted from default namespace
 
 ### What you will do
 
-Apply [requests-limits.yaml](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/requests-limits.yaml):
+Apply [requests-limits.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/requests-limits.yaml):
 a pod **kplabs-pod** (container `kplabs-container` from `nginx`) that requests `640Mi` of memory and
 `0.5` CPU, with limits of `12800Mi` and `1` CPU. Save it as **requests-limits.yaml**, apply it, and
 describe the node it runs on to see the requests in **Allocated resources**. Leave it running.
@@ -2067,7 +2067,7 @@ Conditions:
 
 ### What you will do
 
-Follow [pod-without-scheduler.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/pod-without-scheduler.md).
+Follow [pod-without-scheduler.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/pod-without-scheduler.md).
 First delete kplabs-pod from the last task: `kubectl delete pod kplabs-pod`. Then:
 
 1. Write **kplabs-pod.yaml**: a pod **kplabs-pod** (container `kplabs-container` from `nginx`) with
@@ -2231,7 +2231,7 @@ static-web-node01        1/1     Running   0          2s    10.244.2.30   node01
 
 ### What you will do
 
-Follow [taints-tolerations.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/taints-tolerations.md):
+Follow [taints-tolerations.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/taints-tolerations.md):
 
 1. Taint node01 with `key=value:NoSchedule` and check its taints.
 2. Create a deployment **nginx** with **4** replicas and see that no new pod lands on node01.
@@ -2437,7 +2437,7 @@ pod "tolerated-pod" deleted from default namespace
 
 ### What you will do
 
-Apply [adapter.yaml](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/adapter.yaml):
+Apply [adapter.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/adapter.yaml):
 a ConfigMap **fluentd-config** and a pod **counter** with two containers that share a volume. `count`
 writes two log files, and the adapter `count-agent` (fluentd) reads them and writes them out in one
 format. Save it as **adapter.yaml**, apply it, and look at the files in `/var/log/fluent` inside
@@ -2590,8 +2590,8 @@ buffer.b65ecc004f07f2edb27f9af1cc6b1f94b.log.meta
 
 ### What you will do
 
-Apply [jobs.yaml](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/jobs.yaml)
-and [cronjob.yaml](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/cronjob.yaml):
+Apply [jobs.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/jobs.yaml)
+and [cronjob.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/cronjob.yaml):
 
 1. Save and apply **jobs.yaml**: a Job **kplabs-job** that runs `echo Hello World` in `busybox`.
    Check that it completes and read its logs.
@@ -2767,13 +2767,13 @@ Hello from the Kubernetes cluster
 
 Apply the three probe examples:
 
-1. [livenessprobe.yaml](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/livenessprobe.yaml):
+1. [livenessprobe.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/livenessprobe.yaml):
    a pod **liveness** from `ubuntu` whose liveness probe runs `service nginx status`. There is no
    nginx in it, so watch the kubelet restart it.
-2. [liveness-http.yaml](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/liveness-http.yaml):
+2. [liveness-http.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/liveness-http.yaml):
    a pod **liveness-exec** from `nginx` whose probe asks for `/kplabs.html` on port 80. That page does
    not exist, so after 60 seconds it gets restarted too.
-3. [readinessprobe.md](https://github.com/kumbulanit/CKA/blob/main/Scheduling/%20Workloads%20%26%20Scheduling/readinessprobe.md):
+3. [readinessprobe.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/readinessprobe.md):
    a pod **readiness** from `ubuntu` that is only Ready once `/tmp/healthy` exists. Create the file
    with `kubectl exec` and check that the pod turns Ready.
 

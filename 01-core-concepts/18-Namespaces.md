@@ -34,6 +34,9 @@ spec:
   - name: nginx-container
     image: nginx
  ```
+
+This is also the file [`pod-definition.yaml`](./pod-definition.yaml) in this folder: `kubectl apply -f pod-definition.yaml`
+
   ```
   $ kubectl create -f pod-definition.yaml
   ```
@@ -57,6 +60,8 @@ spec:
   - name: nginx-container
     image: nginx
  ```
+
+This is also the file [`18-namespaces-myapp-pod.yaml`](./18-namespaces-myapp-pod.yaml) in this folder: `kubectl apply -f 18-namespaces-myapp-pod.yaml`
   
   
 - To create a new namespace, create a namespace definition as shown below and then run **`kubectl create`**
@@ -66,6 +71,8 @@ kind: Namespace
 metadata:
   name: dev
 ```
+
+This is also the file [`namespace-dev.yaml`](./namespace-dev.yaml) in this folder: `kubectl apply -f namespace-dev.yaml`
 
   ```
   $ kubectl create -f namespace-dev.yaml
@@ -100,6 +107,9 @@ spec:
     limits.cpu: "10"
     limits.memory: 10Gi
 ```
+
+This is also the file [`compute-quota.yaml`](./compute-quota.yaml) in this folder: `kubectl apply -f compute-quota.yaml`
+
   ```
   $ kubectl create -f compute-quota.yaml
   ```

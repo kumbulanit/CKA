@@ -10,8 +10,8 @@
 # shellcheck source-path=SCRIPTDIR disable=SC2034
 source "$(dirname "$0")/lib.sh"
 
-sched="$repo/Scheduling/ Workloads & Scheduling"
-sec="$repo/security/Domain 4 - Security"
+sched="$repo/03-scheduling/workloads-and-scheduling"
+sec="$repo/05-security/domain-4-security"
 
 LABS=(
   "labels|Pods pod-1, pod-2 (env=stage), pod-3 (env=prod) and nginx (env=dev) (labels)"

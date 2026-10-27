@@ -14,6 +14,9 @@ spec:
   -  image: busybox
      name: count
 ```
+
+This is also the file [`standalone-pods-commands.yaml`](./standalone-pods-commands.yaml) in this folder: `kubectl apply -f standalone-pods-commands.yaml`
+
 ```sh
 kubectl apply -f commands.yaml
 ```
@@ -38,6 +41,9 @@ spec:
      name: count
      command: ["sleep","3600"]
 ```
+
+This is also the file [`standalone-pods-commands-2.yaml`](./standalone-pods-commands-2.yaml) in this folder: `kubectl apply -f standalone-pods-commands-2.yaml`
+
 ```sh
 kubectl apply -f commands.yaml
 ```
@@ -62,6 +68,9 @@ spec:
      command: ["sleep"]
      args: ["3600"]
 ```
+
+This is also the file [`standalone-pods-commands-3.yaml`](./standalone-pods-commands-3.yaml) in this folder: `kubectl apply -f standalone-pods-commands-3.yaml`
+
 ```sh
 kubectl apply -f commands.yaml
 ```
@@ -84,6 +93,9 @@ spec:
      name: count
      args: ["sleep","3600"]
 ```
+
+This is also the file [`standalone-pods-commands-4.yaml`](./standalone-pods-commands-4.yaml) in this folder: `kubectl apply -f standalone-pods-commands-4.yaml`
+
 ```sh
 kubectl apply -f commands.yaml
 ```

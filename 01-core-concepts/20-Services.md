@@ -39,6 +39,8 @@ In this section we will take a look at **`services`** in kubernetes
          port: 80
          nodePort: 30008
       ```
+
+      This is also the file [`20-services-myapp-service.yaml`](./20-services-myapp-service.yaml) in this folder: `kubectl apply -f 20-services-myapp-service.yaml`
       
       #### To connect the service to the pod
       ```
@@ -56,6 +58,8 @@ In this section we will take a look at **`services`** in kubernetes
          app: myapp
          type: front-end
        ```
+
+      This is also the file [`20-services-service-definition.yaml`](./20-services-service-definition.yaml) in this folder: `kubectl apply -f 20-services-service-definition.yaml`
 
       
       #### To create the service

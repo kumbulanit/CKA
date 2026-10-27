@@ -120,6 +120,8 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
              averageUtilization: 50
      ```
 
+     This is also the file [`cluster-maintanance-my-app-hpa.yaml`](./cluster-maintanance-my-app-hpa.yaml) in this folder: `kubectl apply -f cluster-maintanance-my-app-hpa.yaml`
+
 3. **Manage Storage**:
    - Monitor and clean up unused PersistentVolumeClaims (PVCs) and volumes.
    - Optimize storage configurations and backups.
@@ -171,6 +173,8 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
      verbs: ["get", "list", "watch"]
    ```
 
+   This is also the file [`cluster-maintanance-pod-reader.yaml`](./cluster-maintanance-pod-reader.yaml) in this folder: `kubectl apply -f cluster-maintanance-pod-reader.yaml`
+
 3. **Use Network Policies**:
    - Define network policies to control traffic flow between pods.
 
@@ -190,6 +194,8 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
            matchLabels:
              role: backend
    ```
+
+   This is also the file [`cluster-maintanance-allow-ingress.yaml`](./cluster-maintanance-allow-ingress.yaml) in this folder: `kubectl apply -f cluster-maintanance-allow-ingress.yaml`
 
 4. **Monitor for Vulnerabilities**:
    - Use security scanning tools like Trivy or Clair to scan container images for vulnerabilities.

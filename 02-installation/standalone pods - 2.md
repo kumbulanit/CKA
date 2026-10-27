@@ -24,6 +24,8 @@ spec:
     - containerPort: 80
 ```
 
+This is also the file [`standalone-pod.yaml`](./standalone-pod.yaml) in this folder: `kubectl apply -f standalone-pod.yaml`
+
 **Explanation**:
 - `apiVersion`: The version of the Kubernetes API being used.
 - `kind`: Specifies that this is a Pod resource.
@@ -118,6 +120,8 @@ kubectl delete pod standalone-pod
        image: busybox
        command: ['sh', '-c', 'echo Hello Kubernetes! && sleep 3600']
    ```
+
+   This is also the file [`test-pod.yaml`](./test-pod.yaml) in this folder: `kubectl apply -f test-pod.yaml`
 
 **2. Apply the Pod configuration**:
    ```sh

@@ -32,7 +32,7 @@ The steps below use the node names of the lessons. On minikube, `controlplane` i
 
 ### What you will do
 
-Follow [serviceandendpoints.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/serviceandendpoints.md),
+Follow [serviceandendpoints.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/serviceandendpoints.md),
 steps 1 to 6:
 
 1. Create the pods **backend-pod-1** and **backend-pod-2** from `nginx`, and **frontend-pod** from
@@ -298,7 +298,7 @@ command terminated with exit code 7
 
 ### What you will do
 
-Follow [service-selector.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/service-selector.md):
+Follow [service-selector.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/service-selector.md):
 
 1. Write and apply **demo-deployment.yaml**: a Deployment **nginx-deployment** with 3 replicas of
    `nginx:1.27`, label `app: nginx`, containerPort 80.
@@ -629,7 +629,7 @@ pod "manual-pod" deleted from default namespace
 
 ### What you will do
 
-Follow [nodeport.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/nodeport.md):
+Follow [nodeport.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/nodeport.md):
 
 1. Create a pod **nodeport-pod** from `nginx` with the label `type=publicpod`.
 2. Write and apply **nodeport.yaml**: a Service **kplabs-nodeport** of type NodePort that selects
@@ -801,7 +801,7 @@ service "kplabs-nodeport" deleted from default namespace
 
 ### What you will do
 
-Follow [loadbalancer.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/loadbalancer.md):
+Follow [loadbalancer.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/loadbalancer.md):
 
 1. Create a pod **lb-pod** from `nginx` with the label `type=loadbalanced`.
 2. Write and apply **elb-service.yaml**: a Service **kplabs-loadbalancer** of type LoadBalancer that
@@ -985,7 +985,7 @@ service "kplabs-loadbalancer" deleted from default namespace
 
 ### What you will do
 
-Follow [service-manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/service-manifest-cli.md):
+Follow [service-manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/service-manifest-cli.md):
 
 1. Create a pod **nginx** from `nginx`, and apply **service-deployment.yaml**: a Deployment
    **kplabs-deployment** with 3 replicas, label `tier: frontend`, container `nginx` from `nginx`.
@@ -1309,7 +1309,7 @@ service "nginx-deployment-service" deleted from default namespace
 
 ### What you will do
 
-Follow [named-port.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/named-port.md):
+Follow [named-port.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/named-port.md):
 
 1. Create a pod **nginx** from `nginx` with port 80, expose it as the NodePort Service **first-svc**
    (port 80 → targetPort 80), look at its YAML and curl it on node01.
@@ -1535,7 +1535,7 @@ You should see something like:
 
 ### What you will do
 
-Follow [namespace.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/namespace.md):
+Follow [namespace.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/namespace.md):
 
 1. List the namespaces, and the pods in `kube-system`.
 2. Create the namespace **teama**.
@@ -1658,7 +1658,7 @@ nginx   0/1     ContainerCreating   0          0s
 
 ### What you will do
 
-Follow [install-helm.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/install-helm.md)
+Follow [install-helm.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/install-helm.md)
 on controlplane: add Helm's apt repository with its signing key, install the `helm` package, and
 check it with `helm version`.
 
@@ -1793,7 +1793,7 @@ version.BuildInfo{Version:"v4.3.0", GitCommit:"bec5b06ed841fe5269972d864d5177944
 
 ### What you will do
 
-Follow [first-helm-chart.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/first-helm-chart.md):
+Follow [first-helm-chart.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/first-helm-chart.md):
 
 1. Add the `jenkins` repository (https://charts.jenkins.io), install the chart `jenkins/jenkins` as
    the release **my-jenkins**, list the releases, and uninstall it.
@@ -2050,8 +2050,8 @@ release "my-release" uninstalled
 
 ### What you will do
 
-Follow [ingress.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/ingress.md)
-and [deploy-ingress-controller.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/deploy-ingress-controller.md),
+Follow [ingress.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/ingress.md)
+and [deploy-ingress-controller.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/deploy-ingress-controller.md),
 steps 1 to 6:
 
 1. Create the pods **service-pod-1** and **service-pod-2** from `nginx` and expose them as
@@ -2446,8 +2446,8 @@ This is Website 2
 
 ### What you will do
 
-Follow [service-account.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/service-account.md)
-and [sa-pointers.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/sa-pointers.md):
+Follow [service-account.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/service-account.md)
+and [sa-pointers.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/sa-pointers.md):
 
 1. List the service accounts in all namespaces.
 2. Create a pod **app-pod** from `nginx` and describe it to see its service account.
@@ -2761,7 +2761,7 @@ eyJhbGciOiJSUzI1NiIsImtpZCI6IkJDWWFjS0ROYTcxS2JiaUFhb3pWaHB2QTIwb0VmcmxzdFRQSzBU
 
 ### What you will do
 
-Follow [sa-practical.md](https://github.com/kumbulanit/CKA/blob/main/Networking/Services%20and%20Networking/sa-practical.md):
+Follow [sa-practical.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/services-and-networking/sa-practical.md):
 
 1. Create the service account **custom-sa**.
 2. Save a pod **custom-pod** (`nginx`) to **custom-pod-sa.yaml** with `--dry-run=client -o yaml`, and
@@ -2846,7 +2846,7 @@ custom-sa@@PB-STEP end@@
 
 ### What you will do
 
-Follow [DNS for service discovery.md](https://github.com/kumbulanit/CKA/blob/main/Networking/DNS%20for%20service%20discovery.md),
+Follow [DNS for service discovery.md](https://github.com/kumbulanit/CKA/blob/main/04-networking/DNS%20for%20service%20discovery.md),
 section 4:
 
 1. Look at CoreDNS's configuration: the ConfigMap **coredns** in `kube-system`.

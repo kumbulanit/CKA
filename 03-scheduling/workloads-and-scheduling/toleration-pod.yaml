@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tolerated-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+  tolerations:
+  - key: key
+    operator: Equal
+    value: value
+    effect: NoSchedule
+  nodeSelector:
+    kubernetes.io/hostname: node01

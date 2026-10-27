@@ -26,6 +26,9 @@ spec:
    app: myapp
    type: back-end
 ```
+
+This is also the file [`21-services-clusterip-service-definition.yaml`](./21-services-clusterip-service-definition.yaml) in this folder: `kubectl apply -f 21-services-clusterip-service-definition.yaml`
+
 ```
 $ kubectl create -f service-definition.yaml
 ```

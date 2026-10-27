@@ -16,6 +16,9 @@ spec:
   -  image: busybox
      name: count
 ```
+
+This is also the file [`cmd-args-commands.yaml`](./cmd-args-commands.yaml) in this folder: `kubectl apply -f cmd-args-commands.yaml`
+
 ```sh
 kubectl apply -f commands.yaml
 ```
@@ -40,6 +43,9 @@ spec:
      name: count
      command: ["sleep","3600"]
 ```
+
+This is also the file [`cmd-args-commands-2.yaml`](./cmd-args-commands-2.yaml) in this folder: `kubectl apply -f cmd-args-commands-2.yaml`
+
 ```sh
 kubectl apply -f commands.yaml
 ```
@@ -64,6 +70,9 @@ spec:
      command: ["sleep"]
      args: ["3600"]
 ```
+
+This is also the file [`cmd-args-commands-3.yaml`](./cmd-args-commands-3.yaml) in this folder: `kubectl apply -f cmd-args-commands-3.yaml`
+
 ```sh
 kubectl apply -f commands.yaml
 ```
@@ -86,6 +95,9 @@ spec:
      name: count
      args: ["sleep","3600"]
 ```
+
+This is also the file [`cmd-args-commands-4.yaml`](./cmd-args-commands-4.yaml) in this folder: `kubectl apply -f cmd-args-commands-4.yaml`
+
 ```sh
 kubectl apply -f commands.yaml
 ```

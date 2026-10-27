@@ -5,7 +5,7 @@
 # root on controlplane on a kubeadm cluster), for one lab
 # (./day3.sh pv-pvc) or for the whole day (./day3.sh). ./day3.sh --list shows the labs.
 #
-# The troubleshooting labs set up their own broken scenarios: see Troubleshooting/00-Practice-Setup.md.
+# The troubleshooting labs set up their own broken scenarios: see 08-troubleshooting/00-Practice-Setup.md.
 # shellcheck source-path=SCRIPTDIR disable=SC2034
 source "$(dirname "$0")/lib.sh"
 

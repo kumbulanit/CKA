@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stag-pod
+spec:
+  containers:
+    - name: stag-container
+      image: stag-image
+  nodeSelector:
+    environment: staging

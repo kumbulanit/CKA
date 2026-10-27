@@ -54,7 +54,7 @@ and ports); you may edit, delete or recreate objects as needed:
 | deployment **webapp-mysql** | web app, port 8080, env `DB_Host=mysql-service`, `DB_User=root`, `DB_Password=paswrd` |
 | service **web-service** | NodePort, port 8080, nodePort **30081**, selects `name=webapp-mysql` |
 
-The lecture notes: [02-Application-Failure.md](https://github.com/kumbulanit/CKA/blob/main/Troubleshooting/02-Application-Failure.md).
+The lecture notes: [02-Application-Failure.md](https://github.com/kumbulanit/CKA/blob/main/08-troubleshooting/02-Application-Failure.md).
 
 ### Step by step
 
@@ -448,7 +448,7 @@ pod/mysql condition met
 The cluster is broken. The deployment **app** in the default namespace has a pod that never
 starts. Find out why and fix the cluster, so the pod of **app** runs.
 
-The lecture notes: [04-Control-Plane-Failure.md](https://github.com/kumbulanit/CKA/blob/main/Troubleshooting/04-Control-Plane-Failure.md).
+The lecture notes: [04-Control-Plane-Failure.md](https://github.com/kumbulanit/CKA/blob/main/08-troubleshooting/04-Control-Plane-Failure.md).
 
 ### Step by step
 
@@ -645,7 +645,7 @@ It prints nothing when it works.
 Fix the broken cluster: **node01** is not working. It can take up to a minute before
 `kubectl get nodes` shows it as `NotReady`.
 
-The lecture notes: [07-Worker-Node-Failure.md](https://github.com/kumbulanit/CKA/blob/main/Troubleshooting/07-Worker-Node-Failure.md).
+The lecture notes: [07-Worker-Node-Failure.md](https://github.com/kumbulanit/CKA/blob/main/08-troubleshooting/07-Worker-Node-Failure.md).
 
 ### Step by step
 
@@ -907,7 +907,7 @@ The 2 tier application is deployed in the **triton** namespace (same architectur
 `curl http://node01:30081`). It does not work. Make sure all the cluster's components work, and
 that the app shows its green page.
 
-The repository's notes: [10-Practice-Test-Troubleshoot-Network.md](https://github.com/kumbulanit/CKA/blob/main/Troubleshooting/10-Practice-Test-Troubleshoot-Network.md) (Test 2).
+The repository's notes: [10-Practice-Test-Troubleshoot-Network.md](https://github.com/kumbulanit/CKA/blob/main/08-troubleshooting/10-Practice-Test-Troubleshoot-Network.md) (Test 2).
 
 ### Step by step
 
@@ -1018,7 +1018,7 @@ The 2 tier application in **triton** has been redeployed, and now its pods do no
 Examine the cluster (nodes, then pods in all namespaces), find the problem and fix it, so that
 `curl http://node01:30081` shows the green page again.
 
-The repository's notes: [10-Practice-Test-Troubleshoot-Network.md](https://github.com/kumbulanit/CKA/blob/main/Troubleshooting/10-Practice-Test-Troubleshoot-Network.md) (Test 1).
+The repository's notes: [10-Practice-Test-Troubleshoot-Network.md](https://github.com/kumbulanit/CKA/blob/main/08-troubleshooting/10-Practice-Test-Troubleshoot-Network.md) (Test 1).
 
 ### Step by step
 

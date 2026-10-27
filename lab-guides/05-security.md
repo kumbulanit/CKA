@@ -28,7 +28,7 @@ The steps below use the node names of the lessons. On minikube, `controlplane` i
 
 ### What you will do
 
-Follow [authentication.md](https://github.com/kumbulanit/CKA/blob/main/security/Domain%204%20-%20Security/authentication.md):
+Follow [authentication.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/authentication.md):
 
 1. Create the service account **external**.
 2. Save a pod **external-pod** (`nginx`) to **pod-sa.yaml** with `--dry-run=client -o yaml`, add
@@ -236,7 +236,7 @@ kubectl create token external
 
 ### What you will do
 
-Follow [authorization.md](https://github.com/kumbulanit/CKA/blob/main/security/Domain%204%20-%20Security/authorization.md),
+Follow [authorization.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/authorization.md),
 using a token of the service account **external** (`TOKEN=$(kubectl create token external)`):
 
 1. With curl and the token, list the pods in `default`
@@ -469,7 +469,7 @@ You should see something like:
 
 ### What you will do
 
-Follow [cluster-permissions.md](https://github.com/kumbulanit/CKA/blob/main/security/Domain%204%20-%20Security/cluster-permissions.md),
+Follow [cluster-permissions.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/cluster-permissions.md),
 with the same token:
 
 1. Delete the Role and RoleBinding from the last task (`kubectl delete -f role.yaml`, then
@@ -857,7 +857,7 @@ curl -k https://controlplane:6443/api/v1/namespaces/default/pods --header "Autho
 
 ### What you will do
 
-Follow [certificate-steps.md](https://github.com/kumbulanit/CKA/blob/main/security/Domain%204%20-%20Security/certificate-steps.md)
+Follow [certificate-steps.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/certificate-steps.md)
 from step 1 (kubectl is already set up here). First delete the RoleBinding from the last task:
 `kubectl delete -f clusterrole-to-rolebinding.yaml`. Then:
 
@@ -1176,7 +1176,7 @@ rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
 
 ### What you will do
 
-Follow [secret-data.md](https://github.com/kumbulanit/CKA/blob/main/security/Domain%204%20-%20Security/secret-data.md):
+Follow [secret-data.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/secret-data.md):
 
 1. Create **firstsecret** from the literal `dbpassword=mypassword123`.
 2. Write `dbuser=admin` to **credentials.txt** and create **secondsecret** from that file.
@@ -1328,7 +1328,7 @@ secret/stringdata created
 
 ### What you will do
 
-Follow [mounting-secrets.md](https://github.com/kumbulanit/CKA/blob/main/security/Domain%204%20-%20Security/mounting-secrets.md)
+Follow [mounting-secrets.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/mounting-secrets.md)
 (it uses firstsecret from the last task):
 
 1. Write and apply **secretpod.yaml**: a pod **secretmount** (`nginx`) that mounts firstsecret
@@ -1462,7 +1462,7 @@ kubectl exec secret-env -- printenv SECRET_USERNAME
 
 ### What you will do
 
-Follow sections 2 to 4 of [Configuring TLS access to API.md](https://github.com/kumbulanit/CKA/blob/main/security/Configuring%20TLS%20access%20to%20API.md)
+Follow sections 2 to 4 of [Configuring TLS access to API.md](https://github.com/kumbulanit/CKA/blob/main/05-security/Configuring%20TLS%20access%20to%20API.md)
 on controlplane:
 
 1. Inspect `/etc/kubernetes/pki/apiserver.crt` with `openssl x509` (its SANs, subject, issuer and
@@ -1661,7 +1661,7 @@ You should see something like:
 
 ### What you will do
 
-Follow the first part of [security-context-and-network-policy.md](https://github.com/kumbulanit/CKA/blob/main/security/Domain%204%20-%20Security/security-context-and-network-policy.md):
+Follow the first part of [security-context-and-network-policy.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/security-context-and-network-policy.md):
 
 1. Apply **privileged.yaml**: the pods **privileged** (`securityContext.privileged: true`) and
    **non-privileged**. Compare `ls /dev | wc -l` and `grep CapEff /proc/1/status` in both.
@@ -1844,7 +1844,7 @@ CapEff:    00000000a80425fb
 
 ### What you will do
 
-Follow the second part of [security-context-and-network-policy.md](https://github.com/kumbulanit/CKA/blob/main/security/Domain%204%20-%20Security/security-context-and-network-policy.md):
+Follow the second part of [security-context-and-network-policy.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/security-context-and-network-policy.md):
 
 1. Create a pod **pod01** from `nginx` and check from a temporary busybox pod that it answers
    (`wget -T 3 -qO- <POD01-IP>`).
