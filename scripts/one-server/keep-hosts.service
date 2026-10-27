@@ -1,0 +1,11 @@
+[Unit]
+Description=Keep /etc/hosts across reboots (Docker rewrites it when the container restarts)
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/bin/cp /etc/hosts /var/lib/cka-hosts
+
+[Install]
+WantedBy=multi-user.target

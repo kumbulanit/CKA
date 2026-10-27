@@ -9,11 +9,25 @@ Notes and hands-on practicals for the CKA course. Every practical runs on the sa
 - Kubernetes **v1.36**, installed with kubeadm, containerd and Calico (the maintenance lesson upgrades it to v1.37)
 - You work as root on `controlplane` (`sudo -i`) and log in to the workers with `ssh node01`
 
-Build it with [Kubernetes installation using kubeadm](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20/Kubernetes%20installation%20using%20kubeadm.md). Use the same host names: lessons such as troubleshooting refer to the nodes by name.
+Use the same host names: lessons such as troubleshooting refer to the nodes by name.
+
+### Everything on one Ubuntu server
+
+You only need **one Ubuntu server** (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk, Ubuntu 22.04 or 24.04). [scripts/one-server.sh](./scripts/one-server.sh) runs the three machines on it as containers. Each one is a full Ubuntu 24.04 machine with systemd and SSH, so every command in the lessons works unchanged, including the kubeadm installation, `ssh node01` and draining nodes.
+
+```sh
+git clone https://github.com/kumbulanit/CKA.git && cd CKA
+sudo ./scripts/one-server.sh install     # the three machines with Kubernetes installed (5 to 10 minutes)
+sudo ./scripts/one-server.sh shell       # you are now root@controlplane; the repository is in /root/CKA
+```
+
+- To do the installation lesson yourself, use `sudo ./scripts/one-server.sh create` instead: it starts the three machines with nothing installed. Their IP addresses are `172.30.56.10`, `.11` and `.12` (`sudo ./scripts/one-server.sh status` shows them).
+- `sudo ./scripts/one-server.sh shell node01` opens node01. Type `exit` to go back to the server.
+- The machines start again when the server restarts. `sudo ./scripts/one-server.sh delete` removes them, so you can start again from scratch.
 
 ## Scripts
 
-**Install the whole cluster** with [scripts/install-cluster.sh](./scripts/install-cluster.sh). It runs the same steps as the installation guide (containerd, kubeadm v1.36, Calico) and also installs `helm` and `etcd-client` on controlplane. Copy the repository to each machine, then run it as root, controlplane first, with your three IP addresses:
+**Install the whole cluster** with [scripts/install-cluster.sh](./scripts/install-cluster.sh). It runs the same steps as the [installation guide](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20/Kubernetes%20installation%20using%20kubeadm.md) (containerd, kubeadm v1.36, Calico) and also installs `helm` and `etcd-client` on controlplane. `one-server.sh install` runs it for you. On separate machines, run it as root on each one, controlplane first, with your three IP addresses:
 
 ```sh
 sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.168.56.12
@@ -21,7 +35,7 @@ sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.1
 
 At the end it prints the command to run on node01 and node02, with the join command included.
 
-**Catch up when a lab runs out of time.** Each day has a script that creates what that day's labs leave in the cluster, as at the end of each lab. Run it on controlplane as root, for one lab or for the whole day:
+**Catch up when a lab runs out of time.** Each day has a script that creates what that day's labs leave in the cluster, as at the end of each lab. Run it on controlplane as root (`sudo ./scripts/one-server.sh shell`, then `cd /root/CKA`), for one lab or for the whole day:
 
 ```sh
 ./scripts/catch-up/day1.sh --list        # the labs of the day

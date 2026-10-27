@@ -1,0 +1,9 @@
+[Unit]
+Description=Let kube-proxy run inside a container (see /usr/local/bin/cka-kube-proxy-fix)
+
+[Service]
+ExecStart=/usr/local/bin/cka-kube-proxy-fix
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

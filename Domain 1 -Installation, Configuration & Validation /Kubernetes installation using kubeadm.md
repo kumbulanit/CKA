@@ -8,7 +8,7 @@ This guide builds the cluster that every practical in this repository uses: one 
 
 ### Prerequisites
 
-1. **Servers**: 3 machines (VMs are fine): `controlplane`, `node01`, `node02`.
+1. **Servers**: 3 machines (VMs are fine): `controlplane`, `node01`, `node02`. With only one Ubuntu server, run `sudo ./scripts/one-server.sh create` from this repository: it starts the three machines on it (IP addresses `172.30.56.10`, `.11`, `.12`), and `sudo ./scripts/one-server.sh shell node01` opens each one.
 2. **Operating System**: Ubuntu 24.04 LTS (amd64 or arm64).
 3. **Hardware**: at least 2 CPUs and 2 GB RAM on `controlplane`, 1 CPU and 1 GB RAM on each worker.
 4. **Network**: full network connectivity between all machines, and internet access.

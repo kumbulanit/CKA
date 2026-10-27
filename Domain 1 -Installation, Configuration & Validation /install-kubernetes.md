@@ -1,6 +1,6 @@
 # Installing and Configuring Kubernetes for Ubuntu (Minikube)
 
-Minikube runs a small Kubernetes cluster on one machine, which is handy for trying things out. For the CKA practicals use the kubeadm cluster in [Kubernetes installation using kubeadm](./Kubernetes%20installation%20using%20kubeadm.md); the exam uses kubeadm clusters.
+Minikube runs a small Kubernetes cluster on one machine, which is handy for trying things out. For the CKA practicals use the kubeadm cluster in [Kubernetes installation using kubeadm](./Kubernetes%20installation%20using%20kubeadm.md); the exam uses kubeadm clusters. On a single Ubuntu server, `sudo ./scripts/one-server.sh install` builds that kubeadm cluster (controlplane, node01, node02) for you; see the README.
 
 ## 1. Prerequisites
 
