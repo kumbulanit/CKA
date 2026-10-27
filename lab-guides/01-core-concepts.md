@@ -13,6 +13,18 @@ Each lab below is a practical from this repository, step by step: the command, w
 - [Lab 1.9: ClusterIP service](#lab-19-clusterip-service)
 - [Lab 1.10: Namespaces and a resource quota](#lab-110-namespaces-and-a-resource-quota)
 
+## Before you start
+
+You need the three machines of the course, `controlplane`, `node01` and `node02`. On one Ubuntu server (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk), [scripts/one-server.sh](../scripts/one-server.sh) runs them as containers, each a full Ubuntu 24.04 machine:
+
+```bash
+git clone https://github.com/kumbulanit/CKA.git && cd CKA
+sudo ./scripts/one-server.sh install   # the three machines with Kubernetes v1.36 installed (5 to 10 minutes)
+sudo ./scripts/one-server.sh shell     # you are now root@controlplane; the repository is in /root/CKA
+```
+
+If you did the installation module on these machines, you already have this cluster. `sudo ./scripts/one-server.sh shell node01` opens node01, and `sudo ./scripts/one-server.sh delete` removes the machines so you can start again. In Patchbay, starting the lab gives you the same machines.
+
 ## Lab 1.1: Your first pod
 
 ![A kubeadm cluster: what runs where, and who talks to whom](../images/cluster.svg)
@@ -1349,6 +1361,24 @@ Follow [18-Namespaces.md](https://github.com/kumbulanit/CKA/blob/main/Domain%201
 kubectl get pods --namespace=kube-system
 ```
 
+You should see something like:
+
+```text
+NAME                                   READY   STATUS    RESTARTS   AGE
+coredns-589f44dc88-5bw5s               1/1     Running   0          19s
+coredns-589f44dc88-njwz7               1/1     Running   0          19s
+etcd-controlplane                      1/1     Running   0          26s
+kindnet-p9xp9                          1/1     Running   0          3s
+kindnet-ppx74                          1/1     Running   0          2s
+kindnet-wn7qq                          1/1     Running   0          5s
+kube-apiserver-controlplane            1/1     Running   0          26s
+kube-controller-manager-controlplane   1/1     Running   0          26s
+kube-proxy-4p65c                       1/1     Running   0          18s
+kube-proxy-62x5f                       1/1     Running   0          18s
+kube-proxy-q4h55                       1/1     Running   0          19s
+kube-scheduler-controlplane            1/1     Running   0          26s
+```
+
 **Step 2.** Writes the file `namespace-dev.yaml`.
 
 ```bash
@@ -1360,10 +1390,18 @@ metadata:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 3.** Creates the objects in `namespace-dev.yaml`.
 
 ```bash
 kubectl create -f namespace-dev.yaml
+```
+
+You should see something like:
+
+```text
+namespace/dev created
 ```
 
 **Step 4.** Writes the file `pod-definition.yaml`.
@@ -1385,10 +1423,18 @@ spec:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 5.** Creates the objects in `pod-definition.yaml`.
 
 ```bash
 kubectl create -f pod-definition.yaml
+```
+
+You should see something like:
+
+```text
+pod/myapp-pod created
 ```
 
 **Step 6.** Makes `dev` the default namespace of the current context.
@@ -1397,10 +1443,36 @@ kubectl create -f pod-definition.yaml
 kubectl config set-context $(kubectl config current-context) --namespace=dev
 ```
 
+You should see something like:
+
+```text
+Context "kubernetes-admin@kubernetes" modified.
+```
+
 **Step 7.** Lists the pods in every namespace.
 
 ```bash
 kubectl get pods --all-namespaces
+```
+
+You should see something like:
+
+```text
+NAMESPACE            NAME                                      READY   STATUS              RESTARTS   AGE
+dev                  myapp-pod                                 0/1     ContainerCreating   0          0s
+kube-system          coredns-589f44dc88-5bw5s                  1/1     Running             0          19s
+kube-system          coredns-589f44dc88-njwz7                  1/1     Running             0          19s
+kube-system          etcd-controlplane                         1/1     Running             0          26s
+kube-system          kindnet-p9xp9                             1/1     Running             0          3s
+kube-system          kindnet-ppx74                             1/1     Running             0          2s
+kube-system          kindnet-wn7qq                             1/1     Running             0          5s
+kube-system          kube-apiserver-controlplane               1/1     Running             0          26s
+kube-system          kube-controller-manager-controlplane      1/1     Running             0          26s
+kube-system          kube-proxy-4p65c                          1/1     Running             0          18s
+kube-system          kube-proxy-62x5f                          1/1     Running             0          18s
+kube-system          kube-proxy-q4h55                          1/1     Running             0          19s
+kube-system          kube-scheduler-controlplane               1/1     Running             0          26s
+local-path-storage   local-path-provisioner-56c4685b7c-pch9t   1/1     Running             0          19s
 ```
 
 **Step 8.** Writes the file `compute-quota.yaml`.
@@ -1422,16 +1494,30 @@ spec:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 9.** Creates the objects in `compute-quota.yaml`.
 
 ```bash
 kubectl create -f compute-quota.yaml
 ```
 
+You should see something like:
+
+```text
+resourcequota/compute-quota created
+```
+
 **Step 10.** Waits until the pod `myapp-pod` is Ready in the namespace `dev`. Wait until it runs.
 
 ```bash
 kubectl wait -n dev --for=condition=Ready pod/myapp-pod --timeout=120s
+```
+
+You should see something like:
+
+```text
+pod/myapp-pod condition met
 ```
 
 ### If you see something else

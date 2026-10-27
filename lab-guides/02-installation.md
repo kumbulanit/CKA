@@ -14,6 +14,18 @@ Each lab below is a practical from this repository, step by step: the command, w
 - [Lab 2.10: Upgrade the workers](#lab-210-upgrade-the-workers)
 - [Lab 2.11: Back up etcd](#lab-211-back-up-etcd)
 
+## Before you start
+
+You need the three machines of the course, `controlplane`, `node01` and `node02`. On one Ubuntu server (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk), [scripts/one-server.sh](../scripts/one-server.sh) runs them as containers, each a full Ubuntu 24.04 machine:
+
+```bash
+git clone https://github.com/kumbulanit/CKA.git && cd CKA
+sudo ./scripts/one-server.sh create    # three bare machines: you install Kubernetes in these labs
+sudo ./scripts/one-server.sh shell     # you are now root@controlplane; the repository is in /root/CKA
+```
+
+Their IP addresses are `172.30.56.10` (controlplane), `.11` (node01) and `.12` (node02); `sudo ./scripts/one-server.sh status` shows them. The outputs below were recorded in the Patchbay lab, where the addresses differ: use yours. `sudo ./scripts/one-server.sh shell node01` opens node01, and `sudo ./scripts/one-server.sh delete` removes the machines so you can start again. In Patchbay, starting the lab gives you the same machines.
+
 ## Lab 2.1: Prepare the machines
 
 ### What you will do
@@ -38,17 +50,23 @@ with `ssh node01` and `ssh node02` (and `exit` to come back).
 CP_IP=$(getent hosts controlplane | awk '{print $1}')
 ```
 
+It prints nothing when it works.
+
 **Step 2.** Saves `$NODE01_IP`: looks up an address.
 
 ```bash
 NODE01_IP=$(getent hosts node01 | awk '{print $1}')
 ```
 
+It prints nothing when it works.
+
 **Step 3.** Saves `$NODE02_IP`: looks up an address.
 
 ```bash
 NODE02_IP=$(getent hosts node02 | awk '{print $1}')
 ```
+
+It prints nothing when it works.
 
 **Step 4.** Repeats the command for each of `controlplane`, `node01`, `node02`. The same steps on each machine.
 
@@ -79,6 +97,30 @@ EOF
 sudo sysctl --system
 STEP1
 done
+```
+
+You should see something like:
+
+```text
+172.30.77.10 controlplane
+172.30.77.11 node01
+172.30.77.12 node02
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Hit:1 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Get:2 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease [126 kB]
+Get:3 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease [126 kB]
+Get:4 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease [126 kB]
+Get:5 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 Packages [2216 kB]
+Get:6 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 Packages [1790 kB]
+Get:7 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 Packages [1476 kB]
+Get:8 http://ports.ubuntu.com/ubuntu-ports noble-security/universe arm64 Packages [1638 kB]
+Fetched 7500 kB in 7s (1020 kB/s)
+Reading package lists...
+Building dependency tree...
+Reading state information...
+… (342 more lines)
 ```
 
 ### If you see something else
@@ -120,6 +162,30 @@ sudo systemctl restart containerd
 sudo systemctl enable containerd
 STEP2
 done
+```
+
+You should see something like:
+
+```text
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  runc
+The following NEW packages will be installed:
+  containerd runc
+0 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+Need to get 33.7 MB of archives.
+After this operation, 134 MB of additional disk space will be used.
+Get:1 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 runc arm64 1.3.4-0ubuntu1~24.04.1 [8578 kB]
+Get:2 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 containerd arm64 2.2.1-0ubuntu1~24.04.4 [25.2 MB]
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+… (84 more lines)
 ```
 
 ### If you see something else
@@ -164,6 +230,30 @@ STEP3
 done
 ```
 
+You should see something like:
+
+```text
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Hit:1 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Hit:2 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease
+Hit:3 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease
+Hit:5 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease
+Get:4 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.36/deb  InRelease [1227 B]
+Get:6 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.36/deb  Packages [9460 B]
+Fetched 10.7 kB in 2s (4641 B/s)
+Reading package lists...
+Building dependency tree...
+Reading state information...
+All packages are up to date.
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+… (162 more lines)
+```
+
 ### If you see something else
 
 - The check says: _kubeadm v1.36 is not installed on every machine._
@@ -201,11 +291,37 @@ Follow **Step 4** of the installation guide on **controlplane**:
 sudo kubeadm init --pod-network-cidr=192.168.0.0/16
 ```
 
+You should see something like:
+
+```text
+I1027 15:59:45.212728    1505 version.go:260] remote version is much newer: v1.37.1; falling back to: stable-1.36
+[init] Using Kubernetes version: v1.36.5
+[preflight] Running pre-flight checks
+    [WARNING SystemVerification]: missing optional cgroups: hugetlb
+[preflight] Pulling images required for setting up a Kubernetes cluster
+[preflight] This might take a minute or two, depending on the speed of your internet connection
+[preflight] You can also perform this action beforehand using 'kubeadm config images pull'
+[certs] Using certificateDir folder "/etc/kubernetes/pki"
+[certs] Generating "ca" certificate and key
+[certs] Generating "apiserver" certificate and key
+[certs] apiserver serving cert is signed for DNS names [controlplane kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 172.30.201.10]
+[certs] Generating "apiserver-kubelet-client" certificate and key
+[certs] Generating "front-proxy-ca" certificate and key
+[certs] Generating "front-proxy-client" certificate and key
+[certs] Generating "etcd/ca" certificate and key
+[certs] Generating "etcd/server" certificate and key
+[certs] etcd/server serving cert is signed for DNS names [controlplane localhost] and IPs [172.30.201.10 127.0.0.1 ::1]
+[certs] Generating "etcd/peer" certificate and key
+… (67 more lines)
+```
+
 **Step 2.** Creates the folder `$HOME/.kube`.
 
 ```bash
 mkdir -p $HOME/.kube
 ```
+
+It prints nothing when it works.
 
 **Step 3.** Copies `/etc/kubernetes/admin.conf` to `$HOME/.kube/config`.
 
@@ -213,16 +329,27 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 ```
 
+It prints nothing when it works.
+
 **Step 4.** Makes you the owner of the file, so kubectl can read it without sudo.
 
 ```bash
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
+It prints nothing when it works.
+
 **Step 5.** Lists the nodes.
 
 ```bash
 kubectl get nodes
+```
+
+You should see something like:
+
+```text
+NAME           STATUS     ROLES           AGE   VERSION
+controlplane   NotReady   control-plane   1s    v1.36.5
 ```
 
 ### If you see something else
@@ -257,10 +384,43 @@ and watch the pods in `kube-system` until Calico and CoreDNS are `Running` and c
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml
 ```
 
+You should see something like:
+
+```text
+poddisruptionbudget.policy/calico-kube-controllers created
+serviceaccount/calico-kube-controllers created
+serviceaccount/calico-node created
+serviceaccount/calico-cni-plugin created
+configmap/calico-config created
+customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/bgpfilters.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/caliconodestatuses.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
+… (20 more lines)
+```
+
 **Step 2.** Waits until the rollout of the DaemonSet `calico-node` has finished. Instead of watching with -w.
 
 ```bash
 kubectl -n kube-system rollout status ds/calico-node --timeout=300s
+```
+
+You should see something like:
+
+```text
+Waiting for daemon set spec update to be observed...
+Waiting for daemon set "calico-node" rollout to finish: 0 out of 1 new pods have been updated...
+Waiting for daemon set "calico-node" rollout to finish: 0 of 1 updated pods are available...
+daemon set "calico-node" successfully rolled out
 ```
 
 **Step 3.** Waits until the rollout of the Deployment `coredns` has finished.
@@ -269,16 +429,46 @@ kubectl -n kube-system rollout status ds/calico-node --timeout=300s
 kubectl -n kube-system rollout status deployment/coredns --timeout=120s
 ```
 
+You should see something like:
+
+```text
+Waiting for deployment "coredns" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "coredns" rollout to finish: 1 of 2 updated replicas are available...
+deployment "coredns" successfully rolled out
+```
+
 **Step 4.** Lists the pods in the namespace `kube-system`.
 
 ```bash
 kubectl get pods -n kube-system
 ```
 
+You should see something like:
+
+```text
+NAME                                       READY   STATUS              RESTARTS   AGE
+calico-kube-controllers-6ffffbccff-l496v   0/1     ContainerCreating   0          2m3s
+calico-node-cg9t4                          1/1     Running             0          2m3s
+coredns-589f44dc88-ktfk2                   1/1     Running             0          2m3s
+coredns-589f44dc88-qhxkh                   1/1     Running             0          2m3s
+etcd-controlplane                          1/1     Running             0          2m7s
+kube-apiserver-controlplane                1/1     Running             0          2m7s
+kube-controller-manager-controlplane       1/1     Running             0          2m7s
+kube-proxy-gnk2z                           1/1     Running             0          2m2s
+kube-scheduler-controlplane                1/1     Running             0          2m7s
+```
+
 **Step 5.** Lists the nodes.
 
 ```bash
 kubectl get nodes
+```
+
+You should see something like:
+
+```text
+NAME           STATUS   ROLES           AGE    VERSION
+controlplane   Ready    control-plane   2m8s   v1.36.5
 ```
 
 ### If you see something else
@@ -315,10 +505,18 @@ Follow **Steps 6 and 7** of the installation guide:
 JOIN=$(kubeadm token create --print-join-command)
 ```
 
+It prints nothing when it works.
+
 **Step 2.** Prints a value.
 
 ```bash
 echo "$JOIN"
+```
+
+You should see something like:
+
+```text
+kubeadm join 172.30.201.10:6443 --token v9udpx.x6dh6x6nsealjqvo --discovery-token-ca-cert-hash sha256:8aeaa19bb92f5d831f2b9a4c32547bec7d7a4aa2fc7310ef930f3a2823f8f82b
 ```
 
 **Step 3.** On `node01`: joins this machine to the cluster with the join command saved above.
@@ -327,10 +525,58 @@ echo "$JOIN"
 ssh node01 "sudo $JOIN"
 ```
 
+You should see something like:
+
+```text
+[preflight] Running pre-flight checks
+    [WARNING SystemVerification]: missing optional cgroups: hugetlb
+[preflight] Reading configuration from the "kubeadm-config" ConfigMap in namespace "kube-system"...
+[preflight] Use 'kubeadm init phase upload-config kubeadm --config your-config-file' to re-upload it.
+W1027 16:05:35.940621    1648 utils.go:69] The recommended value for "bindAddress" in "KubeProxyConfiguration" is: ::; the provided value is: 0.0.0.0
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/instance-config.yaml"
+[patches] Applied patch of type "application/strategic-merge-patch+json" to target "kubeletconfiguration"
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Starting the kubelet
+[kubelet-check] Waiting for a healthy kubelet at http://127.0.0.1:10248/healthz. This can take up to 4m0s
+[kubelet-check] The kubelet is healthy after 504.923267ms
+[kubelet-start] Waiting for the kubelet to perform the TLS Bootstrap
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.
+* The Kubelet was informed of the new secure connection details.
+
+Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
+```
+
 **Step 4.** On `node02`: joins this machine to the cluster with the join command saved above.
 
 ```bash
 ssh node02 "sudo $JOIN"
+```
+
+You should see something like:
+
+```text
+[preflight] Running pre-flight checks
+    [WARNING SystemVerification]: missing optional cgroups: hugetlb
+[preflight] Reading configuration from the "kubeadm-config" ConfigMap in namespace "kube-system"...
+[preflight] Use 'kubeadm init phase upload-config kubeadm --config your-config-file' to re-upload it.
+W1027 16:05:38.402481    1616 utils.go:69] The recommended value for "bindAddress" in "KubeProxyConfiguration" is: ::; the provided value is: 0.0.0.0
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/instance-config.yaml"
+[patches] Applied patch of type "application/strategic-merge-patch+json" to target "kubeletconfiguration"
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Starting the kubelet
+[kubelet-check] Waiting for a healthy kubelet at http://127.0.0.1:10248/healthz. This can take up to 4m0s
+[kubelet-check] The kubelet is healthy after 503.933242ms
+[kubelet-start] Waiting for the kubelet to perform the TLS Bootstrap
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.
+* The Kubelet was informed of the new secure connection details.
+
+Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
 ```
 
 **Step 5.** Waits until the nodes `node01`, `node02` are Ready.
@@ -339,16 +585,51 @@ ssh node02 "sudo $JOIN"
 kubectl wait --for=condition=Ready node/node01 node/node02 --timeout=180s
 ```
 
+You should see something like:
+
+```text
+node/node01 condition met
+node/node02 condition met
+```
+
 **Step 6.** Lists the nodes.
 
 ```bash
 kubectl get nodes
 ```
 
+You should see something like:
+
+```text
+NAME           STATUS   ROLES           AGE     VERSION
+controlplane   Ready    control-plane   4m29s   v1.36.5
+node01         Ready    <none>          2m18s   v1.36.5
+node02         Ready    <none>          2m15s   v1.36.5
+```
+
 **Step 7.** Lists the pods in every namespace.
 
 ```bash
 kubectl get pods --all-namespaces
+```
+
+You should see something like:
+
+```text
+NAMESPACE     NAME                                       READY   STATUS     RESTARTS   AGE
+kube-system   calico-kube-controllers-6ffffbccff-l496v   1/1     Running    0          4m25s
+kube-system   calico-node-4rx7q                          0/1     Init:3/4   0          2m18s
+kube-system   calico-node-cg9t4                          1/1     Running    0          4m25s
+kube-system   calico-node-zdl5n                          0/1     Init:2/4   0          2m15s
+kube-system   coredns-589f44dc88-ktfk2                   1/1     Running    0          4m25s
+kube-system   coredns-589f44dc88-qhxkh                   1/1     Running    0          4m25s
+kube-system   etcd-controlplane                          1/1     Running    0          4m29s
+kube-system   kube-apiserver-controlplane                1/1     Running    0          4m29s
+kube-system   kube-controller-manager-controlplane       1/1     Running    0          4m29s
+kube-system   kube-proxy-2fj2r                           1/1     Running    0          2m15s
+kube-system   kube-proxy-gnk2z                           1/1     Running    0          4m24s
+kube-system   kube-proxy-qclz4                           1/1     Running    0          2m18s
+kube-system   kube-scheduler-controlplane                1/1     Running    0          4m29s
 ```
 
 ### If you see something else

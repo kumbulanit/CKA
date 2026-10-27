@@ -17,6 +17,18 @@ Each lab below is a practical from this repository, step by step: the command, w
 - [Lab 8.13: Services stopped working](#lab-813-services-stopped-working)
 - [Lab 8.14: Pods cannot start](#lab-814-pods-cannot-start)
 
+## Before you start
+
+You need the three machines of the course, `controlplane`, `node01` and `node02`. On one Ubuntu server (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk), [scripts/one-server.sh](../scripts/one-server.sh) runs them as containers, each a full Ubuntu 24.04 machine:
+
+```bash
+git clone https://github.com/kumbulanit/CKA.git && cd CKA
+sudo ./scripts/one-server.sh install   # the three machines with Kubernetes v1.36 installed (5 to 10 minutes)
+sudo ./scripts/one-server.sh shell     # you are now root@controlplane; the repository is in /root/CKA
+```
+
+If you did the installation module on these machines, you already have this cluster. `sudo ./scripts/one-server.sh shell node01` opens node01, and `sudo ./scripts/one-server.sh delete` removes the machines so you can start again. In Patchbay, starting the lab gives you the same machines.
+
 ## Lab 8.1: App failure: alpha
 
 ![The two-tier app of the troubleshooting labs, and where each scenario breaks it](../images/two-tier-app.svg)
@@ -52,11 +64,21 @@ The lecture notes: [02-Application-Failure.md](https://github.com/kumbulanit/CKA
 kubectl get service -n alpha
 ```
 
+You should see something like:
+
+```text
+NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+mysql         ClusterIP   10.96.76.149    <none>        3306/TCP         1s
+web-service   NodePort    10.96.181.161   <none>        8080:30081/TCP   0s
+```
+
 **Step 2.** Shows the Service `mysql` in the namespace `alpha` as YAML, as the API server stores it.
 
 ```bash
 kubectl get service -n alpha mysql -o yaml > service.yaml
 ```
+
+It prints nothing when it works.
 
 **Step 3.** Edits `service.yaml`: `name: mysql` becomes `name: mysql-service`. In vi: change metadata.name to mysql-service.
 
@@ -64,16 +86,30 @@ kubectl get service -n alpha mysql -o yaml > service.yaml
 sed -i 's/^  name: mysql$/  name: mysql-service/' service.yaml
 ```
 
+It prints nothing when it works.
+
 **Step 4.** Deletes the Service `mysql` in the namespace `alpha`.
 
 ```bash
 kubectl delete svc mysql -n alpha
 ```
 
+You should see something like:
+
+```text
+service "mysql" deleted from alpha namespace
+```
+
 **Step 5.** Creates the objects in `service.yaml`.
 
 ```bash
 kubectl create -f service.yaml
+```
+
+You should see something like:
+
+```text
+service/mysql-service created
 ```
 
 ### If you see something else
@@ -104,6 +140,13 @@ The same 2 tier application is deployed in the **beta** namespace (same architec
 
 ```bash
 kubectl get po -n beta mysql -o jsonpath='{.spec.containers[*].ports[*].containerPort}'
+```
+
+You should see something like:
+
+```text
+3306@@PB-STEP 1@@
+service/mysql-service edited
 ```
 
 **Step 2.** Edits the Service `mysql-service`, `beta` with a scripted editor: `targetPort: 8080` becomes `targetPort: 3306`. Kubectl edit service mysql-service -n beta   -> change targetPort: 8080 to targetPort: 3306.
@@ -139,10 +182,24 @@ The same 2 tier application is deployed in the **gamma** namespace (same archite
 kubectl get pods -n gamma --show-labels
 ```
 
+You should see something like:
+
+```text
+NAME                            READY   STATUS              RESTARTS   AGE   LABELS
+mysql                           0/1     ContainerCreating   0          0s    name=mysql
+webapp-mysql-59699d9cb7-cpvkt   0/1     ContainerCreating   0          0s    name=webapp-mysql,pod-template-hash=59699d9cb7
+```
+
 **Step 2.** Edits the Service `mysql-service`, `gamma` with a scripted editor: `name: sql00001` becomes `name: mysql`. Kubectl edit service mysql-service -n gamma   -> change the selector name: sql00001 to name: mysql.
 
 ```bash
 KUBE_EDITOR="sed -i 's/name: sql00001/name: mysql/'" kubectl edit service mysql-service -n gamma
+```
+
+You should see something like:
+
+```text
+service/mysql-service edited
 ```
 
 ### If you see something else
@@ -172,10 +229,25 @@ The same 2 tier application is deployed in the **delta** namespace (same archite
 KUBE_EDITOR="sed -i 's/value: sql-user/value: root/'" kubectl edit deployment webapp-mysql -n delta
 ```
 
+You should see something like:
+
+```text
+deployment.apps/webapp-mysql edited
+```
+
 **Step 2.** Waits until the rollout of the Deployment `webapp-mysql` has finished.
 
 ```bash
 kubectl rollout status deployment webapp-mysql -n delta
+```
+
+You should see something like:
+
+```text
+Waiting for deployment "webapp-mysql" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "webapp-mysql" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "webapp-mysql" rollout to finish: 1 old replicas are pending termination...
+deployment "webapp-mysql" successfully rolled out
 ```
 
 ### If you see something else
@@ -205,11 +277,19 @@ The same 2 tier application is deployed in the **epsilon** namespace (same archi
 KUBE_EDITOR="sed -i 's/value: sql-user/value: root/'" kubectl edit deployment webapp-mysql -n epsilon
 ```
 
+You should see something like:
+
+```text
+deployment.apps/webapp-mysql edited
+```
+
 **Step 2.** Shows the pod `mysql` in the namespace `epsilon` as YAML, as the API server stores it.
 
 ```bash
 kubectl get pod -n epsilon mysql -o yaml > mysql.yaml
 ```
+
+It prints nothing when it works.
 
 **Step 3.** Edits `mysql.yaml`: `value: passwooooorrddd` becomes `value: paswrd`. In vi: fix MYSQL_ROOT_PASSWORD.
 
@@ -217,16 +297,31 @@ kubectl get pod -n epsilon mysql -o yaml > mysql.yaml
 sed -i 's/value: passwooooorrddd/value: paswrd/' mysql.yaml
 ```
 
+It prints nothing when it works.
+
 **Step 4.** Replaces the objects in `mysql.yaml` with the edited file (deletes and creates it again).
 
 ```bash
 kubectl replace --force -f mysql.yaml
 ```
 
+You should see something like:
+
+```text
+pod "mysql" deleted from epsilon namespace
+pod/mysql replaced
+```
+
 **Step 5.** Waits until the pod `mysql` is Ready in the namespace `epsilon`.
 
 ```bash
 kubectl wait -n epsilon --for=condition=Ready pod/mysql --timeout=180s
+```
+
+You should see something like:
+
+```text
+pod/mysql condition met
 ```
 
 ### If you see something else

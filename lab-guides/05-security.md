@@ -12,6 +12,18 @@ Each lab below is a practical from this repository, step by step: the command, w
 - [Lab 5.8: Security contexts](#lab-58-security-contexts)
 - [Lab 5.9: A network policy](#lab-59-a-network-policy)
 
+## Before you start
+
+You need the three machines of the course, `controlplane`, `node01` and `node02`. On one Ubuntu server (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk), [scripts/one-server.sh](../scripts/one-server.sh) runs them as containers, each a full Ubuntu 24.04 machine:
+
+```bash
+git clone https://github.com/kumbulanit/CKA.git && cd CKA
+sudo ./scripts/one-server.sh install   # the three machines with Kubernetes v1.36 installed (5 to 10 minutes)
+sudo ./scripts/one-server.sh shell     # you are now root@controlplane; the repository is in /root/CKA
+```
+
+If you did the installation module on these machines, you already have this cluster. `sudo ./scripts/one-server.sh shell node01` opens node01, and `sudo ./scripts/one-server.sh delete` removes the machines so you can start again. In Patchbay, starting the lab gives you the same machines.
+
 ## Lab 5.1: Authenticating with tokens
 
 ### What you will do
@@ -34,11 +46,19 @@ Follow [authentication.md](https://github.com/kumbulanit/CKA/blob/main/security/
 kubectl create serviceaccount external
 ```
 
+You should see something like:
+
+```text
+serviceaccount/external created
+```
+
 **Step 2.** Writes the manifest of the pod `external-pod` without creating it.
 
 ```bash
 kubectl run external-pod --image=nginx --dry-run=client -o yaml > pod-sa.yaml
 ```
+
+It prints nothing when it works.
 
 **Step 3.** Edits `pod-sa.yaml`: `spec:` becomes `spec:   serviceAccountName: external`. The edit: add the service account.
 
@@ -46,10 +66,18 @@ kubectl run external-pod --image=nginx --dry-run=client -o yaml > pod-sa.yaml
 sed -i 's/^spec:$/spec:\n  serviceAccountName: external/' pod-sa.yaml
 ```
 
+It prints nothing when it works.
+
 **Step 4.** Creates the objects in `pod-sa.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f pod-sa.yaml
+```
+
+You should see something like:
+
+```text
+pod/external-pod created
 ```
 
 **Step 5.** Waits until the pod `external-pod` is Ready.
@@ -58,10 +86,23 @@ kubectl apply -f pod-sa.yaml
 kubectl wait --for=condition=Ready pod/external-pod --timeout=120s
 ```
 
+You should see something like:
+
+```text
+pod/external-pod condition met
+```
+
 **Step 6.** Lists the pods.
 
 ```bash
 kubectl get pods
+```
+
+You should see something like:
+
+```text
+NAME           READY   STATUS    RESTARTS   AGE
+external-pod   1/1     Running   0          12s
 ```
 
 **Step 7.** Shows the pod `external-pod` as YAML, as the API server stores it.
@@ -70,16 +111,48 @@ kubectl get pods
 kubectl get pod external-pod -o yaml
 ```
 
+You should see something like:
+
+```text
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"labels":{"run":"external-pod"},"name":"external-pod","namespace":"default"},"spec":{"containers":[{"image":"nginx","name":"external-pod","resources":{}}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","serviceAccountName":"external"},"status":{}}
+  creationTimestamp: "2026-10-27T12:58:27Z"
+  generation: 1
+  labels:
+    run: external-pod
+  name: external-pod
+  namespace: default
+  resourceVersion: "688"
+  uid: e5cf2af7-8dbb-4c20-9c5c-75b18976d665
+spec:
+  containers:
+  - image: nginx
+    imagePullPolicy: Always
+… (109 more lines)
+```
+
 **Step 8.** Saves `$TOKEN`: runs a command inside the pod `external-pod`.
 
 ```bash
 TOKEN=$(kubectl exec external-pod -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 ```
 
+It prints nothing when it works.
+
 **Step 9.** Prints a value.
 
 ```bash
 echo $TOKEN
+```
+
+You should see something like:
+
+```text
+eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5oWmgxbWNoWjR3bDlHa29SSkZ6LWg4elg5M2JDZkdlV1djcWdfWXhJd2sifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxODI0NjQxOTA3LCJpYXQiOjE3OTMxMDU5MDcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiNTFhMGZmYzQtOWI2NS00ZDViLTlhYWYtMzAxNDQ4Yjg4NWFkIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwibm9kZSI6eyJuYW1lIjoibm9kZTAyIiwidWlkIjoiYjI5ZTYyYjgtYjgwOS00MWU3LWJhNTUtZTBlZmMzZjBiNjRmIn0sInBvZCI6eyJuYW1lIjoiZXh0ZXJuYWwtcG9kIiwidWlkIjoiZTVjZjJhZjctOGRiYi00YzIwLTljNWMtNzViMTg5NzZkNjY1In0sInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJleHRlcm5hbCIsInVpZCI6IjliMmY0MDBjLTY0MDAtNDBlMC05YTI2LWVkOThkNjkxMGMwNyJ9LCJ3YXJuYWZ0ZXIiOjE3OTMxMDk1MTR9LCJuYmYiOjE3OTMxMDU5MDcsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmV4dGVybmFsIn0.bO31laHERHNZDOFT838aOfJlW6BQlZtS2jGX0DvE6agbumC8JcGc87fwGScQq_klghs2nHfx_dyssEg-enArC4kMP7_Q1d_Xwcch819GLsKfhgRWj1OPi37iyk43-rAG6-4LQrCrliWl74s4XpB4yWeFAu5JPluLrvHMmv2GApdBSXtUN7O7Ulig7zvcalDKtE41zDo8Wl-Hbi-9kOQJKq_e_SaKm8HWytQAztLyx84I7XK0ss-vmz-08uoJt_7aakLoqQSsRr_74N51PRO0bjNkGzsPDwXLs6wNvlr8xi6-U9onrjfQ_B3lBAIQFbfQjBtO_COzPEZKlcAzm7RwNg
 ```
 
 **Step 10.** Shows the addresses of the API server and CoreDNS.
@@ -88,10 +161,43 @@ echo $TOKEN
 kubectl cluster-info
 ```
 
+You should see something like:
+
+```text
+Kubernetes control plane is running at https://controlplane:6443
+CoreDNS is running at https://controlplane:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+```
+
 **Step 11.** Sends an HTTP request to `https://controlplane:6443` and prints the answer.
 
 ```bash
 curl -k https://controlplane:6443
+```
+
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   217  100   217    0     0  33617      0 --:--:-- --:--:-- --:--:-- 36166
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "forbidden: User \"system:anonymous\" cannot get path \"/\"",
+  "reason": "Forbidden",
+  "details": {},
+  "code": 403
+}@@PB-STEP 11@@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{
+  "kind": "APIResourceList",
+  "groupVersion": "v1",
+… (570 more lines)
 ```
 
 **Step 12.** Sends an HTTP request to `https://controlplane:6443/api/v1` and prints the answer.
@@ -148,10 +254,36 @@ using a token of the service account **external** (`TOKEN=$(kubectl create token
 TOKEN=$(kubectl create token external)
 ```
 
+It prints nothing when it works.
+
 **Step 2.** Sends an HTTP request to `https://controlplane:6443/api/v1` and prints the answer.
 
 ```bash
 curl -k https://controlplane:6443/api/v1 --header "Authorization: Bearer $TOKEN"
+```
+
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{
+  "kind": "APIResourceList",
+  "groupVersion": "v1",
+  "resources": [
+    {
+      "name": "bindings",
+      "singularName": "binding",
+      "namespaced": true,
+      "kind": "Binding",
+      "verbs": [
+        "create"
+      ]
+    },
+    {
+      "name": "componentstatuses",
+      "singularName": "componentstatus",
+… (571 more lines)
 ```
 
 **Step 3.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/default/pods` and prints the answer.
@@ -182,16 +314,41 @@ EOF
 kubectl apply -f role.yaml
 ```
 
+You should see something like:
+
+```text
+role.rbac.authorization.k8s.io/pod-reader created
+```
+
 **Step 6.** Lists the Roles.
 
 ```bash
 kubectl get role
 ```
 
+You should see something like:
+
+```text
+NAME         CREATED AT
+pod-reader   2026-10-27T12:58:40Z
+```
+
 **Step 7.** Shows the details of the Role `pod-reader`, with its recent events at the bottom.
 
 ```bash
 kubectl describe role pod-reader
+```
+
+You should see something like:
+
+```text
+Name:         pod-reader
+Labels:       <none>
+Annotations:  <none>
+PolicyRule:
+  Resources  Non-Resource URLs  Resource Names  Verbs
+  ---------  -----------------  --------------  -----
+  pods       []                 []              [list]
 ```
 
 **Step 8.** Writes the file `rolebinding.yaml`.
@@ -214,10 +371,18 @@ roleRef:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 9.** Creates the objects in `rolebinding.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f rolebinding.yaml
+```
+
+You should see something like:
+
+```text
+rolebinding.rbac.authorization.k8s.io/read-pods created
 ```
 
 **Step 10.** Lists the RoleBindings.
@@ -226,16 +391,62 @@ kubectl apply -f rolebinding.yaml
 kubectl get rolebinding
 ```
 
+You should see something like:
+
+```text
+NAME        ROLE              AGE
+read-pods   Role/pod-reader   0s
+```
+
 **Step 11.** Shows the details of the RoleBinding `read-pods`, with its recent events at the bottom.
 
 ```bash
 kubectl describe rolebinding read-pods
 ```
 
+You should see something like:
+
+```text
+Name:         read-pods
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  Role
+  Name:  pod-reader
+Subjects:
+  Kind  Name                                    Namespace
+  ----  ----                                    ---------
+  User  system:serviceaccount:default:external
+```
+
 **Step 12.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/default/pods` and prints the answer.
 
 ```bash
 curl -k https://controlplane:6443/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
+```
+
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{
+  "kind": "PodList",
+  "apiVersion": "v1",
+  "metadata": {
+    "resourceVersion": "697"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "external-pod",
+        "namespace": "default",
+        "uid": "e5cf2af7-8dbb-4c20-9c5c-75b18976d665",
+        "resourceVersion": "688",
+        "generation": 1,
+        "creationTimestamp": "2026-10-27T12:58:27Z",
+        "labels": {
+… (291 more lines)
 ```
 
 ### If you see something else
@@ -279,16 +490,30 @@ with the same token:
 TOKEN=$(kubectl create token external)
 ```
 
+It prints nothing when it works.
+
 **Step 2.** Deletes the objects in `role.yaml`.
 
 ```bash
 kubectl delete -f role.yaml
 ```
 
+You should see something like:
+
+```text
+role.rbac.authorization.k8s.io "pod-reader" deleted from default namespace
+```
+
 **Step 3.** Deletes the objects in `rolebinding.yaml`.
 
 ```bash
 kubectl delete -f rolebinding.yaml
+```
+
+You should see something like:
+
+```text
+rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
 ```
 
 **Step 4.** Writes the file `cluster-role.yaml`.
@@ -306,10 +531,18 @@ rules:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 5.** Creates the objects in `cluster-role.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f cluster-role.yaml
+```
+
+You should see something like:
+
+```text
+clusterrole.rbac.authorization.k8s.io/pod-reader created
 ```
 
 **Step 6.** Lists the ClusterRoles.
@@ -318,10 +551,46 @@ kubectl apply -f cluster-role.yaml
 kubectl get clusterrole
 ```
 
+You should see something like:
+
+```text
+NAME                                                                   CREATED AT
+admin                                                                  2026-10-27T12:57:49Z
+cluster-admin                                                          2026-10-27T12:57:49Z
+edit                                                                   2026-10-27T12:57:49Z
+kindnet                                                                2026-10-27T12:57:52Z
+kubeadm:get-nodes                                                      2026-10-27T12:57:49Z
+local-path-provisioner-role                                            2026-10-27T12:57:52Z
+pod-reader                                                             2026-10-27T12:58:40Z
+system:aggregate-to-admin                                              2026-10-27T12:57:49Z
+system:aggregate-to-edit                                               2026-10-27T12:57:49Z
+system:aggregate-to-view                                               2026-10-27T12:57:49Z
+system:auth-delegator                                                  2026-10-27T12:57:49Z
+system:basic-user                                                      2026-10-27T12:57:49Z
+system:certificates.k8s.io:certificatesigningrequests:nodeclient       2026-10-27T12:57:49Z
+system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   2026-10-27T12:57:49Z
+system:certificates.k8s.io:kube-apiserver-client-approver              2026-10-27T12:57:49Z
+system:certificates.k8s.io:kube-apiserver-client-kubelet-approver      2026-10-27T12:57:49Z
+system:certificates.k8s.io:kubelet-serving-approver                    2026-10-27T12:57:49Z
+… (57 more lines)
+```
+
 **Step 7.** Shows the details of the ClusterRole `pod-reader`, with its recent events at the bottom.
 
 ```bash
 kubectl describe clusterrole pod-reader
+```
+
+You should see something like:
+
+```text
+Name:         pod-reader
+Labels:       <none>
+Annotations:  <none>
+PolicyRule:
+  Resources  Non-Resource URLs  Resource Names  Verbs
+  ---------  -----------------  --------------  -----
+  pods       []                 []              [list]
 ```
 
 **Step 8.** Writes the file `cluster-role-binding.yaml`.
@@ -343,10 +612,18 @@ roleRef:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 9.** Creates the objects in `cluster-role-binding.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f cluster-role-binding.yaml
+```
+
+You should see something like:
+
+```text
+clusterrolebinding.rbac.authorization.k8s.io/list-pods-global created
 ```
 
 **Step 10.** Lists the ClusterRoleBindings.
@@ -355,16 +632,79 @@ kubectl apply -f cluster-role-binding.yaml
 kubectl get clusterrolebinding
 ```
 
+You should see something like:
+
+```text
+NAME                                                            ROLE                                                                               AGE
+cluster-admin                                                   ClusterRole/cluster-admin                                                          52s
+kindnet                                                         ClusterRole/kindnet                                                                49s
+kubeadm:apiserver-kubelet-client                                ClusterRole/system:kubelet-api-admin                                               51s
+kubeadm:cluster-admins                                          ClusterRole/cluster-admin                                                          53s
+kubeadm:get-nodes                                               ClusterRole/kubeadm:get-nodes                                                      52s
+kubeadm:kubelet-bootstrap                                       ClusterRole/system:node-bootstrapper                                               52s
+kubeadm:node-autoapprove-bootstrap                              ClusterRole/system:certificates.k8s.io:certificatesigningrequests:nodeclient       51s
+kubeadm:node-autoapprove-certificate-rotation                   ClusterRole/system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   51s
+kubeadm:node-proxier                                            ClusterRole/system:node-proxier                                                    51s
+list-pods-global                                                ClusterRole/pod-reader                                                             0s
+local-path-provisioner-bind                                     ClusterRole/local-path-provisioner-role                                            49s
+system:basic-user                                               ClusterRole/system:basic-user                                                      52s
+system:controller:attachdetach-controller                       ClusterRole/system:controller:attachdetach-controller                              52s
+system:controller:certificate-controller                        ClusterRole/system:controller:certificate-controller                               52s
+system:controller:clusterrole-aggregation-controller            ClusterRole/system:controller:clusterrole-aggregation-controller                   52s
+system:controller:cronjob-controller                            ClusterRole/system:controller:cronjob-controller                                   52s
+system:controller:daemon-set-controller                         ClusterRole/system:controller:daemon-set-controller                                52s
+… (44 more lines)
+```
+
 **Step 11.** Shows the details of the ClusterRoleBinding `list-pods-global`, with its recent events at the bottom.
 
 ```bash
 kubectl describe clusterrolebinding list-pods-global
 ```
 
+You should see something like:
+
+```text
+Name:         list-pods-global
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  ClusterRole
+  Name:  pod-reader
+Subjects:
+  Kind  Name                                    Namespace
+  ----  ----                                    ---------
+  User  system:serviceaccount:default:external
+```
+
 **Step 12.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/default/pods` and prints the answer.
 
 ```bash
 curl -k https://controlplane:6443/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
+```
+
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{
+  "kind": "PodList",
+  "apiVersion": "v1",
+  "metadata": {
+    "resourceVersion": "701"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "external-pod",
+        "namespace": "default",
+        "uid": "e5cf2af7-8dbb-4c20-9c5c-75b18976d665",
+        "resourceVersion": "688",
+        "generation": 1,
+        "creationTimestamp": "2026-10-27T12:58:27Z",
+        "labels": {
+… (292 more lines)
 ```
 
 **Step 13.** Creates the namespace `external`.
@@ -379,6 +719,23 @@ kubectl create namespace external
 curl -k https://controlplane:6443/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
 ```
 
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   110  100   110    0     0   1800      0 --:--:-- --:--:-- --:--:--  1803
+{
+  "kind": "PodList",
+  "apiVersion": "v1",
+  "metadata": {
+    "resourceVersion": "705"
+  },
+  "items": []
+}@@PB-STEP 14@@
+clusterrolebinding.rbac.authorization.k8s.io "list-pods-global" deleted
+```
+
 **Step 15.** Deletes the ClusterRoleBinding `list-pods-global`.
 
 ```bash
@@ -389,6 +746,26 @@ kubectl delete clusterrolebinding list-pods-global
 
 ```bash
 curl -k https://controlplane:6443/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
+```
+
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   325  100   325    0     0  79287      0 --:--:-- --:--:-- --:--:-- 81250
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "pods is forbidden: User \"system:serviceaccount:default:external\" cannot list resource \"pods\" in API group \"\" in the namespace \"external\"",
+  "reason": "Forbidden",
+  "details": {
+    "kind": "pods"
+  },
+  "code": 403
+}@@PB-STEP 16@@
 ```
 
 **Step 17.** Writes the file `clusterrole-to-rolebinding.yaml`.
@@ -417,10 +794,40 @@ EOF
 kubectl apply -f clusterrole-to-rolebinding.yaml
 ```
 
+You should see something like:
+
+```text
+rolebinding.rbac.authorization.k8s.io/read-pods created
+```
+
 **Step 19.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/external/pods` and prints the answer.
 
 ```bash
 curl -k https://controlplane:6443/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
+```
+
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   325  100   325    0     0  82195      0 --:--:-- --:--:-- --:--:--  105k
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "pods is forbidden: User \"system:serviceaccount:default:external\" cannot list resource \"pods\" in API group \"\" in the namespace \"external\"",
+  "reason": "Forbidden",
+  "details": {
+    "kind": "pods"
+  },
+  "code": 403
+}@@PB-STEP 19@@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{
+… (306 more lines)
 ```
 
 **Step 20.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/default/pods` and prints the answer.
@@ -472,11 +879,19 @@ from step 1 (kubectl is already set up here). First delete the RoleBinding from 
 kubectl delete -f clusterrole-to-rolebinding.yaml
 ```
 
+You should see something like:
+
+```text
+rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
+```
+
 **Step 2.** Creates the folder `/root/certificates`.
 
 ```bash
 mkdir /root/certificates
 ```
+
+It prints nothing when it works.
 
 **Step 3.** Goes into `/root/certificates`.
 
@@ -484,11 +899,15 @@ mkdir /root/certificates
 cd /root/certificates
 ```
 
+It prints nothing when it works.
+
 **Step 4.** Creates a private key `zeal.key`.
 
 ```bash
 openssl genrsa -out zeal.key 2048
 ```
+
+It prints nothing when it works.
 
 **Step 5.** Creates a certificate signing request `zeal.csr` for `zeal`.
 
@@ -496,10 +915,18 @@ openssl genrsa -out zeal.key 2048
 openssl req -new -key zeal.key -out zeal.csr -subj "/CN=zeal/O=kplabs"
 ```
 
+It prints nothing when it works.
+
 **Step 6.** Shows the file `zeal.csr`.
 
 ```bash
 cat zeal.csr | base64 | tr -d '\n'
+```
+
+You should see something like:
+
+```text
+LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1pUQ0NBVTBDQVFBd0lERU5NQXNHQTFVRUF3d0VlbVZoYkRFUE1BMEdBMVVFQ2d3R2EzQnNZV0p6TUlJQgpJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBbmF6ZzJQL1pPUVZTT3VIZDJGbEdoRTBECjAyOVZUNDlldmUzZTVGTHlRTXNvYVZrcUZabkJ0aExHajc5QlpjRVdjOXVWekN1NTR3SExNQWJjVzRDQkZtZ20KdnNSUWJNcVV0WGVRVllqVlVWZC9VUWVzc2hScnltUnRaWTc2bmlRVWJ1VnBkNmVHU0J6RGFlNWpHTXlKWkROaAo5RWh4b2lqU0lVYVpsYVVXaDdRUWMyZ1RVV2VPdWc2RmNOZEIwSDRVeUVlTG9ZVSthZFNOWTNWTFF5YzltQXRXCjJla1JjMElYbTBTMFA5TXdXREZ2bG1EaVlYOTlVZGZUZ2MzRDQ2SmJQcVlJNGFTTTdOcWNmMWN4SURtbGRCVjAKRVVqWEJYVlhzRHd5SHozK0E2V0I4T1p0eGMzRHovTDl3Ym5tbmNlNGZyU1UzRTFhbGpldFJSdktxR2VlZXdJRApBUUFCb0FBd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFIbEI4bHVsclR1QU55MEVvQjRvNlNLcEQ0RFlML3MxCkhSeG1NeG4xSC9VSWlNV1NYWWFpR1VZTTVPMXljZ080N1NFWlhmVTBkcnFTVktMTVFtbEZUeEhmQ1FFNTRXbkEKQmsyOWIwUjlmbGhaT0tMR3VDbEVyblltVkU5bk00cU43V1RzaE5rWFRUSjJvV3VYNEJHS3ZCV0h0R0QvZzZhSwpHY1k3TXJrS2Z3T2xRUG1wYy9LY0Njb3E1MVRoeXI0Nmx5VnkrVUpsR2NMNE9XNHMvQWcrUTliQ0VaY216UlVHCkEvQ3RCTUZWZ04vSnlaYmN1a3BIZ3J1T3VWbXgvQjNkY0tYcDAzWDFWdjNsOE16RldDUEM3M2hVUWJmcW1ITzcKZk9zYWNWM1NWc1ZCODFBc1RJNktLTm9QaWZiUElxNEViQk94OS9ZZ0lodmFXdS95Um9aWGQ1Zz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUgUkVRVUVTVC0tLS0tCg==@@PB-STEP 6@@
 ```
 
 **Step 7.** Writes the file `csr-requests.yaml`.
@@ -528,10 +955,26 @@ EOF
 kubectl apply -f csr-requests.yaml
 ```
 
+You should see something like:
+
+```text
+certificatesigningrequest.certificates.k8s.io/zeal-csr created
+```
+
 **Step 9.** Lists the certificate signing requests.
 
 ```bash
 kubectl get csr
+```
+
+You should see something like:
+
+```text
+NAME        AGE   SIGNERNAME                                    REQUESTOR                  REQUESTEDDURATION   CONDITION
+csr-hmqvg   54s   kubernetes.io/kube-apiserver-client-kubelet   system:node:controlplane   <none>              Approved,Issued
+csr-lzftr   44s   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:abcdef    <none>              Approved,Issued
+csr-tkpz2   44s   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:abcdef    <none>              Approved,Issued
+zeal-csr    0s    kubernetes.io/kube-apiserver-client           kubernetes-admin           <none>              Pending
 ```
 
 **Step 10.** Approves the certificate signing request `zeal-csr`.
@@ -540,11 +983,19 @@ kubectl get csr
 kubectl certificate approve zeal-csr
 ```
 
+You should see something like:
+
+```text
+certificatesigningrequest.certificates.k8s.io/zeal-csr approved
+```
+
 **Step 11.** Repeats until the condition is true (waits for the cluster to catch up). Wait until it is issued.
 
 ```bash
 until [ -n "$(kubectl get csr zeal-csr -o jsonpath='{.status.certificate}')" ]; do sleep 1; done
 ```
+
+It prints nothing when it works.
 
 **Step 12.** Prints one field of the certificate signing request `zeal-csr`.
 
@@ -552,10 +1003,18 @@ until [ -n "$(kubectl get csr zeal-csr -o jsonpath='{.status.certificate}')" ]; 
 kubectl get csr zeal-csr -o jsonpath='{.status.certificate}' | base64 -d > zeal.crt
 ```
 
+It prints nothing when it works.
+
 **Step 13.** Adds a user `zeal`.
 
 ```bash
 kubectl config set-credentials zeal --client-certificate=zeal.crt --client-key=zeal.key
+```
+
+You should see something like:
+
+```text
+User "zeal" set.
 ```
 
 **Step 14.** Lists the clusters.
@@ -564,16 +1023,35 @@ kubectl config set-credentials zeal --client-certificate=zeal.crt --client-key=z
 kubectl config get-clusters
 ```
 
+You should see something like:
+
+```text
+NAME
+kubernetes
+```
+
 **Step 15.** Adds a context `zeal-context`.
 
 ```bash
 kubectl config set-context zeal-context --cluster kubernetes --user=zeal
 ```
 
+You should see something like:
+
+```text
+Context "zeal-context" created.
+```
+
 **Step 16.** Lists the pods.
 
 ```bash
 kubectl --context=zeal-context get pods
+```
+
+You should see something like:
+
+```text
+Error from server (Forbidden): pods is forbidden: User "zeal" cannot list resource "pods" in API group "" in the namespace "default"
 ```
 
 **Step 17.** Writes the file `role.yaml`.
@@ -592,10 +1070,18 @@ rules:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 18.** Creates the objects in `role.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f role.yaml
+```
+
+You should see something like:
+
+```text
+role.rbac.authorization.k8s.io/pod-reader created
 ```
 
 **Step 19.** Writes the file `rolebinding.yaml`.
@@ -618,10 +1104,18 @@ roleRef:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 20.** Creates the objects in `rolebinding.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f rolebinding.yaml
+```
+
+You should see something like:
+
+```text
+rolebinding.rbac.authorization.k8s.io/read-pods created
 ```
 
 **Step 21.** Lists the pods.
@@ -630,16 +1124,35 @@ kubectl apply -f rolebinding.yaml
 kubectl --context=zeal-context get pods
 ```
 
+You should see something like:
+
+```text
+NAME           READY   STATUS    RESTARTS   AGE
+external-pod   1/1     Running   0          15s
+```
+
 **Step 22.** Deletes the objects in `role.yaml`.
 
 ```bash
 kubectl delete -f role.yaml
 ```
 
+You should see something like:
+
+```text
+role.rbac.authorization.k8s.io "pod-reader" deleted from default namespace
+```
+
 **Step 23.** Deletes the objects in `rolebinding.yaml`.
 
 ```bash
 kubectl delete -f rolebinding.yaml
+```
+
+You should see something like:
+
+```text
+rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
 ```
 
 ### If you see something else
@@ -679,16 +1192,30 @@ Follow [secret-data.md](https://github.com/kumbulanit/CKA/blob/main/security/Dom
 kubectl create secret generic  firstsecret --from-literal=dbpassword=mypassword123
 ```
 
+You should see something like:
+
+```text
+secret/firstsecret created
+```
+
 **Step 2.** Writes `credentials.txt`.
 
 ```bash
 echo 'dbuser=admin' > credentials.txt
 ```
 
+It prints nothing when it works.
+
 **Step 3.** Creates the Secret `secondsecret`.
 
 ```bash
 kubectl create secret generic  secondsecret --from-file=./credentials.txt
+```
+
+You should see something like:
+
+```text
+secret/secondsecret created
 ```
 
 **Step 4.** Shows the Secret `firstsecret` as YAML, as the API server stores it.
@@ -697,10 +1224,32 @@ kubectl create secret generic  secondsecret --from-file=./credentials.txt
 kubectl get secret firstsecret -o yaml
 ```
 
+You should see something like:
+
+```text
+apiVersion: v1
+data:
+  dbpassword: bXlwYXNzd29yZDEyMw==
+kind: Secret
+metadata:
+  creationTimestamp: "2026-10-27T12:58:43Z"
+  name: firstsecret
+  namespace: default
+  resourceVersion: "718"
+  uid: a8682f25-96e1-4089-950f-08a7ead77cb5
+type: Opaque
+```
+
 **Step 5.** Prints one field of the Secret `firstsecret`.
 
 ```bash
 kubectl get secret firstsecret -o jsonpath='{.data.dbpassword}' | base64 -d
+```
+
+You should see something like:
+
+```text
+mypassword123@@PB-STEP 5@@
 ```
 
 **Step 6.** Writes the file `secret-data.yaml`.
@@ -724,6 +1273,12 @@ EOF
 kubectl apply -f secret-data.yaml
 ```
 
+You should see something like:
+
+```text
+secret/thirdsecret created
+```
+
 **Step 8.** Writes the file `secret-stringdata.yaml`.
 
 ```bash
@@ -740,10 +1295,18 @@ stringData:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 9.** Creates the objects in `secret-stringdata.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f secret-stringdata.yaml
+```
+
+You should see something like:
+
+```text
+secret/stringdata created
 ```
 
 ### If you see something else
@@ -798,10 +1361,18 @@ spec:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 2.** Creates the objects in `secretpod.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f secretpod.yaml
+```
+
+You should see something like:
+
+```text
+pod/secretmount created
 ```
 
 **Step 3.** Writes the file `secret-env.yaml`.
@@ -826,10 +1397,18 @@ spec:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 4.** Creates the objects in `secret-env.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f secret-env.yaml
+```
+
+You should see something like:
+
+```text
+pod/secret-env created
 ```
 
 **Step 5.** Waits until the pods `secretmount`, `secret-env` are Ready.
@@ -838,10 +1417,24 @@ kubectl apply -f secret-env.yaml
 kubectl wait --for=condition=Ready pod/secretmount pod/secret-env --timeout=120s
 ```
 
+You should see something like:
+
+```text
+pod/secretmount condition met
+pod/secret-env condition met
+```
+
 **Step 6.** Runs a command inside the pod `secretmount`.
 
 ```bash
 kubectl exec secretmount -- cat /etc/foo/dbpassword
+```
+
+You should see something like:
+
+```text
+mypassword123@@PB-STEP 6@@
+mypassword123
 ```
 
 **Step 7.** Runs a command inside the pod `secret-env`.
@@ -889,10 +1482,26 @@ on controlplane:
 sudo openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout -text | grep -A1 "Subject Alternative Name"
 ```
 
+You should see something like:
+
+```text
+            X509v3 Subject Alternative Name: 
+                DNS:controlplane, DNS:kubernetes, DNS:kubernetes.default, DNS:kubernetes.default.svc, DNS:kubernetes.default.svc.cluster.local, DNS:localhost, DNS:pb-2a752efc-control-plane, IP Address:10.96.0.1, IP Address:192.168.147.2, IP Address:127.0.0.1
+```
+
 **Step 2.** Signs the certificate with the cluster CA.
 
 ```bash
 sudo openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout -subject -issuer -dates
+```
+
+You should see something like:
+
+```text
+subject=CN=kube-apiserver
+issuer=CN=kubernetes
+notBefore=Oct 27 12:52:43 2026 GMT
+notAfter=Oct 27 12:57:43 2027 GMT
 ```
 
 **Step 3.** Searches for the text.
@@ -901,10 +1510,44 @@ sudo openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout -subject -issuer 
 sudo grep -E "tls-cert-file|tls-private-key-file|client-ca-file" /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
+You should see something like:
+
+```text
+    - --client-ca-file=/etc/kubernetes/pki/ca.crt
+    - --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt
+    - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
+    - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
+```
+
 **Step 4.** Shows when the cluster certificates expire.
 
 ```bash
 sudo kubeadm certs check-expiration
+```
+
+You should see something like:
+
+```text
+[check-expiration] Reading configuration from the "kubeadm-config" ConfigMap in namespace "kube-system"...
+[check-expiration] Use 'kubeadm init phase upload-config kubeadm --config your-config-file' to re-upload it.
+
+CERTIFICATE                EXPIRES                  RESIDUAL TIME   CERTIFICATE AUTHORITY   EXTERNALLY MANAGED
+admin.conf                 Oct 27, 2027 12:57 UTC   364d            ca                      no      
+apiserver                  Oct 27, 2027 12:57 UTC   364d            ca                      no      
+apiserver-etcd-client      Oct 27, 2027 12:57 UTC   364d            etcd-ca                 no      
+apiserver-kubelet-client   Oct 27, 2027 12:57 UTC   364d            ca                      no      
+controller-manager.conf    Oct 27, 2027 12:57 UTC   364d            ca                      no      
+etcd-healthcheck-client    Oct 27, 2027 12:57 UTC   364d            etcd-ca                 no      
+etcd-peer                  Oct 27, 2027 12:57 UTC   364d            etcd-ca                 no      
+etcd-server                Oct 27, 2027 12:57 UTC   364d            etcd-ca                 no      
+front-proxy-client         Oct 27, 2027 12:57 UTC   364d            front-proxy-ca          no      
+scheduler.conf             Oct 27, 2027 12:57 UTC   364d            ca                      no      
+super-admin.conf           Oct 27, 2027 12:57 UTC   364d            ca                      no      
+
+CERTIFICATE AUTHORITY   EXPIRES                  RESIDUAL TIME   EXTERNALLY MANAGED
+ca                      Oct 24, 2036 12:57 UTC   9y              no      
+etcd-ca                 Oct 24, 2036 12:57 UTC   9y              no      
+front-proxy-ca          Oct 24, 2036 12:57 UTC   9y              no
 ```
 
 **Step 5.** Prints one field of the ConfigMap `kubeadm-config` in the namespace `kube-system`.
@@ -912,6 +1555,8 @@ sudo kubeadm certs check-expiration
 ```bash
 kubectl -n kube-system get configmap kubeadm-config -o jsonpath='{.data.ClusterConfiguration}' > kubeadm.yaml
 ```
+
+It prints nothing when it works.
 
 **Step 6.** Runs the command only when the condition is true. The edit: add the names under apiServer.certSANs (or create the list).
 
@@ -923,16 +1568,27 @@ else
 fi
 ```
 
+It prints nothing when it works.
+
 **Step 7.** Moves `/etc/kubernetes/pki/apiserver.{crt,key}` to `~/`.
 
 ```bash
 sudo mv /etc/kubernetes/pki/apiserver.{crt,key} ~/
 ```
 
+It prints nothing when it works.
+
 **Step 8.** Creates the control plane: certificates, etcd, the API server, the scheduler and the controller manager.
 
 ```bash
 sudo kubeadm init phase certs apiserver --config kubeadm.yaml
+```
+
+You should see something like:
+
+```text
+[certs] Generating "apiserver" certificate and key
+[certs] apiserver serving cert is signed for DNS names [controlplane k8s.example.internal kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local localhost pb-2a752efc-control-plane] and IPs [10.96.0.1 192.168.147.2 192.168.56.100 127.0.0.1]
 ```
 
 **Step 9.** Prints the certificate in readable form.
@@ -941,16 +1597,48 @@ sudo kubeadm init phase certs apiserver --config kubeadm.yaml
 sudo openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout -text | grep -A1 "Subject Alternative Name"
 ```
 
+You should see something like:
+
+```text
+            X509v3 Subject Alternative Name: 
+                DNS:controlplane, DNS:k8s.example.internal, DNS:kubernetes, DNS:kubernetes.default, DNS:kubernetes.default.svc, DNS:kubernetes.default.svc.cluster.local, DNS:localhost, DNS:pb-2a752efc-control-plane, IP Address:10.96.0.1, IP Address:192.168.147.2, IP Address:192.168.56.100, IP Address:127.0.0.1
+```
+
 **Step 10.** Waits 10 seconds.
 
 ```bash
 sleep 10
 ```
 
+It prints nothing when it works.
+
 **Step 11.** Sends an HTTP request to `https://controlplane:6443/version` and prints the answer.
 
 ```bash
 curl --cacert /etc/kubernetes/pki/ca.crt https://controlplane:6443/version
+```
+
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   379  100   379    0     0  35754      0 --:--:-- --:--:-- --:--:-- 37900
+{
+  "major": "1",
+  "minor": "36",
+  "emulationMajor": "1",
+  "emulationMinor": "36",
+  "minCompatibilityMajor": "1",
+  "minCompatibilityMinor": "35",
+  "gitVersion": "v1.36.4",
+  "gitCommit": "bb826b1d48562f110659e64e8ec444327433db95",
+  "gitTreeState": "clean",
+  "buildDate": "2026-08-20T03:06:28Z",
+  "goVersion": "go1.26.5",
+  "compiler": "gc",
+  "platform": "linux/arm64"
+}@@PB-STEP end@@
 ```
 
 ### If you see something else
@@ -1009,10 +1697,19 @@ spec:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 2.** Creates the objects in `privileged.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f privileged.yaml
+```
+
+You should see something like:
+
+```text
+pod/privileged created
+pod/non-privileged created
 ```
 
 **Step 3.** Lists the pods.
@@ -1021,10 +1718,28 @@ kubectl apply -f privileged.yaml
 kubectl get pods
 ```
 
+You should see something like:
+
+```text
+NAME             READY   STATUS              RESTARTS   AGE
+external-pod     1/1     Running             0          40s
+non-privileged   0/1     ContainerCreating   0          0s
+privileged       0/1     ContainerCreating   0          0s
+secret-env       1/1     Running             0          23s
+secretmount      1/1     Running             0          23s
+```
+
 **Step 4.** Waits until the pods `privileged`, `non-privileged` are Ready.
 
 ```bash
 kubectl wait --for=condition=Ready pod/privileged pod/non-privileged --timeout=120s
+```
+
+You should see something like:
+
+```text
+pod/privileged condition met
+pod/non-privileged condition met
 ```
 
 **Step 5.** Runs a command inside the pod `privileged`.
@@ -1033,10 +1748,24 @@ kubectl wait --for=condition=Ready pod/privileged pod/non-privileged --timeout=1
 kubectl exec privileged -- sh -c 'ls /dev | wc -l; grep CapEff /proc/1/status'
 ```
 
+You should see something like:
+
+```text
+59
+CapEff:    000001ffffffffff
+```
+
 **Step 6.** Runs a command inside the pod `non-privileged`.
 
 ```bash
 kubectl exec non-privileged -- sh -c 'ls /dev | wc -l; grep CapEff /proc/1/status'
+```
+
+You should see something like:
+
+```text
+15
+CapEff:    00000000a80425fb
 ```
 
 **Step 7.** Writes the file `capabilities.yaml`.
@@ -1058,10 +1787,18 @@ spec:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 8.** Creates the objects in `capabilities.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f capabilities.yaml
+```
+
+You should see something like:
+
+```text
+pod/privileged1 created
 ```
 
 **Step 9.** Waits until the pod `privileged1` is Ready.
@@ -1070,10 +1807,22 @@ kubectl apply -f capabilities.yaml
 kubectl wait --for=condition=Ready pod/privileged1 --timeout=120s
 ```
 
+You should see something like:
+
+```text
+pod/privileged1 condition met
+```
+
 **Step 10.** Runs a command inside the pod `privileged1`.
 
 ```bash
 kubectl exec privileged1 -- grep CapEff /proc/1/status
+```
+
+You should see something like:
+
+```text
+CapEff:    00000000a80425fb
 ```
 
 ### If you see something else
@@ -1111,10 +1860,22 @@ Follow the second part of [security-context-and-network-policy.md](https://githu
 kubectl run pod01 --image=nginx
 ```
 
+You should see something like:
+
+```text
+pod/pod01 created
+```
+
 **Step 2.** Waits until the pod `pod01` is Ready.
 
 ```bash
 kubectl wait --for=condition=Ready pod/pod01 --timeout=120s
+```
+
+You should see something like:
+
+```text
+pod/pod01 condition met
 ```
 
 **Step 3.** Lists the pod `pod01`, with IP address and node.
@@ -1123,16 +1884,49 @@ kubectl wait --for=condition=Ready pod/pod01 --timeout=120s
 kubectl get pod pod01 -o wide
 ```
 
+You should see something like:
+
+```text
+NAME    READY   STATUS    RESTARTS   AGE   IP           NODE     NOMINATED NODE   READINESS GATES
+pod01   1/1     Running   0          2s    10.244.2.5   node02   <none>           <none>
+```
+
 **Step 4.** Saves `$POD01_IP`: prints one field of the pod `pod01`.
 
 ```bash
 POD01_IP=$(kubectl get pod pod01 -o jsonpath='{.status.podIP}')
 ```
 
+It prints nothing when it works.
+
 **Step 5.** Starts a throwaway pod `test` that runs one command and is deleted afterwards.
 
 ```bash
 kubectl run test --image=busybox:1.37 --rm -i --restart=Never -- wget -T 3 -qO- $POD01_IP
+```
+
+You should see something like:
+
+```text
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, nginx is successfully installed and working.
+Further configuration is required for the web server, reverse proxy, 
+API gateway, load balancer, content cache, or other features.</p>
+
+<p>For online documentation and support please refer to
+<a href="https://nginx.org/">nginx.org</a>.<br/>
+… (12 more lines)
 ```
 
 **Step 6.** Writes the file `nsp-deny-pod.yaml`.
@@ -1154,10 +1948,18 @@ spec:
 EOF
 ```
 
+It prints nothing when it works.
+
 **Step 7.** Creates the objects in `nsp-deny-pod.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f nsp-deny-pod.yaml
+```
+
+You should see something like:
+
+```text
+networkpolicy.networking.k8s.io/default-deny-pod created
 ```
 
 **Step 8.** Lists the NetworkPolicies.
@@ -1166,10 +1968,34 @@ kubectl apply -f nsp-deny-pod.yaml
 kubectl get networkpolicy
 ```
 
+You should see something like:
+
+```text
+NAME               POD-SELECTOR   AGE
+default-deny-pod   run=pod01      0s
+```
+
 **Step 9.** Shows the details of the NetworkPolicy `default-deny-pod`, with its recent events at the bottom.
 
 ```bash
 kubectl describe networkpolicy default-deny-pod
+```
+
+You should see something like:
+
+```text
+Name:         default-deny-pod
+Namespace:    default
+Created on:   2026-10-27 12:59:23 +0000 UTC
+Labels:       <none>
+Annotations:  <none>
+Spec:
+  PodSelector:     run=pod01
+  Allowing ingress traffic:
+    <none> (Selected pods are isolated for ingress connectivity)
+  Allowing egress traffic:
+    <none> (Selected pods are isolated for egress connectivity)
+  Policy Types: Ingress, Egress
 ```
 
 **Step 10.** Waits 5 seconds.
@@ -1178,10 +2004,22 @@ kubectl describe networkpolicy default-deny-pod
 sleep 5
 ```
 
+It prints nothing when it works.
+
 **Step 11.** Starts a throwaway pod `test` that runs one command and is deleted afterwards.
 
 ```bash
 kubectl run test --image=busybox:1.37 --rm -i --restart=Never -- wget -T 3 -qO- $POD01_IP
+```
+
+You should see something like:
+
+```text
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+wget: download timed out
+pod "test" deleted from default namespace
+pod default/test terminated (Error)
 ```
 
 ### If you see something else
