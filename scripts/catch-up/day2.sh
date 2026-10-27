@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # day2.sh [lab ...]: creates what the Day 2 labs (workloads and scheduling, services and
 # networking, security) leave in the cluster, as at the end of each lab, before its clean-up step.
-# Use it when the class runs out of time: run it on controlplane as root, for one lab
+# Use it when the class runs out of time: run it where kubectl works (on the minikube server, or as
+# root on controlplane on a kubeadm cluster), for one lab
 # (./day2.sh ingress) or for the whole day (./day2.sh). ./day2.sh --list shows the labs.
 #
 # Left out on purpose: node taints and the default-deny NetworkPolicy, because the lessons remove
@@ -16,12 +17,12 @@ LABS=(
   "labels|Pods pod-1, pod-2 (env=stage), pod-3 (env=prod) and nginx (env=dev) (labels)"
   "deployments|my-deployment (3 replicas) and kplabs-deployment updated to httpd, 10 replicas (deployment-cli, imp-dep-commands)"
   "workloads|kplabs-daemonset, kplabs-cronjob and kplabs-job (daemonset.yaml, cronjob.yaml, jobs.yaml)"
-  "node-labels|Node labels disk=hdd/ssd/hdd and environment=production on node01, pods service-pod and kplabs-node-affinity (nodeSelector, node-affinity, node selectors)"
+  "node-labels|Node labels disk=hdd/ssd/hdd and environment=production on node01 (minikube-m02), pods service-pod and kplabs-node-affinity (nodeSelector, node-affinity, node selectors)"
   "services|nginx-deployment behind kplabs-service-selector, namespace teama with an nginx pod (service-selector, namespace)"
   "ingress|Helm, ingress-nginx on NodePort 30080, service-pod-1/2 behind service1/2 and name-virtual-host-ingress (install-helm, ingress, deploy-ingress-controller)"
   "service-accounts|custom-sa with custom-pod, external with external-pod, Role pod-reader bound to external (sa-practical, authentication, authorization)"
   "secrets|Secrets firstsecret, secondsecret, thirdsecret, stringdata and pods secretmount, secret-env (secret-data, mounting-secrets)"
-  "certificates|User zeal: key and certificate in /root/certificates, zeal-context, Role pod-reader in teama bound to zeal (certificate-steps, teama-role)"
+  "certificates|User zeal: key and certificate in ~/certificates, zeal-context, Role pod-reader in teama bound to zeal (certificate-steps, teama-role)"
   "security-context|Pods privileged, non-privileged and privileged1 (security-context-and-network-policy)"
 )
 
@@ -49,9 +50,9 @@ lab_workloads() {
 }
 
 lab_node_labels() {
-  kubectl label node controlplane disk=hdd --overwrite
-  kubectl label node node01 disk=ssd environment=production --overwrite
-  kubectl label node node02 disk=hdd --overwrite
+  kubectl label node "$CP" disk=hdd --overwrite
+  kubectl label node "$NODE1" disk=ssd environment=production --overwrite
+  kubectl label node "$NODE2" disk=hdd --overwrite
   apply <<'EOF'
 apiVersion: v1
 kind: Pod
@@ -124,8 +125,8 @@ EOF
 }
 
 lab_ingress() {
-  need_root
   if ! command -v helm >/dev/null; then
+    need_root
     curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor --yes -o /usr/share/keyrings/helm.gpg
     echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" > /etc/apt/sources.list.d/helm-stable-debian.list
     apt-get update -q && apt-get install -y -q helm
@@ -169,7 +170,10 @@ spec:
             port:
               number: 80
 EOF
-  echo 'Try it: curl -H "Host: website01.example.internal" http://node01:30080'
+  local ip
+  ip=$(kubectl get node "$NODE1" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+  echo "Try it: curl -H \"Host: website01.example.internal\" http://$ip:30080"
+
 }
 
 lab_service_accounts() {
@@ -288,9 +292,9 @@ EOF
 }
 
 lab_certificates() {
-  need_root
-  mkdir -p /root/certificates
-  cd /root/certificates || return
+  local dir=$HOME/certificates   # /root/certificates as root on controlplane, as in the lesson
+  mkdir -p "$dir"
+  cd "$dir" || return
   if [ ! -s zeal.crt ]; then
     [ -f zeal.key ] || openssl genrsa -out zeal.key 2048
     openssl req -new -key zeal.key -out zeal.csr -subj "/CN=zeal/O=kplabs"
@@ -317,8 +321,8 @@ EOF
       sleep 1
     done
   fi
-  kubectl config set-credentials zeal --client-certificate=/root/certificates/zeal.crt --client-key=/root/certificates/zeal.key
-  kubectl config set-context zeal-context --cluster kubernetes --user=zeal
+  kubectl config set-credentials zeal --client-certificate="$dir/zeal.crt" --client-key="$dir/zeal.key"
+  kubectl config set-context zeal-context --cluster "$CLUSTER" --user=zeal
   cd - >/dev/null || return
   namespace teama
   apply < "$sec/teama-role.yaml"

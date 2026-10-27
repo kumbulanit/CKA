@@ -15,15 +15,15 @@ Each lab below is a practical from this repository, step by step: the command, w
 
 ## Before you start
 
-You need the three machines of the course, `controlplane`, `node01` and `node02`. On one Ubuntu server (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk), [scripts/one-server.sh](../scripts/one-server.sh) runs them as containers, each a full Ubuntu 24.04 machine:
+Start the practice cluster on your Ubuntu server, as in the [README](../README.md#the-practice-cluster):
 
 ```bash
 git clone https://github.com/kumbulanit/CKA.git && cd CKA
-sudo ./scripts/one-server.sh install   # the three machines with Kubernetes v1.36 installed (5 to 10 minutes)
-sudo ./scripts/one-server.sh shell     # you are now root@controlplane; the repository is in /root/CKA
+sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10 minutes the first time)
+kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-If you did the installation module on these machines, you already have this cluster. `sudo ./scripts/one-server.sh shell node01` opens node01, and `sudo ./scripts/one-server.sh delete` removes the machines so you can start again. In Patchbay, starting the lab gives you the same machines.
+The steps below use the node names of the lessons. On minikube, `controlplane` is `minikube` (`minikube ssh`), `node01` is `minikube-m02` (`minikube ssh -n minikube-m02`) and `node02` is `minikube-m03`; run `kubectl` as your own user on the server. The outputs were recorded in Desired Labs, whose nodes have the lessons' names. In Desired Labs, starting the lab gives you that cluster, with `root@controlplane` in the terminal.
 
 ## Lab 1.1: Your first pod
 
@@ -1139,6 +1139,32 @@ NAME                             DESIRED   CURRENT   READY   AGE
 replicationcontroller/myapp-rc   3         3         3       3m55s
 … (9 more lines)
 ```
+
+### What it looks like in the lab
+
+![The task in the lab: the question and its diagram on the left, the terminal on the right](../images/screenshots/lab-task.png)
+
+*The task in the lab: the question and its diagram on the left, the terminal on the right*
+
+![kubectl set image starts a rollout; the Deployments panel shows it rolling out](../images/screenshots/lab-rollout.png)
+
+*kubectl set image starts a rollout; the Deployments panel shows it rolling out*
+
+![The Deployments panel: each Deployment, its image and ready copies, and what just changed](../images/screenshots/lab-deployments-panel.png)
+
+*The Deployments panel: each Deployment, its image and ready copies, and what just changed*
+
+![The rollout finished: three copies of nginx:1.17.3 ready](../images/screenshots/lab-rollout-done.png)
+
+*The rollout finished: three copies of nginx:1.17.3 ready*
+
+![The deployed app answering on a NodePort of node01](../images/screenshots/lab-app-curl.png)
+
+*The deployed app answering on a NodePort of node01*
+
+![The solution, step by step: each command, what it does and what it printed](../images/screenshots/lab-walkthrough.png)
+
+*The solution, step by step: each command, what it does and what it printed*
 
 ### If you see something else
 

@@ -1,4 +1,4 @@
-# Module 2: Installation, upgrades and backups
+t # Module 2: Installation, upgrades and backups
 
 Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
 
@@ -16,15 +16,15 @@ Each lab below is a practical from this repository, step by step: the command, w
 
 ## Before you start
 
-You need the three machines of the course, `controlplane`, `node01` and `node02`. On one Ubuntu server (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk), [scripts/one-server.sh](../scripts/one-server.sh) runs them as containers, each a full Ubuntu 24.04 machine:
+These labs install and upgrade Kubernetes with kubeadm, so they need machines without Kubernetes. On your Ubuntu server, [scripts/one-server.sh](../scripts/one-server.sh) runs three of them as containers named `controlplane`, `node01` and `node02`, so every command below works as written. On an 8 GB server, stop minikube first (`minikube stop`).
 
 ```bash
-git clone https://github.com/kumbulanit/CKA.git && cd CKA
-sudo ./scripts/one-server.sh create    # three bare machines: you install Kubernetes in these labs
+cd CKA
+sudo ./scripts/one-server.sh create    # three bare Ubuntu 24.04 machines
 sudo ./scripts/one-server.sh shell     # you are now root@controlplane; the repository is in /root/CKA
 ```
 
-Their IP addresses are `172.30.56.10` (controlplane), `.11` (node01) and `.12` (node02); `sudo ./scripts/one-server.sh status` shows them. The outputs below were recorded in the Patchbay lab, where the addresses differ: use yours. `sudo ./scripts/one-server.sh shell node01` opens node01, and `sudo ./scripts/one-server.sh delete` removes the machines so you can start again. In Patchbay, starting the lab gives you the same machines.
+Their IP addresses are `172.30.56.10` (controlplane), `.11` (node01) and `.12` (node02); `sudo ./scripts/one-server.sh status` shows them. The outputs below were recorded in Desired Labs, where the addresses differ: use yours. `sudo ./scripts/one-server.sh delete` removes the machines so you can start again.
 
 ## Lab 2.1: Prepare the machines
 

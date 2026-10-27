@@ -5,37 +5,51 @@ Notes and hands-on practicals for the CKA course. Every practical runs on the sa
 
 ## The practice cluster
 
-- 3 Ubuntu 24.04 machines named **`controlplane`**, **`node01`** and **`node02`**
-- Kubernetes **v1.36**, installed with kubeadm, containerd and Calico (the maintenance lesson upgrades it to v1.37)
-- You work as root on `controlplane` (`sudo -i`) and log in to the workers with `ssh node01`
-
-Use the same host names: lessons such as troubleshooting refer to the nodes by name.
-
-### Everything on one Ubuntu server
-
-You only need **one Ubuntu server** (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk, Ubuntu 22.04 or 24.04). [scripts/one-server.sh](./scripts/one-server.sh) runs the three machines on it as containers. Each one is a full Ubuntu 24.04 machine with systemd and SSH, so every command in the lessons works unchanged, including the kubeadm installation, `ssh node01` and draining nodes.
+One Ubuntu server is all you need (a VM is fine: 4 CPUs, 8 GB RAM, 30 GB free disk, Ubuntu 22.04 or 24.04). **One command installs everything and starts the cluster** (about 10 minutes the first time):
 
 ```sh
 git clone https://github.com/kumbulanit/CKA.git && cd CKA
-sudo ./scripts/one-server.sh install     # the three machines with Kubernetes installed (5 to 10 minutes)
-sudo ./scripts/one-server.sh shell       # you are now root@controlplane; the repository is in /root/CKA
+sudo ./setup.sh
 ```
 
-- To do the installation lesson yourself, use `sudo ./scripts/one-server.sh create` instead: it starts the three machines with nothing installed. Their IP addresses are `172.30.56.10`, `.11` and `.12` (`sudo ./scripts/one-server.sh status` shows them).
-- `sudo ./scripts/one-server.sh shell node01` opens node01. Type `exit` to go back to the server.
-- The machines start again when the server restarts. `sudo ./scripts/one-server.sh delete` removes them, so you can start again from scratch.
+[setup.sh](./setup.sh) installs all the tools the course uses: Docker, minikube, kubectl v1.36 and helm, plus git, curl, jq, vim, nano and bash completion (with `k` as a short name for `kubectl`). Then it creates and starts a minikube cluster on Docker: Kubernetes **v1.36.5** with Calico, three nodes. Run it with `sudo` from your own user, not as root. Running it again is safe; it also starts the cluster again after the server restarts.
+
+Log out and in once (or run `newgrp docker`) so `minikube` works without `sudo`. Then, as your own user:
+
+```sh
+kubectl get nodes                  # minikube (control plane), minikube-m02 and minikube-m03 (workers)
+minikube ssh                       # a shell on the control plane node
+minikube ssh -n minikube-m02       # a shell on the first worker
+minikube stop                      # stop the cluster; sudo ./setup.sh or minikube start starts it again
+```
+
+The lessons were written for a kubeadm cluster whose nodes are called `controlplane`, `node01` and `node02`. On the minikube cluster:
+
+| In the lessons | On the minikube cluster |
+| --- | --- |
+| `controlplane` | `minikube` (`minikube ssh`) |
+| `node01`, `ssh node01` | `minikube-m02` (`minikube ssh -n minikube-m02`) |
+| `node02`, `ssh node02` | `minikube-m03` (`minikube ssh -n minikube-m03`) |
+| `kubectl` as root on controlplane | `kubectl` as your own user on the server |
+| `/etc/kubernetes/pki` | `/var/lib/minikube/certs`, inside `minikube ssh` |
+
+minikube builds its nodes with kubeadm, so the static pod manifests (`/etc/kubernetes/manifests`), the kubelet service and `journalctl -u kubelet` are where the lessons say, inside `minikube ssh`.
+
+### The kubeadm lessons
+
+Installing a cluster with kubeadm, adding a node and the upgrade to v1.37 need machines without Kubernetes. [scripts/one-server.sh](./scripts/one-server.sh) runs three of them on the same server, as containers named `controlplane`, `node01` and `node02`, so those lessons work exactly as written. Stop minikube first on an 8 GB server (`minikube stop`).
+
+```sh
+sudo ./scripts/one-server.sh create        # three bare Ubuntu 24.04 machines (172.30.56.10, .11, .12)
+sudo ./scripts/one-server.sh shell         # root@controlplane; shell node01 opens node01
+sudo ./scripts/one-server.sh delete        # remove them
+```
+
+`sudo ./scripts/one-server.sh install` installs the kubeadm cluster on them in one go, with [scripts/install-cluster.sh](./scripts/install-cluster.sh) (the same steps as the [installation guide](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20/Kubernetes%20installation%20using%20kubeadm.md)). On separate machines, run that script as root on each one, controlplane first, with your three IP addresses: `sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.168.56.12`. It prints the command to run on node01 and node02.
 
 ## Scripts
 
-**Install the whole cluster** with [scripts/install-cluster.sh](./scripts/install-cluster.sh). It runs the same steps as the [installation guide](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20/Kubernetes%20installation%20using%20kubeadm.md) (containerd, kubeadm v1.36, Calico) and also installs `helm` and `etcd-client` on controlplane. `one-server.sh install` runs it for you. On separate machines, run it as root on each one, controlplane first, with your three IP addresses:
-
-```sh
-sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.168.56.12
-```
-
-At the end it prints the command to run on node01 and node02, with the join command included.
-
-**Catch up when a lab runs out of time.** Each day has a script that creates what that day's labs leave in the cluster, as at the end of each lab. Run it on controlplane as root (`sudo ./scripts/one-server.sh shell`, then `cd /root/CKA`), for one lab or for the whole day:
+**Catch up when a lab runs out of time.** Each day has a script that creates what that day's labs leave in the cluster, as at the end of each lab. Run it on the server as your own user, where `kubectl` works (on a kubeadm cluster: as root on controlplane), for one lab or for the whole day. The scripts find the node names themselves, so they work on both:
 
 ```sh
 ./scripts/catch-up/day1.sh --list        # the labs of the day

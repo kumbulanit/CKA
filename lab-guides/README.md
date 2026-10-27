@@ -11,6 +11,6 @@ Every practical of the course, step by step: each command, a sentence on what it
 | 5 | [Security](./05-security.md) | 9 | all recorded |
 | 6 | [Storage](./06-storage.md) | 5 | all recorded |
 | 7 | [Logging and monitoring](./07-logging-monitoring.md) | 6 | all recorded |
-| 8 | [Troubleshooting](./08-troubleshooting.md) | 14 | 5 of 14 recorded |
+| 8 | [Troubleshooting](./08-troubleshooting.md) | 14 | all recorded |
 
 The outputs were recorded on the practice cluster (Kubernetes v1.36, then v1.37 after the upgrade lab). These guides are generated from the Patchbay labs; change the lab and run `node tools/build-guides.mjs labs/cka <this repository>` there, not the guide.

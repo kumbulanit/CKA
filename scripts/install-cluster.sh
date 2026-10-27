@@ -19,7 +19,7 @@ K8S_MINOR=v1.36
 CALICO_VERSION=v3.33.0
 POD_CIDR=192.168.0.0/16
 
-usage() { sed -n '2,3p' "$0" | sed 's/^# //'; exit 1; }
+usage() { sed -n '2p;11,15p' "$0" | sed 's/^# \{0,1\}//'; echo 'On one Ubuntu server, use one-server.sh instead: sudo ./one-server.sh install'; exit 1; }
 [ $# -ge 4 ] || usage
 node=$1 cp_ip=$2 n1_ip=$3 n2_ip=$4 join=${5:-}
 case $node in controlplane|node01|node02) ;; *) echo "node name must be controlplane, node01 or node02" >&2; exit 1 ;; esac

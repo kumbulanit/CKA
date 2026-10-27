@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # day1.sh [lab ...]: creates what the Day 1 labs (core concepts; installation, configuration and
 # validation) leave in the cluster, as at the end of each lab, before its clean-up step.
-# Use it when the class runs out of time: run it on controlplane as root, for one lab
+# Use it when the class runs out of time: run it where kubectl works (on the minikube server, or as
+# root on controlplane on a kubeadm cluster), for one lab
 # (./day1.sh services) or for the whole day (./day1.sh). ./day1.sh --list shows the labs.
 #
 # Not done here, because they change the machines rather than the cluster: installing the
@@ -252,13 +253,29 @@ EOF
 }
 
 lab_etcd_backup() {
-  need_root
-  command -v etcdctl >/dev/null || apt-get install -y -q etcd-client
-  ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-    --cert=/etc/kubernetes/pki/etcd/server.crt \
-    --key=/etc/kubernetes/pki/etcd/server.key \
-    snapshot save /opt/etcd-backup.db
+  if [ -f /etc/kubernetes/pki/etcd/ca.crt ]; then
+    # On controlplane of a kubeadm cluster, as in the lesson.
+    need_root
+    command -v etcdctl >/dev/null || apt-get install -y -q etcd-client
+    ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/server.crt \
+      --key=/etc/kubernetes/pki/etcd/server.key \
+      snapshot save /opt/etcd-backup.db
+    return
+  fi
+  # Elsewhere (minikube): etcdctl inside the etcd pod, with the certificate files etcd itself uses
+  # (/var/lib/minikube/certs/etcd on minikube). The snapshot is saved in etcd's data folder on the
+  # control plane node.
+  local pod cmd dir
+  pod=$(kubectl -n kube-system get pod -l component=etcd -o jsonpath='{.items[0].metadata.name}')
+  cmd=$(kubectl -n kube-system get pod "$pod" -o jsonpath='{.spec.containers[0].command}')
+  flag() { grep -o "\"--$1=[^\"]*\"" <<<"$cmd" | cut -d= -f2 | tr -d '"'; }
+  dir=$(flag data-dir)
+  kubectl -n kube-system exec "$pod" -- etcdctl --endpoints=https://127.0.0.1:2379 \
+    --cacert="$(flag trusted-ca-file)" --cert="$(flag cert-file)" --key="$(flag key-file)" \
+    snapshot save "$dir/etcd-backup.db"
+  echo "Saved on node $CP in $dir/etcd-backup.db (minikube ssh, then: sudo ls -l $dir)"
 }
 
 run_labs "$@"

@@ -65,7 +65,20 @@ EOF
   kubectl delete pod "$pod" --wait=false >/dev/null
 }
 
-need_root() { [ "$(id -u)" -eq 0 ] || die "this lab runs commands on controlplane as root: sudo -i, then run the script again"; }
+need_root() { [ "$(id -u)" -eq 0 ] || die "this step installs packages; run the script as root (sudo -i), or install them first"; }
+
+# find_nodes: the course's nodes on this cluster. CP is the control plane (controlplane; minikube on
+# minikube); NODE1 and NODE2 are the first two workers (node01 and node02; minikube-m02 and
+# minikube-m03), or the control plane when there are none. CLUSTER is the kubeconfig's cluster name.
+# shellcheck disable=SC2034 # used by the day scripts
+find_nodes() {
+  local workers
+  CP=$(kubectl get nodes -l node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].metadata.name}')
+  read -r -a workers <<<"$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o jsonpath='{.items[*].metadata.name}')"
+  NODE1=${workers[0]:-$CP}
+  NODE2=${workers[1]:-$NODE1}
+  CLUSTER=$(kubectl config view --minify -o jsonpath='{.clusters[0].name}')
+}
 
 list_labs() {
   local entry
@@ -78,7 +91,8 @@ run_labs() {
   case ${1:-} in
     -h|--help|--list) echo "Usage: $(basename "$0") [lab ...]   (no lab: all of them)"; echo "Labs:"; list_labs; exit 0 ;;
   esac
-  kubectl get nodes >/dev/null 2>&1 || die "kubectl cannot reach the cluster; run this on controlplane as root (sudo -i)"
+  kubectl get nodes >/dev/null 2>&1 || die "kubectl cannot reach the cluster; run this where kubectl works (on the minikube server, or as root on controlplane)"
+  find_nodes
   local wanted=("$@") entry name
   if [ ${#wanted[@]} -eq 0 ]; then
     for entry in "${LABS[@]}"; do

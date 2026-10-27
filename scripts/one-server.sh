@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# one-server.sh <create|install|shell|status|delete>
+# one-server.sh <create|install|shell|kubeconfig|status|delete>
 #
 # Runs the whole course on one Ubuntu server (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk).
 # The course needs three machines, controlplane, node01 and node02; here they are containers on
@@ -9,6 +9,7 @@
 #   sudo ./scripts/one-server.sh create        three bare machines (to do the installation lesson)
 #   sudo ./scripts/one-server.sh install       the same, with Kubernetes installed (install-cluster.sh)
 #   sudo ./scripts/one-server.sh shell [node]  a root shell on controlplane (or node01, node02)
+#   sudo ./scripts/one-server.sh kubeconfig    kubectl on this server too (install does this for you)
 #   sudo ./scripts/one-server.sh status        the machines and their addresses
 #   sudo ./scripts/one-server.sh delete        remove the machines and everything on them
 #
@@ -112,19 +113,49 @@ install() {
   done
   docker exec controlplane kubectl wait --for=condition=Ready node --all --timeout=600s >/dev/null
   docker exec controlplane kubectl get nodes
+  host_kubectl
+}
+
+# kubectl and helm on this server too: the cluster's admin kubeconfig for the user who ran sudo (an existing
+# ~/.kube/config is kept as config.before-cka), and kubectl and helm, copied from controlplane so the
+# versions match, when the server has none.
+host_kubectl() {
+  docker exec controlplane test -f /etc/kubernetes/admin.conf 2>/dev/null \
+    || die "Kubernetes is not installed on controlplane yet: run sudo $0 install, or do the installation lesson"
+  command -v kubectl >/dev/null || docker cp controlplane:/usr/bin/kubectl /usr/local/bin/kubectl
+  command -v helm >/dev/null || docker cp controlplane:/usr/bin/helm /usr/local/bin/helm
+  local user=${SUDO_USER:-$(id -un)} home=$HOME cfg admin
+  [ -z "${SUDO_USER:-}" ] || home=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+  grep -qs 'kubectl completion bash' "$home/.bashrc" || echo 'source <(kubectl completion bash)' >> "$home/.bashrc"
+  cfg=$home/.kube/config
+  admin=$(docker exec controlplane cat /etc/kubernetes/admin.conf)
+  mkdir -p "$home/.kube"
+  if [ -f "$cfg" ] && [ "$(cat "$cfg")" != "$admin" ]; then cp "$cfg" "$cfg.before-cka"; fi
+  printf '%s\n' "$admin" > "$cfg"
+  chmod 600 "$cfg"
+  chown -R "$user" "$home/.kube"
+  step "kubectl on this server now uses the cluster ($cfg)"
 }
 
 case ${1:-} in
   create)
     create
     echo
-    echo "Three bare Ubuntu machines are running. Open controlplane with: sudo $0 shell"
-    echo "Then follow the installation lesson (the IP addresses: $(ips))."
+    echo "Three bare Ubuntu machines are running ($(ips)). Kubernetes is not installed on them yet:"
+    echo "  - to install it yourself, as in the installation lesson: sudo $0 shell, then follow the lesson"
+    echo "  - to install it in one go:                            sudo $0 install"
+    echo "kubectl runs on controlplane (sudo $0 shell). After installing, sudo $0 kubeconfig sets it up here too."
     ;;
   install)
     install
     echo
-    echo "The cluster is ready. Open controlplane with: sudo $0 shell"
+    echo "The cluster is ready:"
+    echo "  - on this server:  kubectl get nodes"
+    echo "  - the lessons run as root on controlplane:  sudo $0 shell"
+    ;;
+  kubeconfig)
+    need_docker
+    host_kubectl
     ;;
   shell)
     node=${2:-controlplane}
@@ -141,7 +172,7 @@ case ${1:-} in
     echo "Removed controlplane, node01 and node02."
     ;;
   *)
-    sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
     exit 1
     ;;
 esac

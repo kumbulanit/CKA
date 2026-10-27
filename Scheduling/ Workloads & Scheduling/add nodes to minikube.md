@@ -1,5 +1,5 @@
 
-> Optional: this is for Minikube only. The course cluster is kubeadm, where adding a node is the *growing the cluster* lesson.
+> The course's minikube cluster already has 3 nodes (`sudo ./setup.sh` starts it with `--nodes=3`); this page shows how to add or remove more. On a kubeadm cluster, adding a node is the *growing the cluster* lesson.
 
 Adding new nodes to a Minikube cluster involves configuring Minikube to use multiple nodes, which effectively creates a multi-node Kubernetes cluster on your local machine. Here’s how you can do it:
 

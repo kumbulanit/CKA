@@ -3,7 +3,7 @@
 The Metrics Server is essential for enabling Kubernetes' autoscaling features like the Horizontal Pod Autoscaler (HPA). Below is a step-by-step guide on how to set up the Metrics Server in your Kubernetes cluster and configure it to use with autoscaling.
 
 ### Step 1: Deploy the Metrics Server
-**on minikube use below commands** (on the course's kubeadm cluster, skip to the next commands)
+**on minikube use below commands** (the course's cluster; on a kubeadm cluster, skip to the next commands)
 
 ```
 minikube addons enable metrics-server

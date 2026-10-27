@@ -11,7 +11,7 @@ has() { [[ $faults == *" $1 "* ]]; }
 
 # mysql:5.6 is only built for amd64; MariaDB is a drop-in replacement on arm64 machines.
 db_image=mysql:5.6
-[ "$(kubectl get node node01 -o jsonpath='{.status.nodeInfo.architecture}')" = arm64 ] && db_image=mariadb:10.11
+[ "$(kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}')" = arm64 ] && db_image=mariadb:10.11
 
 for old in alpha beta gamma delta epsilon zeta triton; do
   kubectl delete namespace "$old" --ignore-not-found --timeout=180s >/dev/null

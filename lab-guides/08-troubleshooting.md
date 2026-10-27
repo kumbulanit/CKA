@@ -19,15 +19,15 @@ Each lab below is a practical from this repository, step by step: the command, w
 
 ## Before you start
 
-You need the three machines of the course, `controlplane`, `node01` and `node02`. On one Ubuntu server (a VM is fine: 4 CPUs, 8 GB RAM, 40 GB disk), [scripts/one-server.sh](../scripts/one-server.sh) runs them as containers, each a full Ubuntu 24.04 machine:
+Start the practice cluster on your Ubuntu server, as in the [README](../README.md#the-practice-cluster):
 
 ```bash
 git clone https://github.com/kumbulanit/CKA.git && cd CKA
-sudo ./scripts/one-server.sh install   # the three machines with Kubernetes v1.36 installed (5 to 10 minutes)
-sudo ./scripts/one-server.sh shell     # you are now root@controlplane; the repository is in /root/CKA
+sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10 minutes the first time)
+kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-If you did the installation module on these machines, you already have this cluster. `sudo ./scripts/one-server.sh shell node01` opens node01, and `sudo ./scripts/one-server.sh delete` removes the machines so you can start again. In Patchbay, starting the lab gives you the same machines.
+The steps below use the node names of the lessons. On minikube, `controlplane` is `minikube` (`minikube ssh`), `node01` is `minikube-m02` (`minikube ssh -n minikube-m02`) and `node02` is `minikube-m03`; run `kubectl` as your own user on the server. The outputs were recorded in Desired Labs, whose nodes have the lessons' names. In Desired Labs, starting the lab gives you that cluster, with `root@controlplane` in the terminal.
 
 ## Lab 8.1: App failure: alpha
 
@@ -354,10 +354,24 @@ The app should be reachable at `curl http://node01:30081`. It is currently faile
 kubectl get service -n zeta
 ```
 
+You should see something like:
+
+```text
+NAME            TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)          AGE
+mysql-service   ClusterIP   10.96.1.201   <none>        3306/TCP         0s
+web-service     NodePort    10.96.66.21   <none>        8080:30088/TCP   0s
+```
+
 **Step 2.** Edits the Service `zeta`, `web-service` with a scripted editor: `nodePort: 30088` becomes `nodePort: 30081`. Kubectl edit service -n zeta web-service   -> set nodePort to 30081.
 
 ```bash
 KUBE_EDITOR="sed -i 's/nodePort: 30088/nodePort: 30081/'" kubectl edit service -n zeta web-service
+```
+
+You should see something like:
+
+```text
+service/web-service edited
 ```
 
 **Step 3.** Edits the Deployment `webapp-mysql`, `zeta` with a scripted editor: `value: sql-user` becomes `value: root`.
@@ -366,11 +380,19 @@ KUBE_EDITOR="sed -i 's/nodePort: 30088/nodePort: 30081/'" kubectl edit service -
 KUBE_EDITOR="sed -i 's/value: sql-user/value: root/'" kubectl edit deployment webapp-mysql -n zeta
 ```
 
+You should see something like:
+
+```text
+deployment.apps/webapp-mysql edited
+```
+
 **Step 4.** Shows the pod `mysql` in the namespace `zeta` as YAML, as the API server stores it.
 
 ```bash
 kubectl get pod -n zeta mysql -o yaml > mysql.yaml
 ```
+
+It prints nothing when it works.
 
 **Step 5.** Edits `mysql.yaml`: `value: passwooooorrddd` becomes `value: paswrd`.
 
@@ -378,16 +400,31 @@ kubectl get pod -n zeta mysql -o yaml > mysql.yaml
 sed -i 's/value: passwooooorrddd/value: paswrd/' mysql.yaml
 ```
 
+It prints nothing when it works.
+
 **Step 6.** Replaces the objects in `mysql.yaml` with the edited file (deletes and creates it again).
 
 ```bash
 kubectl replace --force -f mysql.yaml
 ```
 
+You should see something like:
+
+```text
+pod "mysql" deleted from zeta namespace
+pod/mysql replaced
+```
+
 **Step 7.** Waits until the pod `mysql` is Ready in the namespace `zeta`.
 
 ```bash
 kubectl wait -n zeta --for=condition=Ready pod/mysql --timeout=180s
+```
+
+You should see something like:
+
+```text
+pod/mysql condition met
 ```
 
 ### If you see something else
@@ -421,11 +458,31 @@ The lecture notes: [04-Control-Plane-Failure.md](https://github.com/kumbulanit/C
 kubectl get pods -n kube-system
 ```
 
+You should see something like:
+
+```text
+NAME                                   READY   STATUS              RESTARTS        AGE
+coredns-589f44dc88-6k74m               1/1     Running             0               9m9s
+coredns-589f44dc88-wlvf8               1/1     Running             0               9m9s
+etcd-controlplane                      1/1     Running             0               9m17s
+kindnet-cn2ww                          1/1     Running             0               8m37s
+kindnet-j4ghr                          1/1     Running             0               8m38s
+kindnet-lggz7                          1/1     Running             0               8m40s
+kube-apiserver-controlplane            1/1     Running             0               9m16s
+kube-controller-manager-controlplane   1/1     Running             1 (5m34s ago)   9m16s
+kube-proxy-86q6m                       1/1     Running             0               9m4s
+kube-proxy-f265d                       1/1     Running             0               9m4s
+kube-proxy-xddcc                       1/1     Running             0               9m9s
+kube-scheduler-controlplane            0/1     RunContainerError   0               1s
+```
+
 **Step 2.** Edits `/etc/kubernetes/manifests/kube-scheduler.yaml`: `kube-schedulerrrr` becomes `kube-scheduler`.
 
 ```bash
 sed -i 's/kube-schedulerrrr/kube-scheduler/g' /etc/kubernetes/manifests/kube-scheduler.yaml
 ```
+
+It prints nothing when it works.
 
 ### If you see something else
 
@@ -460,10 +517,34 @@ if they are not, find out why and fix the cluster.
 kubectl scale deploy app --replicas=2
 ```
 
+You should see something like:
+
+```text
+deployment.apps/app scaled
+```
+
 **Step 2.** Lists the pods in the namespace `kube-system`.
 
 ```bash
 kubectl get pods -n kube-system
+```
+
+You should see something like:
+
+```text
+NAME                                   READY   STATUS    RESTARTS     AGE
+coredns-589f44dc88-6k74m               1/1     Running   0            9m49s
+coredns-589f44dc88-wlvf8               1/1     Running   0            9m49s
+etcd-controlplane                      1/1     Running   0            9m57s
+kindnet-cn2ww                          1/1     Running   0            9m17s
+kindnet-j4ghr                          1/1     Running   0            9m18s
+kindnet-lggz7                          1/1     Running   0            9m20s
+kube-apiserver-controlplane            1/1     Running   0            9m56s
+kube-controller-manager-controlplane   0/1     Running   1 (0s ago)   1s
+kube-proxy-86q6m                       1/1     Running   0            9m44s
+kube-proxy-f265d                       1/1     Running   0            9m44s
+kube-proxy-xddcc                       1/1     Running   0            9m49s
+kube-scheduler-controlplane            1/1     Running   0            27s
 ```
 
 **Step 3.** Edits `/etc/kubernetes/manifests/kube-controller-manager.yaml`: `controller-manager-XXXX.conf` becomes `controller-manager.conf`.
@@ -471,6 +552,8 @@ kubectl get pods -n kube-system
 ```bash
 sed -i 's/controller-manager-XXXX.conf/controller-manager.conf/' /etc/kubernetes/manifests/kube-controller-manager.yaml
 ```
+
+It prints nothing when it works.
 
 ### If you see something else
 
@@ -502,10 +585,34 @@ Something is wrong with scaling again. Scale the deployment **app** to **3** pod
 kubectl scale deploy app --replicas=3
 ```
 
+You should see something like:
+
+```text
+deployment.apps/app scaled
+```
+
 **Step 2.** Lists the pods in the namespace `kube-system`.
 
 ```bash
 kubectl get pods -n kube-system
+```
+
+You should see something like:
+
+```text
+NAME                                   READY   STATUS    RESTARTS   AGE
+coredns-589f44dc88-6k74m               1/1     Running   0          10m
+coredns-589f44dc88-wlvf8               1/1     Running   0          10m
+etcd-controlplane                      1/1     Running   0          10m
+kindnet-cn2ww                          1/1     Running   0          10m
+kindnet-j4ghr                          1/1     Running   0          10m
+kindnet-lggz7                          1/1     Running   0          10m
+kube-apiserver-controlplane            1/1     Running   0          10m
+kube-controller-manager-controlplane   0/1     Running   0          0s
+kube-proxy-86q6m                       1/1     Running   0          10m
+kube-proxy-f265d                       1/1     Running   0          10m
+kube-proxy-xddcc                       1/1     Running   0          10m
+kube-scheduler-controlplane            1/1     Running   0          75s
 ```
 
 **Step 3.** Edits `/etc/kubernetes/manifests/kube-controller-manager.yaml`: `WRONG-PKI-DIRECTORY` becomes `pki`.
@@ -513,6 +620,8 @@ kubectl get pods -n kube-system
 ```bash
 sed -i 's/WRONG-PKI-DIRECTORY/pki/' /etc/kubernetes/manifests/kube-controller-manager.yaml
 ```
+
+It prints nothing when it works.
 
 ### If you see something else
 
@@ -546,10 +655,43 @@ The lecture notes: [07-Worker-Node-Failure.md](https://github.com/kumbulanit/CKA
 kubectl get nodes
 ```
 
+You should see something like:
+
+```text
+NAME           STATUS   ROLES           AGE   VERSION
+controlplane   Ready    control-plane   11m   v1.36.4
+node01         Ready    <none>          11m   v1.36.4
+node02         Ready    <none>          11m   v1.36.4
+```
+
 **Step 2.** On `node01`: shows the state of kubelet.
 
 ```bash
 ssh node01 systemctl status kubelet --no-pager
+```
+
+You should see something like:
+
+```text
+○ kubelet.service - kubelet: The Kubernetes Node Agent
+     Loaded: loaded (/etc/systemd/system/kubelet.service; enabled; preset: enabled)
+    Drop-In: /etc/systemd/system/kubelet.service.d
+             └─10-kubeadm.conf, 11-kind.conf
+     Active: inactive (dead) since Tue 2026-10-27 16:59:04 UTC; 226ms ago
+   Duration: 11min 9.615s
+ Invocation: 362ae07a027f47f4af7ad8fe0bc5126c
+       Docs: http://kubernetes.io/docs/
+    Process: 227 ExecStartPre=/bin/sh -euc if [ -f /sys/fs/cgroup/cgroup.controllers ]; then /kind/bin/create-kubelet-cgroup-v2.sh; fi (code=exited, status=0/SUCCESS)
+    Process: 236 ExecStartPre=/bin/sh -euc if [ ! -f /sys/fs/cgroup/cgroup.controllers ] && [ ! -d /sys/fs/cgroup/systemd/kubelet ]; then mkdir -p /sys/fs/cgroup/systemd/kubelet; fi (code=exited, status=0/SUCCESS)
+    Process: 238 ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS (code=exited, status=0/SUCCESS)
+   Main PID: 238 (code=exited, status=0/SUCCESS)
+   Mem peak: 49.8M
+        CPU: 34.636s
+
+Oct 27 16:58:10 node01 kubelet[238]: I1027 16:58:10.006143     238 pod_startup_latency_tracker.go:148] "Observed pod startup duration" pod="zeta/mysql" podStartSLOduration=93.005403528 podStartE2EDuration="1m33.005403528s" totalImagesPullingTime="0s" totalInitContainerRuntime="0s" isStatefulPod=false podCreationTimestamp="2026-10-27 16:56:37 +0000 UTC" imagePullSessionsCount=0 imagePullSessionsStartsCount=0 observedRunningTime="2026-10-27 16:56:38.659639776 +0000 UTC m=+524.224332596" watchObservedRunningTime="2026-10-27 16:58:10.005403528 +0000 UTC m=+615.570096349"
+Oct 27 16:58:10 node01 kubelet[238]: I1027 16:58:10.178056     238 reconciler_common.go:251] "operationExecutor.VerifyControllerAttachedVolume started for volume \"kube-api-access-s6g2c\" (UniqueName: \"kubernetes.io/projected/a3055a3b-5415-4010-8b4a-94a346296f21-kube-api-access-s6g2c\") pod \"app-78cc97bc89-9jbl2\" (UID: \"a3055a3b-5415-4010-8b4a-94a346296f21\") " pod="default/app-78cc97bc89-9jbl2"
+Oct 27 16:58:12 node01 kubelet[238]: I1027 16:58:12.352841     238 pod_startup_latency_tracker.go:148] "Observed pod startup duration" pod="default/app-78cc97bc89-9jbl2" podStartSLOduration=1.7290337660000001 podStartE2EDuration="3.352810077s" totalImagesPullingTime="1.623776311s" totalInitContainerRuntime="0s" isStatefulPod=false podCreationTimestamp="2026-10-27 16:58:09 +0000 UTC" imagePullSessionsCount=1 imagePullSessionsStartsCount=0 observedRunningTime="2026-10-27 16:58:12.352750412 +0000 UTC m=+617.917443233" watchObservedRunningTime="2026-10-27 16:58:12.352810077 +0000 UTC m=+617.917502898"
+… (7 more lines)
 ```
 
 **Step 3.** On `node01`: starts kubelet.
@@ -558,10 +700,18 @@ ssh node01 systemctl status kubelet --no-pager
 ssh node01 systemctl start kubelet
 ```
 
+It prints nothing when it works.
+
 **Step 4.** Waits until the node `node01` is Ready.
 
 ```bash
 kubectl wait --for=condition=Ready node/node01 --timeout=90s
+```
+
+You should see something like:
+
+```text
+node/node01 condition met
 ```
 
 ### If you see something else
@@ -591,10 +741,27 @@ The cluster is broken again: **node01** is not working. Investigate and fix the 
 ssh node01 journalctl -u kubelet --no-pager -n 5
 ```
 
+You should see something like:
+
+```text
+Oct 27 21:52:08 node01 kubelet[4411]: I1027 21:52:08.211763    4411 server.go:985] "Client rotation is on, will bootstrap in background"
+Oct 27 21:52:08 node01 kubelet[4411]: I1027 21:52:08.212478    4411 certificate_store.go:147] "Loading cert/key pair from a file" filePath="/var/lib/kubelet/pki/kubelet-client-current.pem"
+Oct 27 21:52:08 node01 kubelet[4411]: E1027 21:52:08.215140    4411 run.go:72] "command failed" err="failed to run Kubelet: open /etc/kubernetes/pki/WRONG-CA-FILE.crt: no such file or directory"
+Oct 27 21:52:08 node01 systemd[1]: kubelet.service: Main process exited, code=exited, status=1/FAILURE
+Oct 27 21:52:08 node01 systemd[1]: kubelet.service: Failed with result 'exit-code'.
+```
+
 **Step 2.** On `node01`: lists the files in `/etc/kubernetes/pki`.
 
 ```bash
 ssh node01 ls -l /etc/kubernetes/pki
+```
+
+You should see something like:
+
+```text
+total 4
+-rw-r--r-- 1 root root 1107 Oct 27 21:42 ca.crt
 ```
 
 **Step 3.** On `node01`: runs systemctl on kubelet.
@@ -603,16 +770,48 @@ ssh node01 ls -l /etc/kubernetes/pki
 ssh node01 systemctl cat kubelet
 ```
 
+You should see something like:
+
+```text
+# /etc/systemd/system/kubelet.service
+# slightly modified from:
+# https://github.com/kubernetes/kubernetes/blob/ba8fcafaf8c502a454acd86b728c857932555315/build/debs/kubelet.service
+[Unit]
+Description=kubelet: The Kubernetes Node Agent
+Documentation=http://kubernetes.io/docs/
+# NOTE: kind deviates from upstream here to avoid crashlooping
+# This does *not* support altering the kubelet config path though.
+# We intend to upstream this change but first need to solve the upstream
+# Packaging problem (all kubernetes versions use the same files out of tree).
+ConditionPathExists=/var/lib/kubelet/config.yaml
+
+[Service]
+ExecStart=/usr/bin/kubelet
+Restart=always
+StartLimitInterval=0
+# NOTE: kind deviates from upstream here with a lower RestartSec
+RestartSec=1s
+… (32 more lines)
+```
+
 **Step 4.** On `node01`: edits `/var/lib/kubelet/config.yaml`: `WRONG-CA-FILE.crt` becomes `ca.crt`.
 
 ```bash
 ssh node01 "sed -i 's/WRONG-CA-FILE.crt/ca.crt/g' /var/lib/kubelet/config.yaml"
 ```
 
+It prints nothing when it works.
+
 **Step 5.** Waits until the node `node01` is Ready.
 
 ```bash
 kubectl wait --for=condition=Ready node/node01 --timeout=90s
+```
+
+You should see something like:
+
+```text
+node/node01 condition met
 ```
 
 ### If you see something else
@@ -644,11 +843,23 @@ The cluster is broken again: **node01** goes `NotReady` (it can take up to a min
 ssh node01 journalctl -u kubelet --no-pager -n 5
 ```
 
+You should see something like:
+
+```text
+Oct 27 16:59:13 node01 kubelet[4762]: I1027 16:59:13.340668    4762 kubelet_network_linux.go:53] "Initialized iptables rules." protocol="IPv4"
+Oct 27 16:59:13 node01 kubelet[4762]: I1027 16:59:13.347020    4762 kubelet_network_linux.go:53] "Initialized iptables rules." protocol="IPv6"
+Oct 27 16:59:13 node01 kubelet[4762]: I1027 16:59:13.347067    4762 status_manager.go:277] "Starting to sync pod status with apiserver"
+Oct 27 16:59:13 node01 kubelet[4762]: I1027 16:59:13.347113    4762 kubelet.go:2622] "Starting kubelet main sync loop"
+Oct 27 16:59:13 node01 kubelet[4762]: E1027 16:59:13.347157    4762 kubelet.go:2646] "Skipping pod synchronization" err="[container runtime status check may not have completed yet, PLEG is not healthy: pleg has yet to be successful]"
+```
+
 **Step 2.** On `node01`: edits `/etc/kubernetes/kubelet.conf`: `6553` becomes `6443`.
 
 ```bash
 ssh node01 "sed -i 's/6553/6443/g' /etc/kubernetes/kubelet.conf"
 ```
+
+It prints nothing when it works.
 
 **Step 3.** On `node01`: restarts kubelet.
 
@@ -656,10 +867,18 @@ ssh node01 "sed -i 's/6553/6443/g' /etc/kubernetes/kubelet.conf"
 ssh node01 systemctl restart kubelet
 ```
 
+It prints nothing when it works.
+
 **Step 4.** Waits until the node `node01` is Ready.
 
 ```bash
 kubectl wait --for=condition=Ready node/node01 --timeout=90s
+```
+
+You should see something like:
+
+```text
+node/node01 condition met
 ```
 
 ### If you see something else
@@ -698,10 +917,42 @@ The repository's notes: [10-Practice-Test-Troubleshoot-Network.md](https://githu
 kubectl get pods -A
 ```
 
+You should see something like:
+
+```text
+NAMESPACE            NAME                                      READY   STATUS              RESTARTS      AGE
+default              app-78cc97bc89-9jbl2                      1/1     Running             0             119s
+default              app-78cc97bc89-cngnz                      1/1     Running             0             3m9s
+default              app-78cc97bc89-dj2dm                      1/1     Running             0             69s
+kube-system          coredns-589f44dc88-6k74m                  1/1     Running             0             12m
+kube-system          coredns-589f44dc88-wlvf8                  1/1     Running             0             12m
+kube-system          etcd-controlplane                         1/1     Running             0             12m
+kube-system          kindnet-cn2ww                             1/1     Running             0             11m
+kube-system          kindnet-j4ghr                             1/1     Running             0             11m
+kube-system          kindnet-lggz7                             1/1     Running             0             11m
+kube-system          kube-apiserver-controlplane               1/1     Running             0             12m
+kube-system          kube-controller-manager-controlplane      1/1     Running             0             88s
+kube-system          kube-proxy-676tq                          0/1     Error               3 (36s ago)   53s
+kube-system          kube-proxy-vrhql                          0/1     Error               3 (36s ago)   52s
+kube-system          kube-proxy-w9lqj                          0/1     Error               3 (36s ago)   53s
+kube-system          kube-scheduler-controlplane               1/1     Running             0             2m56s
+local-path-storage   local-path-provisioner-56c4685b7c-kdzsw   1/1     Running             0             12m
+triton               mysql                                     0/1     ContainerCreating   0             0s
+triton               webapp-mysql-59699d9cb7-f8g9t             0/1     ContainerCreating   0             0s
+```
+
 **Step 2.** Prints the logs of it.
 
 ```bash
 kubectl -n kube-system logs -l k8s-app=kube-proxy --tail=3
+```
+
+You should see something like:
+
+```text
+E1027 16:59:58.548043       1 run.go:72] "command failed" err="failed complete: open /var/lib/kube-proxy/configuration.conf: no such file or directory"
+E1027 16:59:56.284505       1 run.go:72] "command failed" err="failed complete: open /var/lib/kube-proxy/configuration.conf: no such file or directory"
+E1027 17:00:02.875950       1 run.go:72] "command failed" err="failed complete: open /var/lib/kube-proxy/configuration.conf: no such file or directory"
 ```
 
 **Step 3.** Shows the details of the ConfigMap `kube-proxy` in the namespace `kube-system`, with its recent events at the bottom.
@@ -710,16 +961,40 @@ kubectl -n kube-system logs -l k8s-app=kube-proxy --tail=3
 kubectl describe cm -n kube-system kube-proxy | grep -E '^(config|kubeconfig)'
 ```
 
+You should see something like:
+
+```text
+config.conf:
+configSyncPeriod: 0s
+kubeconfig.conf:
+```
+
 **Step 4.** Edits the DaemonSet `kube-system`, `kube-proxy` with a scripted editor: `/var/lib/kube-proxy/configuration.conf` becomes `/var/lib/kube-proxy/config.conf`. Kubectl edit ds -n kube-system kube-proxy   -> --config=/var/lib/kube-proxy/config.conf.
 
 ```bash
 KUBE_EDITOR="sed -i 's#/var/lib/kube-proxy/configuration.conf#/var/lib/kube-proxy/config.conf#'" kubectl edit ds -n kube-system kube-proxy
 ```
 
+You should see something like:
+
+```text
+daemonset.apps/kube-proxy edited
+```
+
 **Step 5.** Waits until the rollout of the DaemonSet `kube-proxy` has finished.
 
 ```bash
 kubectl -n kube-system rollout status ds/kube-proxy
+```
+
+You should see something like:
+
+```text
+Waiting for daemon set "kube-proxy" rollout to finish: 0 out of 3 new pods have been updated...
+Waiting for daemon set "kube-proxy" rollout to finish: 2 out of 3 new pods have been updated...
+Waiting for daemon set "kube-proxy" rollout to finish: 0 of 3 updated pods are available...
+Waiting for daemon set "kube-proxy" rollout to finish: 1 of 3 updated pods are available...
+daemon set "kube-proxy" successfully rolled out
 ```
 
 ### If you see something else
@@ -753,10 +1028,40 @@ The repository's notes: [10-Practice-Test-Troubleshoot-Network.md](https://githu
 kubectl get nodes
 ```
 
+You should see something like:
+
+```text
+NAME           STATUS   ROLES           AGE   VERSION
+controlplane   Ready    control-plane   13m   v1.36.4
+node01         Ready    <none>          13m   v1.36.4
+node02         Ready    <none>          13m   v1.36.4
+```
+
 **Step 2.** Lists the pods in every namespace.
 
 ```bash
 kubectl get pods -A
+```
+
+You should see something like:
+
+```text
+NAMESPACE            NAME                                      READY   STATUS              RESTARTS   AGE
+default              app-78cc97bc89-9jbl2                      1/1     Running             0          2m52s
+default              app-78cc97bc89-cngnz                      1/1     Running             0          4m2s
+default              app-78cc97bc89-dj2dm                      1/1     Running             0          2m2s
+kube-system          coredns-589f44dc88-6k74m                  1/1     Running             0          13m
+kube-system          coredns-589f44dc88-wlvf8                  1/1     Running             0          13m
+kube-system          etcd-controlplane                         1/1     Running             0          13m
+kube-system          kube-apiserver-controlplane               1/1     Running             0          13m
+kube-system          kube-controller-manager-controlplane      1/1     Running             0          2m21s
+kube-system          kube-proxy-7jwxs                          1/1     Running             0          53s
+kube-system          kube-proxy-q8glf                          1/1     Running             0          52s
+kube-system          kube-proxy-txl9s                          1/1     Running             0          52s
+kube-system          kube-scheduler-controlplane               1/1     Running             0          3m49s
+local-path-storage   local-path-provisioner-56c4685b7c-kdzsw   1/1     Running             0          13m
+triton               mysql                                     0/1     ContainerCreating   0          1s
+triton               webapp-mysql-59699d9cb7-78q9t             0/1     ContainerCreating   0          1s
 ```
 
 **Step 3.** Creates the objects in `https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml`, or updates them if they exist.
@@ -765,10 +1070,41 @@ kubectl get pods -A
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml
 ```
 
+You should see something like:
+
+```text
+poddisruptionbudget.policy/calico-kube-controllers created
+serviceaccount/calico-kube-controllers created
+serviceaccount/calico-node created
+serviceaccount/calico-cni-plugin created
+configmap/calico-config created
+customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/bgpfilters.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/caliconodestatuses.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
+customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
+… (20 more lines)
+```
+
 **Step 4.** Waits until the rollout of the DaemonSet `calico-node` has finished.
 
 ```bash
 kubectl -n kube-system rollout status ds/calico-node --timeout=180s
+```
+
+You should see something like:
+
+```text
+Waiting for daemon set "calico-node" rollout to finish: 0 of 3 updated pods are available...
+error: timed out waiting for the condition
 ```
 
 **Step 5.** Lists the pods in the namespace `triton`.
@@ -777,10 +1113,24 @@ kubectl -n kube-system rollout status ds/calico-node --timeout=180s
 kubectl get pods -n triton
 ```
 
+You should see something like:
+
+```text
+NAME                            READY   STATUS              RESTARTS   AGE
+mysql                           0/1     ContainerCreating   0          3m4s
+webapp-mysql-59699d9cb7-78q9t   0/1     ContainerCreating   0          3m4s
+```
+
 **Step 6.** Restarts every pod of the Deployment `coredns`.
 
 ```bash
 kubectl -n kube-system rollout restart deployment coredns
+```
+
+You should see something like:
+
+```text
+deployment.apps/coredns restarted
 ```
 
 **Step 7.** Waits until the rollout of the Deployment `coredns` has finished.
@@ -789,10 +1139,31 @@ kubectl -n kube-system rollout restart deployment coredns
 kubectl -n kube-system rollout status deployment coredns --timeout=120s
 ```
 
+You should see something like:
+
+```text
+Waiting for deployment spec update to be observed...
+Waiting for deployment spec update to be observed...
+Waiting for deployment "coredns" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "coredns" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "coredns" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "coredns" rollout to finish: 1 old replicas are pending termination...
+error: timed out waiting for the condition
+```
+
 **Step 8.** Sends an HTTP request to `http://node01:30081` and prints the answer.
 
 ```bash
 curl http://node01:30081
+```
+
+You should see something like:
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+curl: (7) Failed to connect to node01 port 30081 after 17 ms: Could not connect to server
 ```
 
 ### If you see something else

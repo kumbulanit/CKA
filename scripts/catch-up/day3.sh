@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # day3.sh [lab ...]: creates what the Day 3 labs (logging and monitoring, storage) leave in the
 # cluster, as at the end of each lab, before its clean-up step.
-# Use it when the class runs out of time: run it on controlplane as root, for one lab
+# Use it when the class runs out of time: run it where kubectl works (on the minikube server, or as
+# root on controlplane on a kubeadm cluster), for one lab
 # (./day3.sh pv-pvc) or for the whole day (./day3.sh). ./day3.sh --list shows the labs.
 #
 # The troubleshooting labs set up their own broken scenarios: see Troubleshooting/00-Practice-Setup.md.
@@ -15,7 +16,7 @@ LABS=(
   "prometheus|Prometheus and Grafana with Helm; heavy, so only when named (setting up promtheus)"
   "pv-pvc|PersistentVolume pv-log, claim claim-log-1 and pod webapp using it (10-Practice-Test-Persistent-Volume-Claims)"
   "storage-class|local-path provisioner with myclaim and mypod (12-Storage-Class)"
-  "local-storage|StorageClasses local-storage and delayed-volume-sc, local-pv on node01, local-pvc and pod nginx (13-Practice-Test-Storage-Class)"
+  "local-storage|StorageClasses local-storage and delayed-volume-sc, local-pv on node01 (minikube-m02), local-pvc and pod nginx (13-Practice-Test-Storage-Class)"
 )
 OPTIONAL=(prometheus)
 
@@ -105,7 +106,7 @@ lab_prometheus() {
 }
 
 lab_pv_pvc() {
-  for n in node01 node02; do on_node "$n" 'mkdir -p /var/log/webapp /pv/log'; done
+  for n in "$NODE1" "$NODE2"; do on_node "$n" 'mkdir -p /var/log/webapp /pv/log'; done
   apply <<'EOF'
 apiVersion: v1
 kind: PersistentVolume
@@ -189,8 +190,8 @@ EOF
 }
 
 lab_local_storage() {
-  on_node node01 'mkdir -p /opt/vol1'
-  apply <<'EOF'
+  on_node "$NODE1" 'mkdir -p /opt/vol1'
+  apply <<EOF
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -231,7 +232,7 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - node01
+          - $NODE1
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
