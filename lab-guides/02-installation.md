@@ -30,7 +30,7 @@ Their IP addresses are `172.30.56.10` (controlplane), `.11` (node01) and `.12` (
 
 ### What you will do
 
-Follow **Step 1** of [Kubernetes installation using kubeadm.md](https://github.com/kumbulanit/CKA/blob/main/Domain%201%20-Installation,%20Configuration%20%26%20Validation%20/Kubernetes%20installation%20using%20kubeadm.md)
+Follow **Step 1** of [Kubernetes installation using kubeadm.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/Kubernetes%20installation%20using%20kubeadm.md)
 on **controlplane, node01 and node02**. Your terminal is root on controlplane; reach the workers
 with `ssh node01` and `ssh node02` (and `exit` to come back).
 
@@ -650,7 +650,7 @@ kube-system   kube-scheduler-controlplane                1/1     Running    0   
 
 ### What you will do
 
-Follow [growing the cluster.md](https://github.com/kumbulanit/CKA/blob/main/Domain%201%20-Installation,%20Configuration%20%26%20Validation%20/growing%20the%20cluster.md)
+Follow [growing the cluster.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/growing%20the%20cluster.md)
 to add **node03**:
 
 1. Set node03's host name, add node03 to `/etc/hosts` on controlplane, node01 and node02, and add
@@ -770,7 +770,7 @@ kubectl get pods --all-namespaces
 
 ### What you will do
 
-Follow the example scenario in [condoning and drainning nodes.md](https://github.com/kumbulanit/CKA/blob/main/Domain%201%20-Installation,%20Configuration%20%26%20Validation%20/condoning%20and%20drainning%20nodes.md):
+Follow the example scenario in [condoning and drainning nodes.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/condoning%20and%20drainning%20nodes.md):
 
 1. Cordon **node01** and check its status (`SchedulingDisabled`).
 2. Drain it with `--ignore-daemonsets --delete-emptydir-data`.
@@ -851,7 +851,7 @@ kubectl get nodes
 
 ### What you will do
 
-Follow section 1, step 2 of [cluster maintanance.md](https://github.com/kumbulanit/CKA/blob/main/Domain%201%20-Installation,%20Configuration%20%26%20Validation%20/cluster%20maintanance.md)
+Follow section 1, step 2 of [cluster maintanance.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/cluster%20maintanance.md)
 on **controlplane**, to upgrade it from v1.36 to **v1.37.1**:
 
 1. Point the Kubernetes apt repository at v1.37, update, and list the kubeadm versions.

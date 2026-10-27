@@ -5,8 +5,7 @@
 #   git clone https://github.com/kumbulanit/CKA.git && cd CKA
 #   sudo ./setup.sh
 #
-# It installs the same tools as the minikube lesson ("Domain 1 -Installation, Configuration &
-# Validation /install-kubernetes.md"): Docker, minikube, kubectl v1.36 and helm, plus git, curl,
+# It installs the same tools as the minikube lesson (02-installation/install-kubernetes.md): Docker, minikube, kubectl v1.36 and helm, plus git, curl,
 # jq, vim, nano and bash completion. Then, as the user who ran sudo, it creates and starts a
 # minikube cluster on Docker: Kubernetes v1.36.5 with Calico, 3 nodes (minikube is the control
 # plane; minikube-m02 and minikube-m03 are the workers). It takes about 10 minutes the first time.

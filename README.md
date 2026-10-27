@@ -45,7 +45,7 @@ sudo ./scripts/one-server.sh shell         # root@controlplane; shell node01 ope
 sudo ./scripts/one-server.sh delete        # remove them
 ```
 
-`sudo ./scripts/one-server.sh install` installs the kubeadm cluster on them in one go, with [scripts/install-cluster.sh](./scripts/install-cluster.sh) (the same steps as the [installation guide](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20/Kubernetes%20installation%20using%20kubeadm.md)). On separate machines, run that script as root on each one, controlplane first, with your three IP addresses: `sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.168.56.12`. It prints the command to run on node01 and node02.
+`sudo ./scripts/one-server.sh install` installs the kubeadm cluster on them in one go, with [scripts/install-cluster.sh](./scripts/install-cluster.sh) (the same steps as the [installation guide](./02-installation/Kubernetes%20installation%20using%20kubeadm.md)). On separate machines, run that script as root on each one, controlplane first, with your three IP addresses: `sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.168.56.12`. It prints the command to run on node01 and node02.
 
 ## Scripts
 
@@ -71,8 +71,8 @@ Each module has a step-by-step guide in [lab-guides](./lab-guides): every comman
 
 | # | Topic | Folder | Step-by-step guide |
 | --- | --- | --- | --- |
-| 1 | Core concepts: pods, ReplicaSets, Deployments, Namespaces, Services | [Domain 1 - Core Concepts](./Domain%201%20-%20Core%20Concepts) | [Module 1](./lab-guides/01-core-concepts.md) |
-| 2 | Installation, configuration and validation: kubeadm, adding nodes, upgrades, drain, etcd backup | [Domain 1 -Installation, Configuration & Validation](./Domain%201%20-Installation,%20Configuration%20&%20Validation%20) | [Module 2](./lab-guides/02-installation.md) |
+| 1 | Core concepts: pods, ReplicaSets, Deployments, Namespaces, Services | [01-core-concepts](./01-core-concepts) | [Module 1](./lab-guides/01-core-concepts.md) |
+| 2 | Installation, configuration and validation: kubeadm, adding nodes, upgrades, drain, etcd backup | [02-installation](./02-installation) | [Module 2](./lab-guides/02-installation.md) |
 | 3 | Workloads and scheduling | [Scheduling](./Scheduling) | [Module 3](./lab-guides/03-scheduling.md) |
 | 4 | Services and networking | [Networking](./Networking) | [Module 4](./lab-guides/04-networking.md) |
 | 5 | Security | [security](./security) | [Module 5](./lab-guides/05-security.md) |

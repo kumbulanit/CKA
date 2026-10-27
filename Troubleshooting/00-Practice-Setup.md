@@ -1,6 +1,6 @@
 # Practice Setup: Breaking the Cluster on Purpose
 
-The solutions in this folder come from practice labs where the cluster was already broken for you. On your own cluster (built with [Kubernetes installation using kubeadm](../Domain%201%20-Installation,%20Configuration%20&%20Validation%20/Kubernetes%20installation%20using%20kubeadm.md), nodes `controlplane`, `node01`, `node02`), run the command for a scenario first, then troubleshoot it with the matching solution.
+The solutions in this folder come from practice labs where the cluster was already broken for you. On your own cluster (built with [Kubernetes installation using kubeadm](../02-installation/Kubernetes%20installation%20using%20kubeadm.md), nodes `controlplane`, `node01`, `node02`), run the command for a scenario first, then troubleshoot it with the matching solution.
 
 Run everything as root on `controlplane` (`sudo -i`). Root SSH to the workers (step 8 of the installation guide) is needed for the worker node scenarios. Do one scenario at a time and fix it before the next.
 

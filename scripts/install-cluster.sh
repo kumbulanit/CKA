@@ -2,7 +2,7 @@
 # install-cluster <node-name> <controlplane-ip> <node01-ip> <node02-ip> [join command]
 #
 # Builds the course cluster on fresh Ubuntu 24.04 machines, with the same steps as
-# "Domain 1 -Installation, Configuration & Validation /Kubernetes installation using kubeadm.md":
+# "02-installation/Kubernetes installation using kubeadm.md":
 # host names, swap, kernel settings, containerd, kubeadm/kubelet/kubectl v1.36, and then
 #   - on controlplane: kubeadm init, kubectl for root (and the sudo user), Calico, helm and
 #     etcd-client; it prints the command to run on each worker;
