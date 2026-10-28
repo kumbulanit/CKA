@@ -27,10 +27,10 @@ spec:
    type: back-end
 ```
 
-This is also the file [`11-services-clusterip.yaml`](./11-services-clusterip.yaml) in this folder: `kubectl apply -f 11-services-clusterip.yaml`
+This is also the file [`12-services-clusterip.yaml`](./12-services-clusterip.yaml) in this folder: `kubectl apply -f 12-services-clusterip.yaml`
 
 ```
-kubectl create -f 11-services-clusterip.yaml
+kubectl create -f 12-services-clusterip.yaml
 ```
 
 #### To list the services

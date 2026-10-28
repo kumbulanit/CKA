@@ -24,7 +24,7 @@ spec:
     - containerPort: 80
 ```
 
-This is also the file [`04-standalone-pods-2-standalone-pod.yaml`](./04-standalone-pods-2-standalone-pod.yaml) in this folder: `kubectl apply -f 04-standalone-pods-2-standalone-pod.yaml`
+This is also the file [`07-standalone-pods-standalone-pod.yaml`](./07-standalone-pods-standalone-pod.yaml) in this folder: `kubectl apply -f 07-standalone-pods-standalone-pod.yaml`
 
 **Explanation**:
 - `apiVersion`: The version of the Kubernetes API being used.
@@ -38,11 +38,11 @@ This is also the file [`04-standalone-pods-2-standalone-pod.yaml`](./04-standalo
 
 ### Deploying a Standalone Pod
 
-1. **The YAML file**: the YAML above is the file `04-standalone-pods-2-standalone-pod.yaml` in this folder.
+1. **The YAML file**: the YAML above is the file `07-standalone-pods-standalone-pod.yaml` in this folder.
 
 2. **Apply the YAML file to create the Pod**:
    ```sh
-   kubectl apply -f 04-standalone-pods-2-standalone-pod.yaml
+   kubectl apply -f 07-standalone-pods-standalone-pod.yaml
    ```
 
 3. **Verify the Pod status**:
@@ -121,11 +121,11 @@ kubectl delete pod standalone-pod
        command: ['sh', '-c', 'echo Hello Kubernetes! && sleep 3600']
    ```
 
-   This is also the file [`04-standalone-pods-2-test-pod.yaml`](./04-standalone-pods-2-test-pod.yaml) in this folder: `kubectl apply -f 04-standalone-pods-2-test-pod.yaml`
+   This is also the file [`07-standalone-pods-test-pod.yaml`](./07-standalone-pods-test-pod.yaml) in this folder: `kubectl apply -f 07-standalone-pods-test-pod.yaml`
 
 **2. Apply the Pod configuration**:
    ```sh
-   kubectl apply -f 04-standalone-pods-2-test-pod.yaml
+   kubectl apply -f 07-standalone-pods-test-pod.yaml
    ```
 
 **3. Verify the Pod is running**:

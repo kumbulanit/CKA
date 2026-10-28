@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
-# day3.sh [lab ...]: creates what the Day 3 labs (logging and monitoring, storage) leave in the
-# cluster, as at the end of each lab, before its clean-up step.
+# day3.sh [lab ...]: creates what the Day 3 labs (storage, logging and monitoring, cluster
+# maintenance) leave in the cluster, as at the end of each lab, before its clean-up step.
 # Use it when the class runs out of time: run it where kubectl works (on the minikube server, or as
 # root on controlplane on a kubeadm cluster), for one lab
 # (./day3.sh pv-pvc) or for the whole day (./day3.sh). ./day3.sh --list shows the labs.
 #
 # The troubleshooting labs set up their own broken scenarios: see 08-troubleshooting/00-practice-setup.md.
+# Not done here, because they change the machines rather than the cluster: cordon/drain and the
+# upgrade to v1.37.
 # shellcheck source-path=SCRIPTDIR disable=SC2034
 source "$(dirname "$0")/lib.sh"
 
 LABS=(
+  "pv-pvc|PersistentVolume pv-log, claim claim-log-1 and pod webapp using it (06-storage/10-practice-test-persistent-volume-claims)"
+  "storage-class|local-path provisioner with myclaim and mypod (06-storage/11-storage-classes)"
+  "local-storage|StorageClasses local-storage and delayed-volume-sc, local-pv on node01 (minikube-m02), local-pvc and pod nginx (06-storage/12-practice-test-storage-classes)"
   "metrics-server|metrics-server (--kubelet-insecure-tls), Deployment nginx with an HPA (07-logging-monitoring/03-metrics-server-and-autoscaling)"
   "monitor-pods|Pods elephant, lion and rabbit for kubectl top (07-logging-monitoring/04-practice-test-monitor-cluster-components)"
   "app-logs|Pods webapp-1 and webapp-2 that write logs (07-logging-monitoring/06-practice-test-managing-application-logs)"
   "prometheus|Prometheus and Grafana with Helm; heavy, so only when named (07-logging-monitoring/07-prometheus-and-grafana)"
-  "pv-pvc|PersistentVolume pv-log, claim claim-log-1 and pod webapp using it (06-storage/10-practice-test-persistent-volume-claims)"
-  "storage-class|local-path provisioner with myclaim and mypod (06-storage/11-storage-classes)"
-  "local-storage|StorageClasses local-storage and delayed-volume-sc, local-pv on node01 (minikube-m02), local-pvc and pod nginx (06-storage/12-practice-test-storage-classes)"
+  "etcd-backup|etcd snapshot in etcd's data folder (/opt/etcd-backup.db on kubeadm) (09-cluster-maintenance/02-cluster-maintenance)"
 )
 OPTIONAL=(prometheus)
 
@@ -266,6 +269,32 @@ spec:
         persistentVolumeClaim:
           claimName: local-pvc
 EOF
+}
+
+lab_etcd_backup() {
+  if [ -f /etc/kubernetes/pki/etcd/ca.crt ]; then
+    # On controlplane of a kubeadm cluster, as in the lesson.
+    need_root
+    command -v etcdctl >/dev/null || apt-get install -y -q etcd-client
+    ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/server.crt \
+      --key=/etc/kubernetes/pki/etcd/server.key \
+      snapshot save /opt/etcd-backup.db
+    return
+  fi
+  # Elsewhere (minikube): etcdctl inside the etcd pod, with the certificate files etcd itself uses
+  # (/var/lib/minikube/certs/etcd on minikube). The snapshot is saved in etcd's data folder on the
+  # control plane node.
+  local pod cmd dir
+  pod=$(kubectl -n kube-system get pod -l component=etcd -o jsonpath='{.items[0].metadata.name}')
+  cmd=$(kubectl -n kube-system get pod "$pod" -o jsonpath='{.spec.containers[0].command}')
+  flag() { grep -o "\"--$1=[^\"]*\"" <<<"$cmd" | cut -d= -f2 | tr -d '"'; }
+  dir=$(flag data-dir)
+  kubectl -n kube-system exec "$pod" -- etcdctl --endpoints=https://127.0.0.1:2379 \
+    --cacert="$(flag trusted-ca-file)" --cert="$(flag cert-file)" --key="$(flag key-file)" \
+    snapshot save "$dir/etcd-backup.db"
+  echo "Saved on node $CP in $dir/etcd-backup.db (minikube ssh, then: sudo ls -l $dir)"
 }
 
 run_labs "$@"

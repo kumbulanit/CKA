@@ -33,11 +33,11 @@ spec:
     type: front-end
 ```
 
-This is also the file [`08-deployments.yaml`](./08-deployments.yaml) in this folder: `kubectl apply -f 08-deployments.yaml`
+This is also the file [`09-deployments.yaml`](./09-deployments.yaml) in this folder: `kubectl apply -f 09-deployments.yaml`
 
 - Once the file is ready, create the deployment using deployment definition file
   ```
-  kubectl create -f 08-deployments.yaml
+  kubectl create -f 09-deployments.yaml
   ```
 - To see the created deployment
   ```

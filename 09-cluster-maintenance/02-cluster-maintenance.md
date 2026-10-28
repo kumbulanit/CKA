@@ -128,7 +128,7 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
              averageUtilization: 50
      ```
 
-     This is also the file [`06-cluster-maintenance-my-app-hpa.yaml`](./06-cluster-maintenance-my-app-hpa.yaml) in this folder: `kubectl apply -f 06-cluster-maintenance-my-app-hpa.yaml`
+     This is also the file [`02-cluster-maintenance-my-app-hpa.yaml`](./02-cluster-maintenance-my-app-hpa.yaml) in this folder: `kubectl apply -f 02-cluster-maintenance-my-app-hpa.yaml`
 
 3. **Manage Storage**:
    - Monitor and clean up unused PersistentVolumeClaims (PVCs) and volumes.
@@ -181,7 +181,7 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
      verbs: ["get", "list", "watch"]
    ```
 
-   This is also the file [`06-cluster-maintenance-pod-reader.yaml`](./06-cluster-maintenance-pod-reader.yaml) in this folder: `kubectl apply -f 06-cluster-maintenance-pod-reader.yaml`
+   This is also the file [`02-cluster-maintenance-pod-reader.yaml`](./02-cluster-maintenance-pod-reader.yaml) in this folder: `kubectl apply -f 02-cluster-maintenance-pod-reader.yaml`
 
 3. **Use Network Policies**:
    - Define network policies to control traffic flow between pods.
@@ -203,7 +203,7 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
              role: backend
    ```
 
-   This is also the file [`06-cluster-maintenance-allow-ingress.yaml`](./06-cluster-maintenance-allow-ingress.yaml) in this folder: `kubectl apply -f 06-cluster-maintenance-allow-ingress.yaml`
+   This is also the file [`02-cluster-maintenance-allow-ingress.yaml`](./02-cluster-maintenance-allow-ingress.yaml) in this folder: `kubectl apply -f 02-cluster-maintenance-allow-ingress.yaml`
 
 4. **Monitor for Vulnerabilities**:
    - Use security scanning tools like Trivy or Clair to scan container images for vulnerabilities.

@@ -61,9 +61,9 @@ sudo ./scripts/one-server.sh delete        # remove them
 
 | Day | Topics | Script |
 | --- | --- | --- |
-| 1 | Installation, configuration and validation; core concepts (modules 1–2) | [day1.sh](./scripts/catch-up/day1.sh) |
+| 1 | Installation; core concepts (modules 1–2) | [day1.sh](./scripts/catch-up/day1.sh) |
 | 2 | Workloads and scheduling; services and networking; security (modules 3–5) | [day2.sh](./scripts/catch-up/day2.sh) |
-| 3 | Storage; logging and monitoring; troubleshooting (modules 6–8) | [day3.sh](./scripts/catch-up/day3.sh) |
+| 3 | Storage; logging and monitoring; troubleshooting; cluster maintenance (modules 6–9) | [day3.sh](./scripts/catch-up/day3.sh) |
 
 The scripts can be run again safely. They leave out what changes the machines rather than the cluster (installing, adding node03, the v1.37 upgrade, draining), and the troubleshooting labs, which set themselves up with [00-practice-setup.md](./08-troubleshooting/00-practice-setup.md).
 
@@ -73,14 +73,15 @@ Each module has a step-by-step guide in [lab-guides](./lab-guides): every comman
 
 | # | Topic | Folder | Step-by-step guide |
 | --- | --- | --- | --- |
-| 1 | Installation, configuration and validation: the minikube cluster first, then drain and etcd backup; the `kubeadm-lesson-*` files (kubeadm install, adding nodes, HA) are the optional kubeadm route | [01-installation](./01-installation) | [Installation guide](./lab-guides/02-installation.md) |
-| 2 | Core concepts: pods, Namespaces, Deployments, ReplicaSets, Services | [02-core-concepts](./02-core-concepts) | [Core concepts guide](./lab-guides/01-core-concepts.md) |
+| 1 | Installation: the minikube cluster; the `kubeadm-lesson-*` files (kubeadm install, adding nodes, HA) are the optional kubeadm route | [01-installation](./01-installation) | [Installation guide](./lab-guides/02-installation.md) |
+| 2 | Core concepts: pods, standalone pods, Namespaces, Deployments, ReplicaSets, Services | [02-core-concepts](./02-core-concepts) | [Core concepts guide](./lab-guides/01-core-concepts.md) |
 | 3 | Workloads and scheduling | [03-scheduling](./03-scheduling) | [Scheduling guide](./lab-guides/03-scheduling.md) |
 | 4 | Services and networking | [04-networking](./04-networking) | [Networking guide](./lab-guides/04-networking.md) |
 | 5 | Security | [05-security](./05-security) | [Security guide](./lab-guides/05-security.md) |
 | 6 | Storage | [06-storage](./06-storage) | [Storage guide](./lab-guides/06-storage.md) |
 | 7 | Logging and monitoring | [07-logging-monitoring](./07-logging-monitoring) | [Logging guide](./lab-guides/07-logging-monitoring.md) |
 | 8 | Troubleshooting (set up the broken scenarios with [00-practice-setup.md](./08-troubleshooting/00-practice-setup.md)) | [08-troubleshooting](./08-troubleshooting) | [Troubleshooting guide](./lab-guides/08-troubleshooting.md) |
+| 9 | Cluster maintenance: cordon and drain, upgrades, etcd backup | [09-cluster-maintenance](./09-cluster-maintenance) | In the [installation guide](./lab-guides/02-installation.md) |
 | | Practice questions | [practice-tests](./practice-tests) | |
 
 ## Conventions

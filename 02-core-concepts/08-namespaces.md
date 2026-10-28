@@ -35,14 +35,14 @@ spec:
     image: nginx
  ```
 
-This is also the file [`07-namespaces-pod-definition.yaml`](./07-namespaces-pod-definition.yaml) in this folder: `kubectl apply -f 07-namespaces-pod-definition.yaml`
+This is also the file [`08-namespaces-pod-definition.yaml`](./08-namespaces-pod-definition.yaml) in this folder: `kubectl apply -f 08-namespaces-pod-definition.yaml`
 
   ```
-  kubectl create -f 07-namespaces-pod-definition.yaml
+  kubectl create -f 08-namespaces-pod-definition.yaml
   ```
 - To create the pod with the pod-definition file in another namespace, use the **`--namespace`** option.
   ```
-  kubectl create -f 07-namespaces-pod-definition.yaml --namespace=dev
+  kubectl create -f 08-namespaces-pod-definition.yaml --namespace=dev
   ```
 
 - If you want to make sure that this pod gets you created in the **`dev`** env all the time, even if you don't specify in the command line, you can move the **`--namespace`** definition into the pod-definition file.
@@ -61,7 +61,7 @@ spec:
     image: nginx
  ```
 
-This is also the file [`07-namespaces-myapp-pod.yaml`](./07-namespaces-myapp-pod.yaml) in this folder: `kubectl apply -f 07-namespaces-myapp-pod.yaml`
+This is also the file [`08-namespaces-myapp-pod.yaml`](./08-namespaces-myapp-pod.yaml) in this folder: `kubectl apply -f 08-namespaces-myapp-pod.yaml`
   
   
 - To create a new namespace, create a namespace definition as shown below and then run **`kubectl create`**
@@ -72,10 +72,10 @@ metadata:
   name: dev
 ```
 
-This is also the file [`07-namespaces-dev.yaml`](./07-namespaces-dev.yaml) in this folder: `kubectl apply -f 07-namespaces-dev.yaml`
+This is also the file [`08-namespaces-dev.yaml`](./08-namespaces-dev.yaml) in this folder: `kubectl apply -f 08-namespaces-dev.yaml`
 
   ```
-  kubectl create -f 07-namespaces-dev.yaml
+  kubectl create -f 08-namespaces-dev.yaml
   ```
   Another way to create a namespace
   ```
@@ -108,10 +108,10 @@ spec:
     limits.memory: 10Gi
 ```
 
-This is also the file [`07-namespaces-compute-quota.yaml`](./07-namespaces-compute-quota.yaml) in this folder: `kubectl apply -f 07-namespaces-compute-quota.yaml`
+This is also the file [`08-namespaces-compute-quota.yaml`](./08-namespaces-compute-quota.yaml) in this folder: `kubectl apply -f 08-namespaces-compute-quota.yaml`
 
   ```
-  kubectl create -f 07-namespaces-compute-quota.yaml
+  kubectl create -f 08-namespaces-compute-quota.yaml
   ```
   
 K8s Reference Docs:

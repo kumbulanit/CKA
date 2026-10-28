@@ -42,11 +42,11 @@ spec:
  replicas: 3
 ```
 
-This is also the file [`09-replicasets-rc-definition.yaml`](./09-replicasets-rc-definition.yaml) in this folder: `kubectl apply -f 09-replicasets-rc-definition.yaml`
+This is also the file [`10-replicasets-rc-definition.yaml`](./10-replicasets-rc-definition.yaml) in this folder: `kubectl apply -f 10-replicasets-rc-definition.yaml`
 
   - To Create the replication controller
     ```
-    kubectl create -f 09-replicasets-rc-definition.yaml
+    kubectl create -f 10-replicasets-rc-definition.yaml
     ```
   - To list all the replication controllers
     ```
@@ -87,13 +87,13 @@ spec:
     type: front-end
 ```
 
-This is also the file [`09-replicasets-replicaset-definition.yaml`](./09-replicasets-replicaset-definition.yaml) in this folder: `kubectl apply -f 09-replicasets-replicaset-definition.yaml`
+This is also the file [`10-replicasets-replicaset-definition.yaml`](./10-replicasets-replicaset-definition.yaml) in this folder: `kubectl apply -f 10-replicasets-replicaset-definition.yaml`
 
 #### ReplicaSet requires a selector definition when compare to Replication Controller.
    
   - To Create the replicaset
     ```
-    kubectl create -f 09-replicasets-replicaset-definition.yaml
+    kubectl create -f 10-replicasets-replicaset-definition.yaml
     ```
   - To list all the replicaset
     ```
@@ -111,7 +111,7 @@ This is also the file [`09-replicasets-replicaset-definition.yaml`](./09-replica
   
 ## How to scale replicaset
 - There are multiple ways to scale replicaset
-  - First way is to update the number of replicas in the definition file, e.g. `replicas: 6` as in `09-replicasets-scaled.yaml` below, and then run
+  - First way is to update the number of replicas in the definition file, e.g. `replicas: 6` as in `10-replicasets-scaled.yaml` below, and then run
 ```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
@@ -137,14 +137,14 @@ spec:
     type: front-end
 ```
 
-This is also the file [`09-replicasets-scaled.yaml`](./09-replicasets-scaled.yaml) in this folder: `kubectl apply -f 09-replicasets-scaled.yaml`
+This is also the file [`10-replicasets-scaled.yaml`](./10-replicasets-scaled.yaml) in this folder: `kubectl apply -f 10-replicasets-scaled.yaml`
 
   ```
-  kubectl apply -f 09-replicasets-scaled.yaml
+  kubectl apply -f 10-replicasets-scaled.yaml
   ```
   - Second way is to use **`kubectl scale`** command.
   ```
-  kubectl scale --replicas=6 -f 09-replicasets-replicaset-definition.yaml
+  kubectl scale --replicas=6 -f 10-replicasets-replicaset-definition.yaml
   ```
   - Third way is to use **`kubectl scale`** command with type and name
   ```

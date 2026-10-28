@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
-# day1.sh [lab ...]: creates what the Day 1 labs (installation, configuration and validation;
-# core concepts) leave in the cluster, as at the end of each lab, before its clean-up step.
+# day1.sh [lab ...]: creates what the Day 1 labs (installation; core concepts) leave in the
+# cluster, as at the end of each lab, before its clean-up step.
 # Use it when the class runs out of time: run it where kubectl works (on the minikube server, or as
 # root on controlplane on a kubeadm cluster), for one lab
 # (./day1.sh services) or for the whole day (./day1.sh). ./day1.sh --list shows the labs.
 #
 # Not done here, because they change the machines rather than the cluster: installing the
-# cluster (use ../install-cluster.sh), adding node03, the upgrade to v1.37, and cordon/drain.
+# cluster (sudo ./setup.sh, or ../install-cluster.sh for kubeadm) and adding node03.
 # shellcheck source-path=SCRIPTDIR disable=SC2034
 source "$(dirname "$0")/lib.sh"
 
 LABS=(
-  "pod-yaml|Pods from YAML: nginxwebserver, nginx-pod, command to command4 (01-installation/02-first-pod-yaml, 03-standalone-pods; 02-core-concepts/03-first-pod-yaml, 05-commands-and-arguments, 06-expose-pods)"
-  "standalone|Pods standalone-pod and test-pod (01-installation/04-standalone-pods-2)"
-  "etcd-backup|etcd snapshot in /opt/etcd-backup.db (01-installation/06-cluster-maintenance)"
   "pods|Pods nginx, nginx-port and mywebserver (02-core-concepts/01-pods, 02-basic-pods, 04-pod-manifest-cli)"
-  "namespaces|Namespace dev with myapp-pod and the compute-quota ResourceQuota (02-core-concepts/07-namespaces)"
-  "deployments|Deployment myapp-deployment (02-core-concepts/08-deployments, 09-replicasets)"
-  "services|Services myapp-service (NodePort 30008) and back-end (02-core-concepts/10-services-nodeport, 11-services-clusterip)"
-  "webapp|webapp-deployment with 6 replicas and webapp-service (02-core-concepts/12-deployments-and-services, 01-installation/kubeadm-lesson-growing-the-cluster)"
+  "pod-yaml|Pods from YAML: nginxwebserver, nginx-pod, command to command4 (02-core-concepts/03-first-pod-yaml, 05-commands-and-arguments, 06-expose-pods)"
+  "standalone|Pods standalone-pod and test-pod (02-core-concepts/07-standalone-pods)"
+  "namespaces|Namespace dev with myapp-pod and the compute-quota ResourceQuota (02-core-concepts/08-namespaces)"
+  "deployments|Deployment myapp-deployment (02-core-concepts/09-deployments, 10-replicasets)"
+  "services|Services myapp-service (NodePort 30008) and back-end (02-core-concepts/11-services-nodeport, 12-services-clusterip)"
+  "webapp|webapp-deployment with 6 replicas and webapp-service (02-core-concepts/13-deployments-and-services, 01-installation/kubeadm-lesson-growing-the-cluster)"
 )
 
 lab_pods() {
@@ -252,30 +251,5 @@ spec:
 EOF
 }
 
-lab_etcd_backup() {
-  if [ -f /etc/kubernetes/pki/etcd/ca.crt ]; then
-    # On controlplane of a kubeadm cluster, as in the lesson.
-    need_root
-    command -v etcdctl >/dev/null || apt-get install -y -q etcd-client
-    ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-      --cert=/etc/kubernetes/pki/etcd/server.crt \
-      --key=/etc/kubernetes/pki/etcd/server.key \
-      snapshot save /opt/etcd-backup.db
-    return
-  fi
-  # Elsewhere (minikube): etcdctl inside the etcd pod, with the certificate files etcd itself uses
-  # (/var/lib/minikube/certs/etcd on minikube). The snapshot is saved in etcd's data folder on the
-  # control plane node.
-  local pod cmd dir
-  pod=$(kubectl -n kube-system get pod -l component=etcd -o jsonpath='{.items[0].metadata.name}')
-  cmd=$(kubectl -n kube-system get pod "$pod" -o jsonpath='{.spec.containers[0].command}')
-  flag() { grep -o "\"--$1=[^\"]*\"" <<<"$cmd" | cut -d= -f2 | tr -d '"'; }
-  dir=$(flag data-dir)
-  kubectl -n kube-system exec "$pod" -- etcdctl --endpoints=https://127.0.0.1:2379 \
-    --cacert="$(flag trusted-ca-file)" --cert="$(flag cert-file)" --key="$(flag key-file)" \
-    snapshot save "$dir/etcd-backup.db"
-  echo "Saved on node $CP in $dir/etcd-backup.db (minikube ssh, then: sudo ls -l $dir)"
-}
 
 run_labs "$@"

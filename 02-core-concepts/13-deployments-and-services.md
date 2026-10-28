@@ -37,7 +37,7 @@ spec:
         - containerPort: 80
 ```
 
-This is also the file [`12-deployments-and-services-webapp-deployment.yaml`](./12-deployments-and-services-webapp-deployment.yaml) in this folder: `kubectl apply -f 12-deployments-and-services-webapp-deployment.yaml`
+This is also the file [`13-deployments-and-services-webapp-deployment.yaml`](./13-deployments-and-services-webapp-deployment.yaml) in this folder: `kubectl apply -f 13-deployments-and-services-webapp-deployment.yaml`
 
 **Service YAML**:
 ```yaml
@@ -55,12 +55,12 @@ spec:
   type: ClusterIP
 ```
 
-This is also the file [`12-deployments-and-services-webapp-service.yaml`](./12-deployments-and-services-webapp-service.yaml) in this folder: `kubectl apply -f 12-deployments-and-services-webapp-service.yaml`
+This is also the file [`13-deployments-and-services-webapp-service.yaml`](./13-deployments-and-services-webapp-service.yaml) in this folder: `kubectl apply -f 13-deployments-and-services-webapp-service.yaml`
 
 **Commands**:
 ```sh
-kubectl apply -f 12-deployments-and-services-webapp-deployment.yaml
-kubectl apply -f 12-deployments-and-services-webapp-service.yaml
+kubectl apply -f 13-deployments-and-services-webapp-deployment.yaml
+kubectl apply -f 13-deployments-and-services-webapp-service.yaml
 ```
 
 **Diagram**:
@@ -95,7 +95,7 @@ spec:
         - containerPort: 80
 ```
 
-This is also the file [`12-deployments-and-services-webapp-deployment.yaml`](./12-deployments-and-services-webapp-deployment.yaml) in this folder: `kubectl apply -f 12-deployments-and-services-webapp-deployment.yaml`
+This is also the file [`13-deployments-and-services-webapp-deployment.yaml`](./13-deployments-and-services-webapp-deployment.yaml) in this folder: `kubectl apply -f 13-deployments-and-services-webapp-deployment.yaml`
 
 **Base Service YAML**:
 ```yaml
@@ -113,13 +113,13 @@ spec:
   type: ClusterIP
 ```
 
-This is also the file [`12-deployments-and-services-webapp-service.yaml`](./12-deployments-and-services-webapp-service.yaml) in this folder: `kubectl apply -f 12-deployments-and-services-webapp-service.yaml`
+This is also the file [`13-deployments-and-services-webapp-service.yaml`](./13-deployments-and-services-webapp-service.yaml) in this folder: `kubectl apply -f 13-deployments-and-services-webapp-service.yaml`
 
 **Kustomization YAML**:
 ```yaml
 resources:
-- 12-deployments-and-services-webapp-deployment.yaml
-- 12-deployments-and-services-webapp-service.yaml
+- 13-deployments-and-services-webapp-deployment.yaml
+- 13-deployments-and-services-webapp-service.yaml
 ```
 
 **Commands** (save the YAML above as `kustomization.yaml` in this folder first):
@@ -254,7 +254,7 @@ spec:
         - containerPort: 80
 ```
 
-This is also the file [`12-deployments-and-services-webapp.yaml`](./12-deployments-and-services-webapp.yaml) in this folder: `kubectl apply -f 12-deployments-and-services-webapp.yaml`
+This is also the file [`13-deployments-and-services-webapp.yaml`](./13-deployments-and-services-webapp.yaml) in this folder: `kubectl apply -f 13-deployments-and-services-webapp.yaml`
 
 **base/service.yaml**:
 ```yaml
@@ -272,7 +272,7 @@ spec:
   type: ClusterIP
 ```
 
-This is also the file [`12-deployments-and-services-webapp-2.yaml`](./12-deployments-and-services-webapp-2.yaml) in this folder: `kubectl apply -f 12-deployments-and-services-webapp-2.yaml`
+This is also the file [`13-deployments-and-services-webapp-2.yaml`](./13-deployments-and-services-webapp-2.yaml) in this folder: `kubectl apply -f 13-deployments-and-services-webapp-2.yaml`
 
 **overlays/production/kustomization.yaml**:
 ```yaml
@@ -373,7 +373,7 @@ spec:
   type: ClusterIP
 ```
 
-This is also the file [`12-deployments-and-services-webapp-2.yaml`](./12-deployments-and-services-webapp-2.yaml) in this folder: `kubectl apply -f 12-deployments-and-services-webapp-2.yaml`
+This is also the file [`13-deployments-and-services-webapp-2.yaml`](./13-deployments-and-services-webapp-2.yaml) in this folder: `kubectl apply -f 13-deployments-and-services-webapp-2.yaml`
 
 **Diagram**:
 ![CI/CD Diagram](https://about.gitlab.com/images/press/logo/png/gitlab-logo-gray-stacked-rgb.png)

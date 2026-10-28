@@ -40,7 +40,7 @@ In this section we will take a look at **`services`** in kubernetes
          nodePort: 30008
       ```
 
-      This is also the file [`10-services-nodeport-myapp-service.yaml`](./10-services-nodeport-myapp-service.yaml) in this folder: `kubectl apply -f 10-services-nodeport-myapp-service.yaml`
+      This is also the file [`11-services-nodeport-myapp-service.yaml`](./11-services-nodeport-myapp-service.yaml) in this folder: `kubectl apply -f 11-services-nodeport-myapp-service.yaml`
       
       #### To connect the service to the pod
       ```
@@ -59,12 +59,12 @@ In this section we will take a look at **`services`** in kubernetes
          type: front-end
        ```
 
-      This is also the file [`10-services-nodeport-service-definition.yaml`](./10-services-nodeport-service-definition.yaml) in this folder: `kubectl apply -f 10-services-nodeport-service-definition.yaml`
+      This is also the file [`11-services-nodeport-service-definition.yaml`](./11-services-nodeport-service-definition.yaml) in this folder: `kubectl apply -f 11-services-nodeport-service-definition.yaml`
 
       
       #### To create the service
       ```
-      kubectl create -f 10-services-nodeport-service-definition.yaml
+      kubectl create -f 11-services-nodeport-service-definition.yaml
       ```
       
       #### To list the services
