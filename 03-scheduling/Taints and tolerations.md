@@ -187,6 +187,9 @@ spec:
   containers:
     - name: db-container
       image: mysql
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
   tolerations:
     - key: dedicated
       operator: Equal

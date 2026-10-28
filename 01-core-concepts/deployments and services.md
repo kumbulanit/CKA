@@ -357,8 +357,6 @@ spec:
         - containerPort: 80
 ```
 
-This is also the file [`deployments-and-services-webapp-3.yaml`](./deployments-and-services-webapp-3.yaml) in this folder: `kubectl apply -f deployments-and-services-webapp-3.yaml`
-
 **k8s/service.yaml**:
 ```yaml
 apiVersion: v1

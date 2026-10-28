@@ -5,6 +5,6 @@ metadata:
 spec:
   containers:
     - name: my-container
-      image: my-image
+      image: nginx
   nodeSelector:
     environment: production

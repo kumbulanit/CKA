@@ -57,8 +57,6 @@ subsets:
       - port: 80
 ```
 
-This is also the file [`endpoint.yaml`](./endpoint.yaml) in this folder: `kubectl apply -f endpoint.yaml`
-
 ```sh
 kubectl apply -f endpoint.yaml
 ```
@@ -77,8 +75,6 @@ endpoints:
   - addresses:
       - <BACKEND-POD-1-IP>
 ```
-
-This is also the file [`serviceandendpoints-kplabs-service-1.yaml`](./serviceandendpoints-kplabs-service-1.yaml) in this folder: `kubectl apply -f serviceandendpoints-kplabs-service-1.yaml`
 
 #### Step 6: Test the Connection
 ```sh

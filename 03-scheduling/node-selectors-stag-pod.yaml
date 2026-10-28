@@ -5,6 +5,6 @@ metadata:
 spec:
   containers:
     - name: stag-container
-      image: stag-image
+      image: nginx
   nodeSelector:
     environment: staging

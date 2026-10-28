@@ -53,7 +53,7 @@ metadata:
 spec:
   containers:
     - name: my-container
-      image: my-image
+      image: nginx
   nodeSelector:
     environment: production
 ```
@@ -132,7 +132,7 @@ metadata:
 spec:
   containers:
     - name: prod-container
-      image: prod-image
+      image: nginx
   nodeSelector:
     environment: production
 ```
@@ -149,7 +149,7 @@ metadata:
 spec:
   containers:
     - name: stag-container
-      image: stag-image
+      image: nginx
   nodeSelector:
     environment: staging
 ```

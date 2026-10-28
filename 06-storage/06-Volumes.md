@@ -24,6 +24,7 @@ spec:
     volumeMounts:
     - mountPath: /opt
       name: data-volume
+  restartPolicy: Never
   volumes:
   - name: data-volume
     hostPath:
