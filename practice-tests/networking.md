@@ -20,6 +20,6 @@ Create a deployment named deployment-manual. Launch 3 replicas of nginx image. C
 <details><summary>Expand The Question </summary>
 <p>
 
-Create a deployment named kplabs-dmz. There should be 2 replicas of nginx image as part of the deployment. Create a service name service-elb and it should be based on LoadBalancer type. The Load Balancer should list on Port 80. Once launched, verify that the nginx default page loads when you open the Load Balancer IP in a browser. (On a kubeadm cluster on your own machines there is no load balancer, so `EXTERNAL-IP` stays `<pending>`; use the service's node port instead.)
+Create a deployment named kplabs-dmz. There should be 2 replicas of nginx image as part of the deployment. Create a service name service-elb and it should be based on LoadBalancer type. The Load Balancer should list on Port 80. Once launched, verify that the nginx default page loads when you open the Load Balancer IP in a browser. (On minikube, run `minikube tunnel` in a second terminal to give the service an `EXTERNAL-IP`; without it, `EXTERNAL-IP` stays `<pending>` and you use the service's node port instead.)
 
 </details>

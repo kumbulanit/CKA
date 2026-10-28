@@ -110,12 +110,12 @@ This will output something like:
 
 ```
 NAME           STATUS   ROLES           AGE   VERSION   INTERNAL-IP     EXTERNAL-IP
-controlplane   Ready    control-plane   30d   v1.36.5   192.168.56.10   <none>
-node01         Ready    <none>          30d   v1.36.5   192.168.56.11   <none>
-node02         Ready    <none>          30d   v1.36.5   192.168.56.12   <none>
+minikube       Ready    control-plane   30d   v1.36.5   192.168.49.2    <none>
+minikube-m02   Ready    <none>          30d   v1.36.5   192.168.49.3    <none>
+minikube-m03   Ready    <none>          30d   v1.36.5   192.168.49.4    <none>
 ```
 
-Use the `EXTERNAL-IP` of any of the nodes. If your nodes don't have an external IP (as on a kubeadm cluster on your own VMs), use the `INTERNAL-IP`. From any node you can also use the node name, for example `curl http://node01:30008`.
+Use the `EXTERNAL-IP` of any of the nodes. If your nodes don't have an external IP (as on minikube), use the `INTERNAL-IP`. `minikube ip -n minikube-m02` prints a node's address, so from the server `curl http://$(minikube ip -n minikube-m02):30008` works too.
 
 ### 5. Access the Application
 
@@ -125,10 +125,10 @@ Open a browser or use a tool like `curl` to access the application:
 curl http://<NodeIP>:<NodePort>
 ```
 
-For example, if your node's IP is `192.168.56.11` and the NodePort is `30008`:
+For example, if your node's IP is `192.168.49.3` and the NodePort is `30008`:
 
 ```sh
-curl http://192.168.56.11:30008
+curl http://192.168.49.3:30008
 ```
 
 ### Note

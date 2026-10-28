@@ -31,7 +31,7 @@ This is also the file [`sc-definition.yaml`](./sc-definition.yaml) in this folde
 
 The provisioner is the cloud's CSI driver (`pd.csi.storage.gke.io` on Google Cloud, `ebs.csi.aws.com` on AWS, `disk.csi.azure.com` on Azure). The old in-tree names such as `kubernetes.io/gce-pd` no longer exist.
 
-**On a kubeadm cluster on your own machines** there is no cloud disk. To practise dynamic provisioning there, install the local-path provisioner, which creates volumes in a folder on the node:
+**On minikube, or a kubeadm cluster on your own machines**, there is no cloud disk. minikube already has a default StorageClass (`standard`); to practise with the local-path provisioner this lesson uses, install it (it creates volumes in a folder on the node):
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.37/deploy/local-path-storage.yaml

@@ -4,10 +4,10 @@
 
 #### Practice setup (your own cluster)
 
-The test starts with two storage classes and a local PersistentVolume on node01. Create them first:
+The test starts with two storage classes and a local PersistentVolume on the worker `minikube-m02` (`node01` on a kubeadm cluster). Create them first:
 
 ```
-ssh node01 mkdir -p /opt/vol1
+minikube ssh -n minikube-m02 -- sudo mkdir -p /opt/vol1
 cat <<EOF | kubectl apply -f -
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -42,7 +42,7 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - node01
+          - minikube-m02
 EOF
 ```
 

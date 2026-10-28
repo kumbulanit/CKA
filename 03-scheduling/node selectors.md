@@ -1,5 +1,8 @@
 ### Scheduling in Kubernetes: Node Selectors
 
+> This lesson uses the minikube node names: `minikube` is the control plane, `minikube-m02` and `minikube-m03` the workers (`controlplane`, `node01` and `node02` on a kubeadm cluster).
+
+
 Scheduling in Kubernetes refers to the process of determining which nodes will run your Pods. Kubernetes uses the Scheduler component to assign Pods to Nodes based on resource requirements, constraints, and policies.
 
 Node selectors are one of the simplest methods to control Pod placement by specifying criteria for the nodes where Pods should be scheduled. This method allows you to ensure that Pods run on nodes with specific labels, making it easier to manage workloads based on node attributes.
@@ -34,10 +37,10 @@ kubectl label nodes <node-name> <key>=<value>
 **Example Command**:
 
 ```sh
-kubectl label nodes node01 environment=production
+kubectl label nodes minikube-m02 environment=production
 ```
 
-This command labels `node01` with the key `environment` and the value `production`.
+This command labels `minikube-m02` with the key `environment` and the value `production`.
 
 #### **2.2. Using Node Selectors in Pod Specifications**
 
@@ -76,8 +79,8 @@ This command lists all nodes along with their labels.
 
 ```plaintext
 NAME      STATUS   ROLES    AGE   VERSION   LABELS
-node01    Ready    <none>   5d    v1.36.5   kubernetes.io/hostname=node01,environment=production
-node02    Ready    <none>   5d    v1.36.5   kubernetes.io/hostname=node02,environment=staging
+minikube-m02    Ready    <none>   5d    v1.36.5   kubernetes.io/hostname=minikube-m02,environment=production
+minikube-m03    Ready    <none>   5d    v1.36.5   kubernetes.io/hostname=minikube-m03,environment=staging
 ```
 
 ---

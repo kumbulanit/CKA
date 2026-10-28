@@ -20,6 +20,7 @@ apiVersion: v1
 metadata:
   name: myclaim
 spec:
+  storageClassName: ""   # a volume you create yourself, not the default StorageClass
   accessModes: [ "ReadWriteOnce" ]
   resources:
    requests:
@@ -27,6 +28,8 @@ spec:
 ```
 
 This is also the file [`08-persistent-volume-claims-pvc-definition.yaml`](./08-persistent-volume-claims-pvc-definition.yaml) in this folder: `kubectl apply -f 08-persistent-volume-claims-pvc-definition.yaml`
+
+`storageClassName: ""` makes the claim bind to a PersistentVolume you created yourself. Without it, a cluster with a default StorageClass (minikube has one, called `standard`) would create a new volume for the claim instead.
 
 `pv-definition.yaml`:
 

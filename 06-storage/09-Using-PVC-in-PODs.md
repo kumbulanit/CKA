@@ -42,6 +42,7 @@ apiVersion: v1
 metadata:
   name: myclaim
 spec:
+  storageClassName: ""   # a volume you create yourself, not the default StorageClass
   accessModes: [ "ReadWriteOnce" ]
   resources:
    requests:

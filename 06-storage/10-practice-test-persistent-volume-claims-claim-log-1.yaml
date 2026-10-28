@@ -3,6 +3,7 @@ apiVersion: v1
 metadata:
   name: claim-log-1
 spec:
+  storageClassName: ""   # a volume you create yourself, not the default StorageClass
   accessModes:
     - ReadWriteOnce
   resources:

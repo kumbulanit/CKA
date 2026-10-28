@@ -1,12 +1,15 @@
 #### Documentation Referred:
 
+> This lesson uses the minikube node names: `minikube` is the control plane, `minikube-m02` and `minikube-m03` the workers (`controlplane`, `node01` and `node02` on a kubeadm cluster).
+
+
 https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
 
 ## Required Scheduling (Hard Preference)
 
-These examples use the `disk` labels from the nodeSelector lesson (`node01` has `disk=ssd`). Add them first if you skipped it:
+These examples use the `disk` labels from the nodeSelector lesson (`minikube-m02` has `disk=ssd`). Add them first if you skipped it:
 ```sh
-kubectl label node node01 disk=ssd
+kubectl label node minikube-m02 disk=ssd
 ```
 
 #### Step 1: Node Affinity - Required
@@ -41,7 +44,7 @@ kubectl apply -f nodeAffinity-required.yaml
 #### Step 2 - Verify and Clean Resources
 ```sh
 kubectl get pods -o wide
-kubectl describe node node01
+kubectl describe node minikube-m02
 kubectl delete -f nodeAffinity-required.yaml
 ```
 #### Step 3: Node Affinity - Required using NotIn Operator
@@ -77,7 +80,7 @@ kubectl apply -f nodeAffinity-required.yaml
 #### Step 4 - Verify and Clean Resources
 ```sh
 kubectl get pods -o wide
-kubectl describe node node01
+kubectl describe node minikube-m02
 kubectl delete -f nodeAffinity-required.yaml
 ```
 #### Step 5: Node Affinity Using Unknown Label
@@ -152,6 +155,6 @@ kubectl apply -f nodeAffinity-preferred.yaml
 #### Step 2 - Verify and Clean Resources
 ```sh
 kubectl get pods -o wide
-kubectl describe node node01
+kubectl describe node minikube-m02
 kubectl delete -f nodeAffinity-preferred.yaml
 ```

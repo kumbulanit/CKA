@@ -106,7 +106,8 @@ lab_prometheus() {
 }
 
 lab_pv_pvc() {
-  for n in "$NODE1" "$NODE2"; do on_node "$n" 'mkdir -p /var/log/webapp /pv/log'; done
+  # Every node: the pod can land on any of them (minikube's control plane runs pods too).
+  for n in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do on_node "$n" 'mkdir -p /var/log/webapp /pv/log'; done
   apply <<'EOF'
 apiVersion: v1
 kind: PersistentVolume
@@ -125,6 +126,7 @@ apiVersion: v1
 metadata:
   name: claim-log-1
 spec:
+  storageClassName: ""   # a volume you create yourself, not the default StorageClass
   accessModes:
     - ReadWriteMany
   resources:

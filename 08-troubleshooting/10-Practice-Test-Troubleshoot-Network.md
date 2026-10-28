@@ -48,7 +48,7 @@ Note that this lab is sequential. You must solve test 1 completely before you ca
    ```
    kubectl -n kube-system rollout restart deployment coredns
    kubectl -n kube-system rollout status deployment coredns
-   curl http://node01:30081
+   curl http://$(minikube ip):30081
    ```
 
    </details>

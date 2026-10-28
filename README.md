@@ -23,21 +23,21 @@ minikube ssh -n minikube-m02       # a shell on the first worker
 minikube stop                      # stop the cluster; sudo ./setup.sh or minikube start starts it again
 ```
 
-The lessons were written for a kubeadm cluster whose nodes are called `controlplane`, `node01` and `node02`. On the minikube cluster:
+The lessons use these minikube names and commands. On a kubeadm cluster (the optional route below, and the CKA exam) the same things are:
 
-| In the lessons | On the minikube cluster |
+| On the minikube cluster | On a kubeadm cluster |
 | --- | --- |
-| `controlplane` | `minikube` (`minikube ssh`) |
-| `node01`, `ssh node01` | `minikube-m02` (`minikube ssh -n minikube-m02`) |
-| `node02`, `ssh node02` | `minikube-m03` (`minikube ssh -n minikube-m03`) |
-| `kubectl` as root on controlplane | `kubectl` as your own user on the server |
-| `/etc/kubernetes/pki` | `/var/lib/minikube/certs`, inside `minikube ssh` |
+| `minikube` (`minikube ssh`) | `controlplane` |
+| `minikube-m02` (`minikube ssh -n minikube-m02`) | `node01` (`ssh node01`) |
+| `minikube-m03` (`minikube ssh -n minikube-m03`) | `node02` (`ssh node02`) |
+| `kubectl` as your own user on the server | `kubectl` as root on controlplane |
+| `/var/lib/minikube/certs`, API server port `8443` | `/etc/kubernetes/pki`, API server port `6443` |
 
-minikube builds its nodes with kubeadm, so the static pod manifests (`/etc/kubernetes/manifests`), the kubelet service and `journalctl -u kubelet` are where the lessons say, inside `minikube ssh`.
+minikube builds its nodes with kubeadm, so the static pod manifests (`/etc/kubernetes/manifests`), the kubelet service and `journalctl -u kubelet` are in the same places, inside `minikube ssh`.
 
-### The kubeadm lessons
+### Optional: kubeadm, the exam's tool
 
-Installing a cluster with kubeadm, adding a node and the upgrade to v1.37 need machines without Kubernetes. [scripts/one-server.sh](./scripts/one-server.sh) runs three of them on the same server, as containers named `controlplane`, `node01` and `node02`, so those lessons work exactly as written. Stop minikube first on an 8 GB server (`minikube stop`).
+The CKA exam uses kubeadm clusters. Installing a cluster with kubeadm, adding a node and the kubeadm upgrade (in [02-installation](./02-installation)) need machines without Kubernetes. [scripts/one-server.sh](./scripts/one-server.sh) runs three of them on the same server, as containers named `controlplane`, `node01` and `node02`, so those lessons work exactly as written. Stop minikube first on an 8 GB server (`minikube stop`).
 
 ```sh
 sudo ./scripts/one-server.sh create        # three bare Ubuntu 24.04 machines (172.30.56.10, .11, .12)
@@ -84,7 +84,7 @@ Each module has a step-by-step guide in [lab-guides](./lab-guides): every comman
 ## Conventions
 
 - Commands that start with `$` show the prompt; type them without the `$`.
-- `kubectl` commands run on `controlplane` unless a step says `ssh node01` first.
+- `kubectl` commands run on the server as your own user. Commands for a node start with `minikube ssh` (`minikube ssh -n minikube-m02` for the first worker).
 - Files such as `newpod.yaml` are created in your current folder; use `vi` or `nano`.
 - Every YAML example is also saved as a file in the same folder as its lesson, and the line under each example names it. Go to that folder and apply it instead of typing it, for example `cd ~/CKA/01-core-concepts`, then `kubectl apply -f newpod.yaml`. Where a lesson already gives the file a name, the file has that name.
 - Images used here run on both amd64 and arm64 unless a lesson says otherwise.

@@ -1,5 +1,8 @@
 ### Growing the Kubernetes Cluster
 
+> **Optional: kubeadm, the tool the CKA exam uses.** The course's practicals run on minikube (`sudo ./setup.sh`). To do this lesson, use machines without Kubernetes: `sudo ./scripts/one-server.sh create` starts `controlplane`, `node01` and `node02` on your server.
+
+
 Growing a Kubernetes cluster involves adding new nodes to increase its capacity, scalability, and reliability. This process is relatively straightforward using `kubeadm`.
 
 ### Prerequisites

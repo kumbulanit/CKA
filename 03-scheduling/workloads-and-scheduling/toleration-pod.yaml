@@ -12,4 +12,4 @@ spec:
     value: value
     effect: NoSchedule
   nodeSelector:
-    kubernetes.io/hostname: node01
+    kubernetes.io/hostname: minikube-m02

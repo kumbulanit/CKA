@@ -12,7 +12,7 @@ https://kubernetes.github.io/ingress-nginx/deploy/
 helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace \
   --set controller.service.type=NodePort --set controller.service.nodePorts.http=30080
 ```
-On a cloud cluster you can leave out the two `--set` options: the controller then gets a cloud load balancer. A kubeadm cluster on your own machines has no load balancer, so we expose the controller on node port 30080 instead.
+On a cloud cluster you can leave out the two `--set` options: the controller then gets a cloud load balancer. A cluster on your own machines, like minikube, has no load balancer, so we expose the controller on node port 30080 instead.
 
 #### Step 2: Verify the Ingress Controller Resource
 ```sh
@@ -34,14 +34,14 @@ kubectl apply -f ingress.yaml
 ```
 
 #### Step 4: Verify the Ingress Controller Setup
-From controlplane, send requests to the controller's node port with each host name:
+From the server, send requests to the controller's node port on a worker, with each host name:
 ```sh
-curl -H "Host: website01.example.internal" http://node01:30080
-curl -H "Host: website02.example.internal" http://node01:30080
+curl -H "Host: website01.example.internal" http://$(minikube ip -n minikube-m02):30080
+curl -H "Host: website02.example.internal" http://$(minikube ip -n minikube-m02):30080
 ```
-Or add the names to `/etc/hosts` on controlplane (use node01's IP address) and use them directly:
+Or add the names to `/etc/hosts` on the server, with the worker's address, and use them directly:
 ```sh
-echo "<NODE01-IP> website01.example.internal website02.example.internal" | sudo tee -a /etc/hosts
+echo "$(minikube ip -n minikube-m02) website01.example.internal website02.example.internal" | sudo tee -a /etc/hosts
 curl http://website01.example.internal:30080
 ```
 
@@ -61,8 +61,8 @@ echo "This is Website 2" > index.html
 #### Step 6: Verification
 
 ```sh
-curl -H "Host: website01.example.internal" http://node01:30080
-curl -H "Host: website02.example.internal" http://node01:30080
+curl -H "Host: website01.example.internal" http://$(minikube ip -n minikube-m02):30080
+curl -H "Host: website02.example.internal" http://$(minikube ip -n minikube-m02):30080
 ```
 #### Step 7: Delete All Resource
 

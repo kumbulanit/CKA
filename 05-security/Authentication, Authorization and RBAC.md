@@ -33,17 +33,17 @@ openssl genrsa -out client.key 2048
 openssl req -new -key client.key -out client.csr -subj "/CN=client/O=dev"
 ```
 
-The certificate must be signed by the cluster's CA, otherwise the API server rejects it. On a kubeadm cluster, sign it on `controlplane` with the cluster CA (or use the CertificateSigningRequest API, see *Domain 4 - Security/certificate-steps.md*):
+The certificate must be signed by the cluster's CA, otherwise the API server rejects it. minikube keeps the cluster CA on the server, in `~/.minikube` (on a kubeadm cluster it is in `/etc/kubernetes/pki` on `controlplane`). Sign it with the CA (or use the CertificateSigningRequest API, see [certificate-steps.md](./domain-4-security/certificate-steps.md)):
 
 ```sh
-sudo openssl x509 -req -in client.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out client.crt -days 30
+openssl x509 -req -in client.csr -CA ~/.minikube/ca.crt -CAkey ~/.minikube/ca.key -CAcreateserial -out client.crt -days 30
 ```
 
 Add the user to your kubeconfig:
 
 ```sh
 kubectl config set-credentials client --client-certificate=client.crt --client-key=client.key
-kubectl config set-context my-context --cluster=kubernetes --user=client
+kubectl config set-context my-context --cluster=minikube --user=client
 kubectl config use-context my-context
 ```
 

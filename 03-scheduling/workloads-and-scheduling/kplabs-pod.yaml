@@ -3,7 +3,7 @@ kind: Pod
 metadata:
   name: kplabs-pod
 spec:
-  nodeName: node01
+  nodeName: minikube-m02
   containers:
   - name: kplabs-container
     image: nginx

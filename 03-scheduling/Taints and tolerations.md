@@ -1,5 +1,8 @@
 ### Taints and Tolerations in Kubernetes
 
+> This lesson uses the minikube node names: `minikube` is the control plane, `minikube-m02` and `minikube-m03` the workers (`controlplane`, `node01` and `node02` on a kubeadm cluster).
+
+
 **Taints and Tolerations** are mechanisms used in Kubernetes to control the scheduling of Pods onto Nodes. They allow you to specify conditions under which Pods can or cannot be scheduled on certain Nodes, helping you manage node resources and workload distribution more effectively.
 
 ---
@@ -32,15 +35,15 @@ kubectl taint nodes <node-name> key=value:effect
 **Example**:
 
 ```sh
-kubectl taint nodes node01 environment=production:NoSchedule
+kubectl taint nodes minikube-m02 environment=production:NoSchedule
 ```
 
-In this example, the Node `node01` is tainted so that only Pods with a matching toleration can be scheduled on it. Pods without the appropriate toleration will not be scheduled.
+In this example, the Node `minikube-m02` is tainted so that only Pods with a matching toleration can be scheduled on it. Pods without the appropriate toleration will not be scheduled.
 
 To remove a taint, run the same command with a `-` at the end:
 
 ```sh
-kubectl taint nodes node01 environment=production:NoSchedule-
+kubectl taint nodes minikube-m02 environment=production:NoSchedule-
 ```
 
 #### **1.3. Viewing Taints on Nodes**
@@ -54,7 +57,7 @@ kubectl describe node <node-name>
 **Example Output**:
 
 ```plaintext
-Name:               node01
+Name:               minikube-m02
 ...
 Taints:             environment=production:NoSchedule
 ```
@@ -173,7 +176,7 @@ You might have dedicated Nodes for specific workloads or environments. Taints an
 **Example**:
 
 ```sh
-kubectl taint nodes node01 dedicated=database:NoSchedule
+kubectl taint nodes minikube-m02 dedicated=database:NoSchedule
 ```
 
 **Pod Specification**:
@@ -208,7 +211,7 @@ Taints with the `NoExecute` effect can be used to evict Pods from Nodes under ma
 **Example**:
 
 ```sh
-kubectl taint nodes node01 maintenance=true:NoExecute
+kubectl taint nodes minikube-m02 maintenance=true:NoExecute
 ```
 
 **Pod Specification**:

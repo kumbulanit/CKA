@@ -69,11 +69,11 @@ kubectl get csr zeal-csr -o jsonpath='{.status.certificate}' | base64 -d > zeal.
 ```sh
 kubectl config set-credentials zeal --client-certificate=zeal.crt --client-key=zeal.key
 ```
-`kubectl config get-clusters` lists the cluster names; on a kubeadm cluster it is `kubernetes`.
+`kubectl config get-clusters` lists the cluster names; on minikube it is `minikube` (`kubernetes` on a kubeadm cluster).
 
 #### Step 8: Set new Context
 ```sh
-kubectl config set-context zeal-context --cluster kubernetes --user=zeal
+kubectl config set-context zeal-context --cluster minikube --user=zeal
 ```
 #### Step 9: Use Context to Verify
 ```sh

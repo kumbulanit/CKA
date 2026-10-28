@@ -1,5 +1,8 @@
 ### Cordoning and Draining Nodes in Kubernetes
 
+> This lesson uses the minikube node names: `minikube` is the control plane, `minikube-m02` and `minikube-m03` the workers (`controlplane`, `node01` and `node02` on a kubeadm cluster).
+
+
 Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance, especially when performing upgrades or other administrative tasks. These operations ensure that no new pods are scheduled on the node, and existing pods are gracefully removed or rescheduled to other nodes.
 
 ---
@@ -23,12 +26,12 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
      ```sh
      kubectl get nodes
      ```
-   - **Output** (after `kubectl cordon node01`):
+   - **Output** (after `kubectl cordon minikube-m02`):
      ```plaintext
      NAME           STATUS                     ROLES           AGE   VERSION
-     controlplane   Ready                      control-plane   30d   v1.36.5
-     node01         Ready,SchedulingDisabled   <none>          30d   v1.36.5
-     node02         Ready                      <none>          30d   v1.36.5
+     minikube       Ready                      control-plane   30d   v1.36.5
+     minikube-m02   Ready,SchedulingDisabled   <none>          30d   v1.36.5
+     minikube-m03   Ready                      <none>          30d   v1.36.5
      ```
 
 **Diagram: Cordoning Nodes**
@@ -73,9 +76,9 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
    - **Output**:
      ```plaintext
      NAME           STATUS                     ROLES           AGE   VERSION
-     controlplane   Ready                      control-plane   30d   v1.36.5
-     node01         Ready,SchedulingDisabled   <none>          30d   v1.36.5
-     node02         Ready                      <none>          30d   v1.36.5
+     minikube       Ready                      control-plane   30d   v1.36.5
+     minikube-m02   Ready,SchedulingDisabled   <none>          30d   v1.36.5
+     minikube-m03   Ready                      <none>          30d   v1.36.5
      ```
 
 3. **Reboot or Maintain Node**:
@@ -126,25 +129,26 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
 
 1. **Cordoning the Node**:
    ```sh
-   kubectl cordon node01
+   kubectl cordon minikube-m02
    ```
 
 2. **Draining the Node**:
    ```sh
-   kubectl drain node01 --ignore-daemonsets --delete-emptydir-data
+   kubectl drain minikube-m02 --ignore-daemonsets --delete-emptydir-data
    ```
 
 3. **Perform Upgrade or Maintenance**:
-   - Perform required operations on `node01`.
+   - Perform required operations on `minikube-m02`.
 
-4. **Reboot Node** (on node01, for example after `ssh node01`):
+4. **Restart the Node** (on minikube, stop and start it; on a kubeadm cluster, `sudo reboot` on the node):
    ```sh
-   sudo reboot
+   minikube node stop minikube-m02
+   minikube node start minikube-m02
    ```
 
 5. **Uncordon the Node**:
    ```sh
-   kubectl uncordon node01
+   kubectl uncordon minikube-m02
    ```
 
 6. **Verify Node Readiness**:

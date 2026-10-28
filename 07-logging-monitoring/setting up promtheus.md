@@ -15,7 +15,7 @@ Install Prometheus using Helm:
 helm install prometheus prometheus-community/prometheus \
   --set server.persistentVolume.enabled=false --set alertmanager.persistence.enabled=false
 ```
-This command installs Prometheus with default configurations, except that its server and Alertmanager keep their data on the pod instead of a PersistentVolume: a kubeadm cluster has no default StorageClass, so their claims would stay Pending. (With a default StorageClass, leave out the two `--set` options.) You can customize the installation further by modifying the Helm values.
+This command installs Prometheus with default configurations, except that its server and Alertmanager keep their data on the pod instead of a PersistentVolume, so the install also works on a cluster without a default StorageClass, such as a kubeadm cluster, where their claims would stay Pending. (minikube has a default StorageClass, `standard`, so there you can leave out the two `--set` options.) You can customize the installation further by modifying the Helm values.
 
 Verify the installation:
 

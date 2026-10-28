@@ -11,12 +11,12 @@
   - If they are **`NotReady`** then check the **`LastHeartbeatTime`** of the node to find out the time when node might have crashed
 
     ```
-    kubectl describe node node01
+    kubectl describe node minikube-m02
     ```
 
 
 
-  - Log in to the node (`ssh node01`) and check the possible **`CPU`**, **`MEMORY`** and disk usage using **`top`**, **`free -m`** and **`df -h`** 
+  - Log in to the node (`minikube ssh -n minikube-m02`; `ssh node01` on a kubeadm cluster) and check the possible **`CPU`**, **`MEMORY`** and disk usage using **`top`**, **`free -m`** and **`df -h`** 
 
  
 

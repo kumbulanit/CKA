@@ -1,15 +1,17 @@
+> This lesson uses the minikube node names: `minikube` is the control plane, `minikube-m02` and `minikube-m03` the workers (`controlplane`, `node01` and `node02` on a kubeadm cluster).
+
 
 ### Step 1: Verify the Label of Node
 ```sh
 kubectl get nodes
-kubectl describe node node01
+kubectl describe node minikube-m02
 ```
 
 ### Step 2: Label Worker Node
 ```sh
-kubectl label node controlplane disk=hdd
-kubectl label node node01 disk=ssd
-kubectl label node node02 disk=hdd
+kubectl label node minikube disk=hdd
+kubectl label node minikube-m02 disk=ssd
+kubectl label node minikube-m03 disk=hdd
 ```
 
 ### Step 3: Create NodeSelector Configuration

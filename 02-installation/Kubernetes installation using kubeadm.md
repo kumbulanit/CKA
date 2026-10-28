@@ -1,5 +1,8 @@
 ### Kubernetes Installation Using kubeadm: Installation, Configuration & Validation
 
+> **Optional: kubeadm, the tool the CKA exam uses.** The course's practicals run on minikube (`sudo ./setup.sh`). To do this lesson, use machines without Kubernetes: `sudo ./scripts/one-server.sh create` starts `controlplane`, `node01` and `node02` on your server.
+
+
 #### Overview
 
 `kubeadm` is a tool that helps you install and configure a secure Kubernetes cluster rapidly. It automates the process of setting up the control plane and joining worker nodes to the cluster.

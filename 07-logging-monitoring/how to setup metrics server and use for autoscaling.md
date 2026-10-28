@@ -22,8 +22,8 @@ kubectl top nodes
    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
    ```
 
-2. **Allow the kubelets' self-signed certificates (kubeadm clusters)**:
-   - kubeadm gives each kubelet a self-signed serving certificate, which the Metrics Server refuses by default (its pod stays `0/1` with `x509` errors in its logs). For a lab cluster, tell it to skip that check:
+2. **Allow the kubelets' self-signed certificates (minikube and kubeadm clusters)**:
+   - minikube and kubeadm give each kubelet a self-signed serving certificate, which the Metrics Server refuses by default (its pod stays `0/1` with `x509` errors in its logs). For a lab cluster, tell it to skip that check:
    ```sh
    kubectl -n kube-system patch deployment metrics-server --type=json \
      -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'

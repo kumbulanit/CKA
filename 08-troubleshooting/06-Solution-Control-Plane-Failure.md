@@ -2,6 +2,8 @@
 
   - Lets have a look at the [Practice Test](https://kodekloud.com/topic/practice-test-control-plane-failure/) of the Control Plane Failure
 
+  - The static pod manifests are on the control plane node: the fixes below reach them with `minikube ssh`. On a kubeadm cluster, run the `sed` part as root on `controlplane`; there, fix 4 is `sed -i 's/WRONG-PKI-DIRECTORY/pki/' …`.
+
     ### Solution
 
     1. Check Solution 
@@ -13,7 +15,7 @@
         ```
 
         ```
-        sed -i 's/kube-schedulerrrr/kube-scheduler/g' /etc/kubernetes/manifests/kube-scheduler.yaml
+        minikube ssh -- "sudo sed -i 's/kube-schedulerrrr/kube-scheduler/g' /etc/kubernetes/manifests/kube-scheduler.yaml"
         ```
        </details>
 
@@ -31,7 +33,7 @@
        <details>
 
         ```
-        sed -i 's/controller-manager-XXXX.conf/controller-manager.conf/' /etc/kubernetes/manifests/kube-controller-manager.yaml
+        minikube ssh -- "sudo sed -i 's/controller-manager-XXXX.conf/controller-manager.conf/' /etc/kubernetes/manifests/kube-controller-manager.yaml"
         ```
        </details>
 
@@ -40,7 +42,7 @@
        <details>
 
         ```
-        sed -i 's/WRONG-PKI-DIRECTORY/pki/' /etc/kubernetes/manifests/kube-controller-manager.yaml
+        minikube ssh -- "sudo sed -i 's/WRONG-CERTS-DIRECTORY/certs/' /etc/kubernetes/manifests/kube-controller-manager.yaml"
         ```
        </details>
 

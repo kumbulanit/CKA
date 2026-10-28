@@ -1,5 +1,8 @@
 ### Control Plane High Availability in Kubernetes
 
+> Background for the CKA exam, which uses kubeadm. The course's minikube cluster has one control plane node; `minikube start --ha` would start three.
+
+
 High Availability (HA) for the Kubernetes control plane ensures that the cluster's management components remain operational and accessible even if one or more of the control plane nodes fail. This is critical for maintaining the reliability and resilience of the Kubernetes cluster.
 
 ### Key Components of the Kubernetes Control Plane

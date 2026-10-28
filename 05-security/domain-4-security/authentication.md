@@ -57,7 +57,7 @@ cat /var/run/secrets/kubernetes.io/serviceaccount/token
 ```
 
 #### Step 5: Make a Request to Kubernetes using Token
-`kubectl cluster-info` shows `<K8S-SERVER-URL>` (on a kubeadm cluster, `https://controlplane:6443`).
+`kubectl cluster-info` shows `<K8S-SERVER-URL>` (on minikube, `https://192.168.49.2:8443`; on a kubeadm cluster, `https://controlplane:6443`).
 ```sh
 curl -k <K8S-SERVER-URL>
 curl -k <K8S-SERVER-URL>/api/v1 --header "Authorization: Bearer <TOKEN-HERE>"

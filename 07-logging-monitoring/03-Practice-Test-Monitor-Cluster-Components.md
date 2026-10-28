@@ -72,7 +72,7 @@ Solutions to practice test - monitor cluster components
 1.  <details>
     <summary>Deploy the metrics-server by creating all the components downloaded.</summary>
     
-    Run the 'kubectl create -f .' command from within the download folder. On a kubeadm cluster, also add `--kubelet-insecure-tls` (see *how to setup metrics server and use for autoscaling.md*).
+    Run the 'kubectl create -f .' command from within the download folder. On minikube and kubeadm clusters, also add `--kubelet-insecure-tls` (see *how to setup metrics server and use for autoscaling.md*).
   
     ```
     cd kubernetes-metrics-server

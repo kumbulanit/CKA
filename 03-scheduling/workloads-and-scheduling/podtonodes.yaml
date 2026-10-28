@@ -9,7 +9,7 @@ spec:
   - name: frontend
     image: nginx
   nodeSelector:
-    kubernetes.io/hostname: node01
+    kubernetes.io/hostname: minikube-m02
 
 ---
 apiVersion: v1
@@ -23,4 +23,4 @@ spec:
   - name: frontendpod
     image: nginx
   nodeSelector:
-    kubernetes.io/hostname: node02
+    kubernetes.io/hostname: minikube-m03

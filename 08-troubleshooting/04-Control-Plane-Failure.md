@@ -23,7 +23,7 @@
     ```
 
 
-  - If the API server itself is down, `kubectl` cannot answer. On a kubeadm cluster, look at the containers directly on `controlplane` with `crictl` (containerd's CLI; `docker ps` does not exist on these nodes):
+  - If the API server itself is down, `kubectl` cannot answer. Look at the containers directly on the control plane node with `crictl` (containerd's CLI): log in with `minikube ssh` (on a kubeadm cluster, on `controlplane`):
 
     ```
     sudo crictl ps -a | grep -E "kube-apiserver|etcd|scheduler|controller"
@@ -31,7 +31,7 @@
     sudo ls /var/log/pods/
     ```
 
-  - Static pod manifests are in `/etc/kubernetes/manifests/` on controlplane. The kubelet restarts a component whenever its manifest changes.
+  - Static pod manifests are in `/etc/kubernetes/manifests/` on the control plane node (`minikube ssh`). The kubelet restarts a component whenever its manifest changes.
 
   - If the Control Plane components are deployed as services (not with kubeadm) then check the status of all the components
 
@@ -70,7 +70,7 @@
   - To check the logs of the Control Plane components deployed as Pods:
 
     ```
-    kubectl logs kube-apiserver-controlplane -n kube-system
+    kubectl logs kube-apiserver-minikube -n kube-system
     ```
 
 

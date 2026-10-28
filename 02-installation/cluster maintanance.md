@@ -13,7 +13,15 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
    - Review Kubernetes release notes and documentation for new features and breaking changes.
    - Test the upgrade process in a staging environment before applying it to production.
 
-2. **Upgrade the Control Plane Node** (on `controlplane`; this example upgrades v1.36 to v1.37):
+2. **On the course's minikube cluster**, one command upgrades every node, one minor version at a time (minikube v1.39 goes up to v1.37.0):
+     ```sh
+     minikube start --kubernetes-version=v1.37.0
+     kubectl get nodes
+     ```
+
+   **On a kubeadm cluster** (the way the CKA exam does it, on the machines from `sudo ./scripts/one-server.sh`), upgrade node by node as in steps 3 and 4.
+
+3. **kubeadm: Upgrade the Control Plane Node** (on `controlplane`; this example upgrades v1.36 to v1.37):
    - Point the package repository at the next minor version (`pkgs.k8s.io` has one repository per minor version):
      ```sh
      sudo sed -i 's|/v1.36/|/v1.37/|' /etc/apt/sources.list.d/kubernetes.list
@@ -35,7 +43,7 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
      ```
    - **Managed Services**: Use cloud provider tools or console for managed Kubernetes services.
 
-3. **Upgrade Worker Nodes** (one at a time):
+4. **kubeadm: Upgrade Worker Nodes** (one at a time):
    - On the worker (`ssh node01`), switch the repository and upgrade kubeadm as above, then:
      ```sh
      sudo kubeadm upgrade node
@@ -55,10 +63,10 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
      ```
    - Repeat for node02. You can only upgrade one minor version at a time (v1.36 to v1.37, not v1.36 to v1.38).
 
-4. **Upgrade Add-ons**:
+5. **Upgrade Add-ons**:
    - Upgrade add-ons like the network plugin (Calico), the metrics server and storage provisioners. kubeadm upgrades CoreDNS and kube-proxy for you.
 
-5. **Verify Upgrade**:
+6. **Verify Upgrade**:
    - Check the status of nodes and pods.
      ```sh
      kubectl get nodes
@@ -230,7 +238,17 @@ Maintaining a Kubernetes cluster involves several activities to ensure its stabi
    - Regularly back up etcd data to prevent data loss.
    - Use etcd’s built-in snapshot capabilities.
 
-   **Example Backup Command** (on `controlplane`; install the client first with `sudo apt install -y etcd-client`):
+   **On the course's minikube cluster**, run `etcdctl` inside the etcd pod, with minikube's certificate files. The snapshot is saved on the control plane node:
+   ```sh
+   kubectl -n kube-system exec etcd-minikube -- etcdctl --endpoints=https://127.0.0.1:2379 \
+     --cacert=/var/lib/minikube/certs/etcd/ca.crt \
+     --cert=/var/lib/minikube/certs/etcd/server.crt \
+     --key=/var/lib/minikube/certs/etcd/server.key \
+     snapshot save /var/lib/minikube/etcd/etcd-backup.db
+   kubectl -n kube-system exec etcd-minikube -- etcdutl snapshot status /var/lib/minikube/etcd/etcd-backup.db --write-out=table
+   ```
+
+   **On a kubeadm cluster** (on `controlplane`; install the client first with `sudo apt install -y etcd-client`):
    ```sh
    sudo ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
      --cacert=/etc/kubernetes/pki/etcd/ca.crt \

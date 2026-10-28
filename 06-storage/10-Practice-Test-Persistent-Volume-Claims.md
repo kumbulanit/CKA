@@ -7,7 +7,7 @@
 The test starts with a pod `webapp` that writes its log inside the container only, and a folder `/var/log/webapp` on the workers. Create both first:
 
 ```
-for n in node01 node02; do ssh $n mkdir -p /var/log/webapp; done
+for n in minikube minikube-m02 minikube-m03; do minikube ssh -n $n -- sudo mkdir -p /var/log/webapp; done
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
@@ -122,6 +122,7 @@ Then: (4) recreate `webapp` with a hostPath volume `/var/log/webapp` mounted at 
       metadata:
         name: claim-log-1
       spec:
+        storageClassName: ""   # a volume you create yourself, not the default StorageClass
         accessModes:
           - ReadWriteOnce
         resources:
@@ -130,6 +131,8 @@ Then: (4) recreate `webapp` with a hostPath volume `/var/log/webapp` mounted at 
       ```
 
       This is also the file [`10-practice-test-persistent-volume-claims-claim-log-1.yaml`](./10-practice-test-persistent-volume-claims-claim-log-1.yaml) in this folder: `kubectl apply -f 10-practice-test-persistent-volume-claims-claim-log-1.yaml`
+
+      `storageClassName: ""` makes the claim bind to a PersistentVolume you created yourself. Without it, a cluster with a default StorageClass (minikube has one, called `standard`) would create a new volume for the claim instead.
 
      </details>
 
@@ -170,6 +173,7 @@ Then: (4) recreate `webapp` with a hostPath volume `/var/log/webapp` mounted at 
        metadata:
          name: claim-log-1
        spec:
+         storageClassName: ""   # a volume you create yourself, not the default StorageClass
          accessModes:
            - ReadWriteMany
          resources:

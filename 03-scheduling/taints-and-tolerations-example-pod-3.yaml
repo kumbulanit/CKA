@@ -1,4 +1,4 @@
-apiVersion: v1
+t apiVersion: v1
 kind: Pod
 metadata:
   name: example-pod
