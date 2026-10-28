@@ -5,10 +5,10 @@
 #   git clone https://github.com/kumbulanit/CKA.git && cd CKA
 #   sudo ./setup.sh
 #
-# It installs the same tools as the minikube lesson (02-installation/01-install-minikube.md): Docker, minikube, kubectl v1.36 and helm, plus git, curl,
+# It installs the same tools as the minikube lesson (01-installation/01-install-minikube.md): Docker, minikube, kubectl v1.36 and helm, plus git, curl,
 # jq, vim, nano and bash completion. Then, as the user who ran sudo, it creates and starts a
-# minikube cluster on Docker: Kubernetes v1.36.5 with Calico, 3 nodes (minikube is the control
-# plane; minikube-m02 and minikube-m03 are the workers). It takes about 10 minutes the first time.
+# minikube cluster on Docker: Kubernetes v1.36.5 with Calico, 3 nodes: one control plane (minikube)
+# and two workers (minikube-m02 and minikube-m03). It takes about 10 minutes the first time.
 #
 # Running it again is safe: it installs only what is missing, and starts the cluster if it is
 # stopped (after the server restarts, for example).
@@ -106,8 +106,20 @@ else
   as_user minikube start --driver=docker --nodes="$NODES" --kubernetes-version="$K8S_VERSION" --cni="$CNI"
 fi
 
+# One control plane and two workers: a cluster made earlier with fewer nodes gets the missing workers.
+have=$(as_user minikube node list 2>/dev/null | grep -c . || true)
+while [ "${have:-0}" -lt "$NODES" ]; do
+  step "Adding worker node $((have + 1)) of $NODES"
+  as_user minikube node add --worker
+  have=$((have + 1))
+done
+
 step "Waiting for all nodes to be Ready"
 as_user kubectl wait --for=condition=Ready node --all --timeout=600s >/dev/null
+# minikube gives the workers no role, so kubectl get nodes would show <none>: label them as workers.
+for n in $(as_user kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o name); do
+  as_user kubectl label "$n" node-role.kubernetes.io/worker= --overwrite >/dev/null
+done
 as_user kubectl get nodes -o wide
 
 if docker container inspect controlplane >/dev/null 2>&1; then

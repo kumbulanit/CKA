@@ -2,7 +2,7 @@
 
 #### Create POD without any commands or arguments.
 
-##### 06-standalone-pods-commands.yaml
+##### 03-standalone-pods-commands.yaml
 
 ```sh
 apiVersion: v1
@@ -15,10 +15,10 @@ spec:
      name: count
 ```
 
-This is also the file [`06-standalone-pods-commands.yaml`](./06-standalone-pods-commands.yaml) in this folder: `kubectl apply -f 06-standalone-pods-commands.yaml`
+This is also the file [`03-standalone-pods-commands.yaml`](./03-standalone-pods-commands.yaml) in this folder: `kubectl apply -f 03-standalone-pods-commands.yaml`
 
 ```sh
-kubectl apply -f 06-standalone-pods-commands.yaml
+kubectl apply -f 03-standalone-pods-commands.yaml
 ```
 ```sh
 kubectl get pods
@@ -42,10 +42,10 @@ spec:
      command: ["sleep","3600"]
 ```
 
-This is also the file [`06-standalone-pods-commands-2.yaml`](./06-standalone-pods-commands-2.yaml) in this folder: `kubectl apply -f 06-standalone-pods-commands-2.yaml`
+This is also the file [`03-standalone-pods-commands-2.yaml`](./03-standalone-pods-commands-2.yaml) in this folder: `kubectl apply -f 03-standalone-pods-commands-2.yaml`
 
 ```sh
-kubectl apply -f 06-standalone-pods-commands-2.yaml
+kubectl apply -f 03-standalone-pods-commands-2.yaml
 ```
 ```sh
 kubectl get pods
@@ -69,10 +69,10 @@ spec:
      args: ["3600"]
 ```
 
-This is also the file [`06-standalone-pods-commands-3.yaml`](./06-standalone-pods-commands-3.yaml) in this folder: `kubectl apply -f 06-standalone-pods-commands-3.yaml`
+This is also the file [`03-standalone-pods-commands-3.yaml`](./03-standalone-pods-commands-3.yaml) in this folder: `kubectl apply -f 03-standalone-pods-commands-3.yaml`
 
 ```sh
-kubectl apply -f 06-standalone-pods-commands-3.yaml
+kubectl apply -f 03-standalone-pods-commands-3.yaml
 ```
 ```sh
 kubectl get pods
@@ -94,10 +94,10 @@ spec:
      args: ["sleep","3600"]
 ```
 
-This is also the file [`06-standalone-pods-commands-4.yaml`](./06-standalone-pods-commands-4.yaml) in this folder: `kubectl apply -f 06-standalone-pods-commands-4.yaml`
+This is also the file [`03-standalone-pods-commands-4.yaml`](./03-standalone-pods-commands-4.yaml) in this folder: `kubectl apply -f 03-standalone-pods-commands-4.yaml`
 
 ```sh
-kubectl apply -f 06-standalone-pods-commands-4.yaml
+kubectl apply -f 03-standalone-pods-commands-4.yaml
 ```
 ```sh
 kubectl get pods

@@ -1,6 +1,6 @@
 # Installing and Configuring Kubernetes for Ubuntu (Minikube)
 
-Minikube runs a small Kubernetes cluster on one machine. It is the course's practice cluster: `sudo ./setup.sh`, at the top of this repository, does everything in this lesson in one command (Docker, minikube, kubectl, helm) and starts a 3-node cluster with `minikube start --driver=docker --nodes=3 --kubernetes-version=v1.36.5 --cni=calico`; see the README. The exam uses kubeadm clusters, which [Kubernetes installation using kubeadm](./02-install-kubeadm.md) builds.
+Minikube runs a small Kubernetes cluster on one machine. It is the course's practice cluster: `sudo ./setup.sh`, at the top of this repository, does everything in this lesson in one command (Docker, minikube, kubectl, helm) and starts a 3-node cluster with `minikube start --driver=docker --nodes=3 --kubernetes-version=v1.36.5 --cni=calico`; see the README. The exam uses kubeadm clusters, which [Kubernetes installation using kubeadm](./kubeadm-lesson-install-kubeadm.md) builds.
 
 ## 1. Prerequisites
 
@@ -90,17 +90,28 @@ kubectl version --client
 
 ## 5. Start Minikube
 
-**Start Minikube with Docker:**
+**Start the course cluster with Docker: one control plane node and two worker nodes:**
 ```sh
-minikube start --driver=docker
+minikube start --driver=docker --nodes=3 --kubernetes-version=v1.36.5 --cni=calico
 ```
 
-This command downloads the Kubernetes images, creates a container that acts as the cluster node, and starts the cluster.
+This command downloads the Kubernetes images, creates three containers that act as the cluster nodes, and starts the cluster: `minikube` is the control plane, `minikube-m02` and `minikube-m03` are the workers. (`minikube start --driver=docker` on its own starts a single node.)
+
+minikube gives the workers no role name, so label them as workers (`setup.sh` does this too):
+```sh
+kubectl label node minikube-m02 minikube-m03 node-role.kubernetes.io/worker=
+```
+
+If you already have a one-node minikube cluster from an earlier `minikube start`, add the two workers to it instead of starting again:
+```sh
+minikube node add
+minikube node add
+```
 
 **Start Minikube with VirtualBox (amd64 only, alternative):**
 ```sh
 sudo apt-get install -y virtualbox
-minikube start --driver=virtualbox
+minikube start --driver=virtualbox --nodes=3
 ```
 
 ## 6. Verify Cluster Status
@@ -119,7 +130,13 @@ You should see that the cluster and various components (e.g., kubelet, apiserver
 ```sh
 kubectl get nodes
 ```
-You should see a single node listed with a status of Ready.
+Output: three nodes, all `Ready`, one control plane and two workers:
+```
+NAME           STATUS   ROLES           AGE   VERSION
+minikube       Ready    control-plane   5m    v1.36.5
+minikube-m02   Ready    worker          4m    v1.36.5
+minikube-m03   Ready    worker          4m    v1.36.5
+```
 
 **Access Kubernetes Dashboard (Optional):**
 Minikube ships its own copy of the Dashboard as an add-on. This command opens it in your default web browser:

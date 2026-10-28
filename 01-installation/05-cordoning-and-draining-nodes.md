@@ -30,8 +30,8 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
      ```plaintext
      NAME           STATUS                     ROLES           AGE   VERSION
      minikube       Ready                      control-plane   30d   v1.36.5
-     minikube-m02   Ready,SchedulingDisabled   <none>          30d   v1.36.5
-     minikube-m03   Ready                      <none>          30d   v1.36.5
+     minikube-m02   Ready,SchedulingDisabled   worker          30d   v1.36.5
+     minikube-m03   Ready                      worker          30d   v1.36.5
      ```
 
 **Diagram: Cordoning Nodes**
@@ -77,8 +77,8 @@ Cordoning and draining nodes are crucial steps in Kubernetes cluster maintenance
      ```plaintext
      NAME           STATUS                     ROLES           AGE   VERSION
      minikube       Ready                      control-plane   30d   v1.36.5
-     minikube-m02   Ready,SchedulingDisabled   <none>          30d   v1.36.5
-     minikube-m03   Ready                      <none>          30d   v1.36.5
+     minikube-m02   Ready,SchedulingDisabled   worker          30d   v1.36.5
+     minikube-m03   Ready                      worker          30d   v1.36.5
      ```
 
 3. **Reboot or Maintain Node**:

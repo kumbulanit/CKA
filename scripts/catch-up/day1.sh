@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# day1.sh [lab ...]: creates what the Day 1 labs (core concepts; installation, configuration and
-# validation) leave in the cluster, as at the end of each lab, before its clean-up step.
+# day1.sh [lab ...]: creates what the Day 1 labs (installation, configuration and validation;
+# core concepts) leave in the cluster, as at the end of each lab, before its clean-up step.
 # Use it when the class runs out of time: run it where kubectl works (on the minikube server, or as
 # root on controlplane on a kubeadm cluster), for one lab
 # (./day1.sh services) or for the whole day (./day1.sh). ./day1.sh --list shows the labs.
@@ -11,14 +11,14 @@
 source "$(dirname "$0")/lib.sh"
 
 LABS=(
-  "pods|Pods nginx, nginx-port and mywebserver (01-core-concepts/01-pods, 02-basic-pods, 04-pod-manifest-cli)"
-  "pod-yaml|Pods from YAML: nginxwebserver, nginx-pod, command to command4 (01-core-concepts/03-first-pod-yaml, 05-commands-and-arguments, 06-expose-pods)"
-  "namespaces|Namespace dev with myapp-pod and the compute-quota ResourceQuota (01-core-concepts/07-namespaces)"
-  "deployments|Deployment myapp-deployment (01-core-concepts/08-deployments, 09-replicasets)"
-  "services|Services myapp-service (NodePort 30008) and back-end (01-core-concepts/10-services-nodeport, 11-services-clusterip)"
-  "webapp|webapp-deployment with 6 replicas and webapp-service (01-core-concepts/12-deployments-and-services, 02-installation/04-growing-the-cluster)"
-  "standalone|Pods standalone-pod and test-pod (02-installation/07-standalone-pods-2)"
-  "etcd-backup|etcd snapshot in /opt/etcd-backup.db (02-installation/09-cluster-maintenance)"
+  "pod-yaml|Pods from YAML: nginxwebserver, nginx-pod, command to command4 (01-installation/02-first-pod-yaml, 03-standalone-pods; 02-core-concepts/03-first-pod-yaml, 05-commands-and-arguments, 06-expose-pods)"
+  "standalone|Pods standalone-pod and test-pod (01-installation/04-standalone-pods-2)"
+  "etcd-backup|etcd snapshot in /opt/etcd-backup.db (01-installation/06-cluster-maintenance)"
+  "pods|Pods nginx, nginx-port and mywebserver (02-core-concepts/01-pods, 02-basic-pods, 04-pod-manifest-cli)"
+  "namespaces|Namespace dev with myapp-pod and the compute-quota ResourceQuota (02-core-concepts/07-namespaces)"
+  "deployments|Deployment myapp-deployment (02-core-concepts/08-deployments, 09-replicasets)"
+  "services|Services myapp-service (NodePort 30008) and back-end (02-core-concepts/10-services-nodeport, 11-services-clusterip)"
+  "webapp|webapp-deployment with 6 replicas and webapp-service (02-core-concepts/12-deployments-and-services, 01-installation/kubeadm-lesson-growing-the-cluster)"
 )
 
 lab_pods() {

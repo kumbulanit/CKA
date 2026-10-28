@@ -7,7 +7,7 @@ https://github.com/kubernetes/community/blob/master/contributors/devel/sig-archi
 
 
 
-### 05-first-pod-yaml.yaml file
+### 02-first-pod-yaml.yaml file
 ```sh
 apiVersion: v1
 kind: Pod
@@ -19,17 +19,17 @@ spec:
      name: democontainer
 ```
 
-This is also the file [`05-first-pod-yaml.yaml`](./05-first-pod-yaml.yaml) in this folder: `kubectl apply -f 05-first-pod-yaml.yaml`
+This is also the file [`02-first-pod-yaml.yaml`](./02-first-pod-yaml.yaml) in this folder: `kubectl apply -f 02-first-pod-yaml.yaml`
 
 ```sh
-kubectl apply -f 05-first-pod-yaml.yaml
+kubectl apply -f 02-first-pod-yaml.yaml
 ```
 
 #### List the Running Pods
 ```sh
 kubectl get pods
 ```
-#### Delete the Resources Created via 05-first-pod-yaml.yaml
+#### Delete the Resources Created via 02-first-pod-yaml.yaml
 ```sh
-kubectl delete -f 05-first-pod-yaml.yaml
+kubectl delete -f 02-first-pod-yaml.yaml
 ```

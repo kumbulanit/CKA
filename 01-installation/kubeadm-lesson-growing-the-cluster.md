@@ -8,7 +8,7 @@ Growing a Kubernetes cluster involves adding new nodes to increase its capacity,
 ### Prerequisites
 
 1. **Existing Kubernetes Cluster**: Ensure you have an existing Kubernetes cluster set up using `kubeadm`.
-2. **New Nodes**: Prepare new nodes with the same prerequisites as the initial cluster setup: steps 1–3 of [Kubernetes installation using kubeadm](./02-install-kubeadm.md) (system preparation, containerd, and the Kubernetes packages).
+2. **New Nodes**: Prepare new nodes with the same prerequisites as the initial cluster setup: steps 1–3 of [Kubernetes installation using kubeadm](./kubeadm-lesson-install-kubeadm.md) (system preparation, containerd, and the Kubernetes packages).
 
 ### Steps to Add New Nodes
 

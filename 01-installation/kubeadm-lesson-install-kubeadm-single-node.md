@@ -3,7 +3,7 @@
 > Despite its name, this page installs a single-node cluster with **kubeadm** (the tool the CKA exam uses). The course's practice cluster is minikube: see [01-install-minikube.md](./01-install-minikube.md), or run `sudo ./setup.sh`.
 
 
-Installing a standalone Kubernetes cluster on Ubuntu involves setting up Kubernetes components on a single machine. This setup is suitable for development, testing, or learning purposes. The following guide uses `kubeadm` for installation, which simplifies the process of setting up Kubernetes clusters. (For the 3-node cluster the practicals use, see [Kubernetes installation using kubeadm](./02-install-kubeadm.md).)
+Installing a standalone Kubernetes cluster on Ubuntu involves setting up Kubernetes components on a single machine. This setup is suitable for development, testing, or learning purposes. The following guide uses `kubeadm` for installation, which simplifies the process of setting up Kubernetes clusters. (For the 3-node cluster the practicals use, see [Kubernetes installation using kubeadm](./kubeadm-lesson-install-kubeadm.md).)
 
 ---
 

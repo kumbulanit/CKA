@@ -19,7 +19,11 @@ Adding new nodes to a Minikube cluster involves configuring Minikube to use mult
    minikube node add
    ```
 
-   This will add one more node to your existing Minikube cluster.
+   This will add one more node to your existing Minikube cluster: a worker, named `minikube-m04` for the fourth node. Give it the worker role name, as `setup.sh` does for the other two:
+
+   ```bash
+   kubectl label node minikube-m04 node-role.kubernetes.io/worker=
+   ```
 
 ### 3. **View the Nodes:**
    After adding the nodes, you can check the nodes in your cluster using the `kubectl` command:
