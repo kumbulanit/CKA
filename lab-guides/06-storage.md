@@ -18,19 +18,19 @@ sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10
 kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-The steps below use the node names of the lessons. On minikube, `controlplane` is `minikube` (`minikube ssh`), `node01` is `minikube-m02` (`minikube ssh -n minikube-m02`) and `node02` is `minikube-m03`; run `kubectl` as your own user on the server. The outputs were recorded in Desired Labs, whose nodes have the lessons' names. In Desired Labs, starting the lab gives you that cluster, with `root@controlplane` in the terminal.
+The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, where the terminal is already root on `minikube` and the API server answers on port 6443 (8443 on minikube): addresses, ports and ages on yours will differ.
 
 ## Lab 6.1: A hostPath volume
 
 ### What you will do
 
-Follow [06-Volumes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/06-Volumes.md):
+Follow [06-volumes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/06-volumes.md):
 
 1. Write and apply **random-number-generator.yaml**: a pod **random-number-generator** (`alpine`)
    that writes a random number to `/opt/number.out`, with `/opt` on a `hostPath` volume at `/data`
    (`type: DirectoryOrCreate`).
 2. Find the node it ran on (`kubectl get pod -o wide`) and read `/data/number.out` there
-   (`ssh <node> cat /data/number.out`).
+   (`minikube ssh -n <node> -- cat /data/number.out`).
 3. Delete the pod, and check that the file is still on the node.
 
 ### Step by step
@@ -91,8 +91,8 @@ kubectl get pod random-number-generator -o wide
 You should see something like:
 
 ```text
-NAME                      READY   STATUS    RESTARTS   AGE   IP           NODE     NOMINATED NODE   READINESS GATES
-random-number-generator   1/1     Running   0          55s   10.244.2.2   node02   <none>           <none>
+NAME                      READY   STATUS      RESTARTS   AGE   IP           NODE           NOMINATED NODE   READINESS GATES
+random-number-generator   0/1     Completed   0          8s    10.244.2.2   minikube-m03   <none>           <none>
 ```
 
 **Step 5.** Saves `$NODE`: prints one field of the pod `random-number-generator`.
@@ -106,13 +106,13 @@ It prints nothing when it works.
 **Step 6.** On `$NODE`: shows the file `/data/number.out`.
 
 ```bash
-ssh $NODE cat /data/number.out
+minikube ssh -n $NODE -- cat /data/number.out
 ```
 
 You should see something like:
 
 ```text
-63
+67
 ```
 
 **Step 7.** Deletes the pod `random-number-generator`.
@@ -130,21 +130,21 @@ pod "random-number-generator" deleted from default namespace
 **Step 8.** On `$NODE`: shows the file `/data/number.out`.
 
 ```bash
-ssh $NODE cat /data/number.out
+minikube ssh -n $NODE -- cat /data/number.out
 ```
 
 You should see something like:
 
 ```text
-63
-96
+67
+80
 ```
 
 ### If you see something else
 
 - The check says: _The pod random-number-generator has not run yet._
 - The check says: _random-number-generator is still there. Delete it (step 3)._
-- The check says: _There is no /data/number.out on node01 or node02._
+- The check says: _There is no /data/number.out on minikube-m02 or minikube-m03._
 - The pod's `volumes` entry names the hostPath; the container's `volumeMounts` entry mounts it by that name at /opt.
 - The container exits after writing, and the kubelet restarts it, so the file collects several numbers. That is fine.
 
@@ -162,9 +162,9 @@ You should see something like:
 
 ### What you will do
 
-Follow [07-Persistent-Volumes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/07-Persistent-Volumes.md),
-[08-Persistent-Volume-Claims.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/08-Persistent-Volume-Claims.md) and
-[09-Using-PVC-in-PODs.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/09-Using-PVC-in-PODs.md):
+Follow [07-persistent-volumes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/07-persistent-volumes.md),
+[08-persistent-volume-claims.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/08-persistent-volume-claims.md) and
+[09-using-pvcs-in-pods.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/09-using-pvcs-in-pods.md):
 
 1. Write **pv-definition.yaml** (PersistentVolume **pv-vol1**, 1Gi, ReadWriteOnce, hostPath
    `/tmp/data`) and **pvc-definition.yaml** (claim **myclaim**, ReadWriteOnce, 1Gi).
@@ -203,6 +203,7 @@ apiVersion: v1
 metadata:
   name: myclaim
 spec:
+  storageClassName: ""   # bind to the lesson's PV, not a default StorageClass
   accessModes: [ "ReadWriteOnce" ]
   resources:
    requests:
@@ -233,8 +234,8 @@ kubectl get pv
 You should see something like:
 
 ```text
-NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-pv-vol1   1Gi        RWO            Retain           Pending                          <unset>                          2s
+NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+pv-vol1   1Gi        RWO            Retain           Available                          <unset>                          0s
 ```
 
 **Step 5.** Creates the objects in `pvc-definition.yaml`.
@@ -258,8 +259,8 @@ kubectl get pvc
 You should see something like:
 
 ```text
-NAME      STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-myclaim   Pending   pv-vol1   0                                        <unset>                 1s
+NAME      STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+myclaim   Bound    pv-vol1   1Gi        RWO                           <unset>                 0s
 ```
 
 **Step 7.** Deletes the PersistentVolumeClaim `myclaim`.
@@ -368,13 +369,13 @@ You should see something like:
 
 ```text
 NAME        READY   STATUS    RESTARTS   AGE
-pod/mypod   1/1     Running   0          49s
+pod/mypod   1/1     Running   0          15s
 
 NAME                            STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-persistentvolumeclaim/myclaim   Bound    pv-vol1   1Gi        RWO                           <unset>                 50s
+persistentvolumeclaim/myclaim   Bound    pv-vol1   1Gi        RWO                           <unset>                 15s
 
 NAME                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-persistentvolume/pv-vol1   1Gi        RWO            Retain           Bound    default/myclaim                  <unset>                          50s
+persistentvolume/pv-vol1   1Gi        RWO            Retain           Bound    default/myclaim                  <unset>                          15s
 ```
 
 ### If you see something else
@@ -397,7 +398,7 @@ persistentvolume/pv-vol1   1Gi        RWO            Retain           Bound    d
 
 ### What you will do
 
-Work through [10-Practice-Test-Persistent-Volume-Claims.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/10-Practice-Test-Persistent-Volume-Claims.md).
+Work through [10-practice-test-persistent-volume-claims.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/10-practice-test-persistent-volume-claims.md).
 The pod **webapp** writes its log to `/log/app.log` inside the container only.
 
 1. Recreate webapp with a `hostPath` volume `/var/log/webapp` (type Directory) mounted at `/log`.
@@ -514,6 +515,7 @@ apiVersion: v1
 metadata:
   name: claim-log-1
 spec:
+  storageClassName: ""   # bind to the lesson's PV, not a default StorageClass
   accessModes:
     - ReadWriteOnce
   resources:
@@ -591,7 +593,7 @@ You should see something like:
 
 ```text
 NAME          STATUS   VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-claim-log-1   Bound    pv-log   100Mi      RWX                           <unset>                 0s
+claim-log-1   Bound    pv-log   100Mi      RWX                           <unset>                 1s
 ```
 
 **Step 14.** Deletes the pod `webapp`.
@@ -725,7 +727,7 @@ You should see something like:
 
 ```text
 NAME     CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM                 STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-pv-log   100Mi      RWX            Retain           Released   default/claim-log-1                  <unset>                          69s
+pv-log   100Mi      RWX            Retain           Released   default/claim-log-1                  <unset>                          68s
 ```
 
 ### If you see something else
@@ -747,7 +749,7 @@ pv-log   100Mi      RWX            Retain           Released   default/claim-log
 
 ### What you will do
 
-Follow [12-Storage-Class.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/12-Storage-Class.md).
+Follow [11-storage-classes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/11-storage-classes.md).
 First delete mypod and myclaim from task 6.2. Then:
 
 1. Install the local-path provisioner (v0.0.37) and list the storage classes.
@@ -814,7 +816,7 @@ You should see something like:
 
 ```text
 NAME         PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-local-path   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  1s
+local-path   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  0s
 ```
 
 **Step 5.** Writes the file `sc-definition.yaml`.
@@ -854,7 +856,7 @@ You should see something like:
 ```text
 NAME             PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
 google-storage   pd.csi.storage.gke.io   Delete          Immediate              false                  0s
-local-path       rancher.io/local-path   Delete          WaitForFirstConsumer   false                  1s
+local-path       rancher.io/local-path   Delete          WaitForFirstConsumer   false                  0s
 ```
 
 **Step 8.** Writes the file `pvc-definition.yaml`.
@@ -946,12 +948,12 @@ You should see something like:
 
 ```text
 NAME                            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-persistentvolumeclaim/myclaim   Bound    pvc-896d0afd-a0f2-4be1-95db-d414b2b28437   500Mi      RWO            local-path     <unset>                 28s
+persistentvolumeclaim/myclaim   Bound    pvc-951edc40-ee03-4b77-bbf7-ed4d5cc0dd4e   500Mi      RWO            local-path     <unset>                 19s
 
 NAME                                                        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM                 STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-persistentvolume/pv-log                                     100Mi      RWX            Retain           Released   default/claim-log-1                  <unset>                          100s
-persistentvolume/pv-vol1                                    1Gi        RWO            Retain           Released   default/myclaim                      <unset>                          2m34s
-persistentvolume/pvc-896d0afd-a0f2-4be1-95db-d414b2b28437   500Mi      RWO            Delete           Bound      default/myclaim       local-path     <unset>                          13s
+persistentvolume/pv-log                                     100Mi      RWX            Retain           Released   default/claim-log-1                  <unset>                          90s
+persistentvolume/pv-vol1                                    1Gi        RWO            Retain           Released   default/myclaim                      <unset>                          2m28s
+persistentvolume/pvc-951edc40-ee03-4b77-bbf7-ed4d5cc0dd4e   500Mi      RWO            Delete           Bound      default/myclaim       local-path     <unset>                          3s
 ```
 
 ### If you see something else
@@ -972,9 +974,9 @@ persistentvolume/pvc-896d0afd-a0f2-4be1-95db-d414b2b28437   500Mi      RWO      
 
 ### What you will do
 
-Work through [13-Practice-Test-Storage-Class.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/13-Practice-Test-Storage-Class.md).
+Work through [12-practice-test-storage-classes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/12-practice-test-storage-classes.md).
 The cluster now has the storage classes **local-storage** and **portworx-io-priority-high**, and a
-PersistentVolume **local-pv** on node01.
+PersistentVolume **local-pv** on minikube-m02.
 
 1. Look at the storage classes: which provisioner and binding mode does each use?
 2. Create the claim **local-pvc**: ReadWriteOnce, 500Mi, `storageClassName: local-storage`.
@@ -996,8 +998,8 @@ You should see something like:
 
 ```text
 NAME                        PROVISIONER                     RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-google-storage              pd.csi.storage.gke.io           Delete          Immediate              false                  29s
-local-path                  rancher.io/local-path           Delete          WaitForFirstConsumer   false                  30s
+google-storage              pd.csi.storage.gke.io           Delete          Immediate              false                  20s
+local-path                  rancher.io/local-path           Delete          WaitForFirstConsumer   false                  20s
 local-storage               kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  0s
 portworx-io-priority-high   kubernetes.io/portworx-volume   Delete          Immediate              false                  0s
 ```
@@ -1134,7 +1136,7 @@ You should see something like:
 
 ```text
 NAME        STATUS   VOLUME     CAPACITY   ACCESS MODES   STORAGECLASS    VOLUMEATTRIBUTESCLASS   AGE
-local-pvc   Bound    local-pv   500Mi      RWO            local-storage   <unset>                 10s
+local-pvc   Bound    local-pv   500Mi      RWO            local-storage   <unset>                 11s
 ```
 
 **Step 10.** Writes the file `delayed-volume-sc.yaml`.
@@ -1175,10 +1177,10 @@ You should see something like:
 ```text
 NAME                        PROVISIONER                     RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
 delayed-volume-sc           kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  0s
-google-storage              pd.csi.storage.gke.io           Delete          Immediate              false                  39s
-local-path                  rancher.io/local-path           Delete          WaitForFirstConsumer   false                  40s
-local-storage               kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  10s
-portworx-io-priority-high   kubernetes.io/portworx-volume   Delete          Immediate              false                  10s
+google-storage              pd.csi.storage.gke.io           Delete          Immediate              false                  31s
+local-path                  rancher.io/local-path           Delete          WaitForFirstConsumer   false                  31s
+local-storage               kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  11s
+portworx-io-priority-high   kubernetes.io/portworx-volume   Delete          Immediate              false                  11s
 ```
 
 ### If you see something else
@@ -1191,7 +1193,7 @@ portworx-io-priority-high   kubernetes.io/portworx-volume   Delete          Imme
 
 ### Why it works
 
-**Why it works.** `kubernetes.io/no-provisioner` means the class never creates volumes: claims bind to PVs an admin made, such as local-pv. Because local-storage uses `WaitForFirstConsumer`, local-pvc stays Pending until a pod using it is scheduled; the scheduler then places the pod where local-pv lives (its nodeAffinity says node01) and binds the claim. With `Immediate`, binding would happen at once, possibly to a volume on a node the pod cannot run on.
+**Why it works.** `kubernetes.io/no-provisioner` means the class never creates volumes: claims bind to PVs an admin made, such as local-pv. Because local-storage uses `WaitForFirstConsumer`, local-pvc stays Pending until a pod using it is scheduled; the scheduler then places the pod where local-pv lives (its nodeAffinity says minikube-m02) and binds the claim. With `Immediate`, binding would happen at once, possibly to a volume on a node the pod cannot run on.
 
 **In the exam:** `kubectl describe pvc` shows `WaitForFirstConsumer` in its events; that Pending is expected, not an error.
 

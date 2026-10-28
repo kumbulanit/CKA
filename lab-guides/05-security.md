@@ -22,19 +22,20 @@ sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10
 kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-The steps below use the node names of the lessons. On minikube, `controlplane` is `minikube` (`minikube ssh`), `node01` is `minikube-m02` (`minikube ssh -n minikube-m02`) and `node02` is `minikube-m03`; run `kubectl` as your own user on the server. The outputs were recorded in Desired Labs, whose nodes have the lessons' names. In Desired Labs, starting the lab gives you that cluster, with `root@controlplane` in the terminal.
+The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, where the terminal is already root on `minikube` and the API server answers on port 6443 (8443 on minikube): addresses, ports and ages on yours will differ.
 
 ## Lab 5.1: Authenticating with tokens
 
 ### What you will do
 
-Follow [authentication.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/authentication.md):
+Follow [02-authentication-with-tokens.md](https://github.com/kumbulanit/CKA/blob/main/05-security/02-authentication-with-tokens.md):
 
 1. Create the service account **external**.
 2. Save a pod **external-pod** (`nginx`) to **pod-sa.yaml** with `--dry-run=client -o yaml`, add
    `serviceAccountName: external` under `spec`, and apply it. Look at the pod's YAML.
 3. Read the token inside the pod (`/var/run/secrets/kubernetes.io/serviceaccount/token`).
-4. Call the API server (`kubectl cluster-info` shows it, `https://controlplane:6443`) with
+4. Call the API server (`kubectl cluster-info` shows its address; save it with
+   `APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')`) with
    `curl -k`, first without a token, then `/api/v1` with `--header "Authorization: Bearer <TOKEN>"`.
 5. Get a token without a pod: `kubectl create token external`. Leave the pod running.
 
@@ -102,7 +103,7 @@ You should see something like:
 
 ```text
 NAME           READY   STATUS    RESTARTS   AGE
-external-pod   1/1     Running   0          12s
+external-pod   1/1     Running   0          19s
 ```
 
 **Step 7.** Shows the pod `external-pod` as YAML, as the API server stores it.
@@ -120,14 +121,14 @@ metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
       {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"labels":{"run":"external-pod"},"name":"external-pod","namespace":"default"},"spec":{"containers":[{"image":"nginx","name":"external-pod","resources":{}}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","serviceAccountName":"external"},"status":{}}
-  creationTimestamp: "2026-10-27T12:58:27Z"
+  creationTimestamp: "2026-10-27T23:23:04Z"
   generation: 1
   labels:
     run: external-pod
   name: external-pod
   namespace: default
-  resourceVersion: "688"
-  uid: e5cf2af7-8dbb-4c20-9c5c-75b18976d665
+  resourceVersion: "754"
+  uid: 7b1df098-c096-468e-90a4-0f78088cbf62
 spec:
   containers:
   - image: nginx
@@ -152,7 +153,7 @@ echo $TOKEN
 You should see something like:
 
 ```text
-eyJhbGciOiJSUzI1NiIsImtpZCI6Ik5oWmgxbWNoWjR3bDlHa29SSkZ6LWg4elg5M2JDZkdlV1djcWdfWXhJd2sifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxODI0NjQxOTA3LCJpYXQiOjE3OTMxMDU5MDcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiNTFhMGZmYzQtOWI2NS00ZDViLTlhYWYtMzAxNDQ4Yjg4NWFkIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwibm9kZSI6eyJuYW1lIjoibm9kZTAyIiwidWlkIjoiYjI5ZTYyYjgtYjgwOS00MWU3LWJhNTUtZTBlZmMzZjBiNjRmIn0sInBvZCI6eyJuYW1lIjoiZXh0ZXJuYWwtcG9kIiwidWlkIjoiZTVjZjJhZjctOGRiYi00YzIwLTljNWMtNzViMTg5NzZkNjY1In0sInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJleHRlcm5hbCIsInVpZCI6IjliMmY0MDBjLTY0MDAtNDBlMC05YTI2LWVkOThkNjkxMGMwNyJ9LCJ3YXJuYWZ0ZXIiOjE3OTMxMDk1MTR9LCJuYmYiOjE3OTMxMDU5MDcsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmV4dGVybmFsIn0.bO31laHERHNZDOFT838aOfJlW6BQlZtS2jGX0DvE6agbumC8JcGc87fwGScQq_klghs2nHfx_dyssEg-enArC4kMP7_Q1d_Xwcch819GLsKfhgRWj1OPi37iyk43-rAG6-4LQrCrliWl74s4XpB4yWeFAu5JPluLrvHMmv2GApdBSXtUN7O7Ulig7zvcalDKtE41zDo8Wl-Hbi-9kOQJKq_e_SaKm8HWytQAztLyx84I7XK0ss-vmz-08uoJt_7aakLoqQSsRr_74N51PRO0bjNkGzsPDwXLs6wNvlr8xi6-U9onrjfQ_B3lBAIQFbfQjBtO_COzPEZKlcAzm7RwNg
+eyJhbGciOiJSUzI1NiIsImtpZCI6InlGbjdmbW1DU2htV2x0NUpIbWJYWjUxRlJMTjkwQnFoTzNmUi1iZFpISDAifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxODI0Njc5Mzg1LCJpYXQiOjE3OTMxNDMzODUsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiODU1YzI1MjMtOTdjZi00OGYyLTg1MjEtYzYzNmEwMTVlNWU4Iiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwibm9kZSI6eyJuYW1lIjoibWluaWt1YmUtbTAyIiwidWlkIjoiMDA5MTFjNjctOTMyYy00YzY2LWI3MjEtZjgwNTExNjc2ZTMzIn0sInBvZCI6eyJuYW1lIjoiZXh0ZXJuYWwtcG9kIiwidWlkIjoiN2IxZGYwOTgtYzA5Ni00NjhlLTkwYTQtMGY3ODA4OGNiZjYyIn0sInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJleHRlcm5hbCIsInVpZCI6ImM4OTY5YzQ4LTU2MjAtNDk2NC1hZjJmLTA0YTgzMTcxYjBkYSJ9LCJ3YXJuYWZ0ZXIiOjE3OTMxNDY5OTJ9LCJuYmYiOjE3OTMxNDMzODUsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmV4dGVybmFsIn0.1VngAnww7anZR62ln4gY4tRuymIVEhBGEWBAxST-RH7Wp4SfIUJEYw_H63e6zv-4xuCDFKBEol5shsiP9RVsw6FJFOsgEPNgtiqeH0DQA23HmxOVQUDGO7_Johd0W2iiVxX5c96b0O18zxMtmVMWMZDYCHxCxfUfbOe_NQQ7euloZmRzy9BD_Zkfs4BUxUZdQHWyK0T_nuWGx59-gEeMSbO0ZNGQvhe1XBClzkrvObkRPWGDNYEIs7_uRcM2oMuxqqtKKwUkxaN48TYYG7jBsM0WTjsBHQYSmw3V0YfoqSf7NR8Skxn3EQ160av9sir1IrFwQt5boFxYzGho37IklA
 ```
 
 **Step 10.** Shows the addresses of the API server and CoreDNS.
@@ -164,16 +165,24 @@ kubectl cluster-info
 You should see something like:
 
 ```text
-Kubernetes control plane is running at https://controlplane:6443
-CoreDNS is running at https://controlplane:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://minikube:6443
+CoreDNS is running at https://minikube:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ```
 
-**Step 11.** Sends an HTTP request to `https://controlplane:6443` and prints the answer.
+**Step 11.** Saves `$APISERVER`: shows the kubeconfig.
 
 ```bash
-curl -k https://controlplane:6443
+APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+```
+
+It prints nothing when it works.
+
+**Step 12.** Sends an HTTP request to `the address` and prints the answer.
+
+```bash
+curl -k $APISERVER
 ```
 
 You should see something like:
@@ -181,7 +190,7 @@ You should see something like:
 ```text
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100   217  100   217    0     0  33617      0 --:--:-- --:--:-- --:--:-- 36166
+100   217  100   217    0     0  21000      0 --:--:-- --:--:-- --:--:-- 21700
 {
   "kind": "Status",
   "apiVersion": "v1",
@@ -191,7 +200,7 @@ You should see something like:
   "reason": "Forbidden",
   "details": {},
   "code": 403
-}@@PB-STEP 11@@
+}@@PB-STEP 12@@
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{
@@ -200,13 +209,13 @@ You should see something like:
 … (570 more lines)
 ```
 
-**Step 12.** Sends an HTTP request to `https://controlplane:6443/api/v1` and prints the answer.
+**Step 13.** Sends an HTTP request to `the address` and prints the answer.
 
 ```bash
-curl -k https://controlplane:6443/api/v1 --header "Authorization: Bearer $TOKEN"
+curl -k $APISERVER/api/v1 --header "Authorization: Bearer $TOKEN"
 ```
 
-**Step 13.** Creates a short-lived token for the service account `external`.
+**Step 14.** Creates a short-lived token for the service account `external`.
 
 ```bash
 kubectl create token external
@@ -236,11 +245,11 @@ kubectl create token external
 
 ### What you will do
 
-Follow [authorization.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/authorization.md),
+Follow [03-authorization.md](https://github.com/kumbulanit/CKA/blob/main/05-security/03-authorization.md),
 using a token of the service account **external** (`TOKEN=$(kubectl create token external)`):
 
 1. With curl and the token, list the pods in `default`
-   (`https://controlplane:6443/api/v1/namespaces/default/pods`): it is **Forbidden**.
+   (`$APISERVER/api/v1/namespaces/default/pods`): it is **Forbidden**.
 2. Write and apply **role.yaml**: a Role **pod-reader** in `default` that may `list` pods.
 3. Write and apply **rolebinding.yaml**: a RoleBinding **read-pods** that gives pod-reader to the
    user `system:serviceaccount:default:external`.
@@ -256,10 +265,18 @@ TOKEN=$(kubectl create token external)
 
 It prints nothing when it works.
 
-**Step 2.** Sends an HTTP request to `https://controlplane:6443/api/v1` and prints the answer.
+**Step 2.** Saves `$APISERVER`: shows the kubeconfig.
 
 ```bash
-curl -k https://controlplane:6443/api/v1 --header "Authorization: Bearer $TOKEN"
+APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+```
+
+It prints nothing when it works.
+
+**Step 3.** Sends an HTTP request to `the address` and prints the answer.
+
+```bash
+curl -k $APISERVER/api/v1 --header "Authorization: Bearer $TOKEN"
 ```
 
 You should see something like:
@@ -286,13 +303,13 @@ You should see something like:
 … (571 more lines)
 ```
 
-**Step 3.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/default/pods` and prints the answer.
+**Step 4.** Sends an HTTP request to `the address` and prints the answer.
 
 ```bash
-curl -k https://controlplane:6443/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
+curl -k $APISERVER/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
 ```
 
-**Step 4.** Writes the file `role.yaml`.
+**Step 5.** Writes the file `role.yaml`.
 
 ```bash
 cat > role.yaml <<'EOF'
@@ -308,7 +325,7 @@ rules:
 EOF
 ```
 
-**Step 5.** Creates the objects in `role.yaml`, or updates them if they exist.
+**Step 6.** Creates the objects in `role.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f role.yaml
@@ -320,7 +337,7 @@ You should see something like:
 role.rbac.authorization.k8s.io/pod-reader created
 ```
 
-**Step 6.** Lists the Roles.
+**Step 7.** Lists the Roles.
 
 ```bash
 kubectl get role
@@ -330,10 +347,10 @@ You should see something like:
 
 ```text
 NAME         CREATED AT
-pod-reader   2026-10-27T12:58:40Z
+pod-reader   2026-10-27T23:23:24Z
 ```
 
-**Step 7.** Shows the details of the Role `pod-reader`, with its recent events at the bottom.
+**Step 8.** Shows the details of the Role `pod-reader`, with its recent events at the bottom.
 
 ```bash
 kubectl describe role pod-reader
@@ -351,7 +368,7 @@ PolicyRule:
   pods       []                 []              [list]
 ```
 
-**Step 8.** Writes the file `rolebinding.yaml`.
+**Step 9.** Writes the file `rolebinding.yaml`.
 
 ```bash
 cat > rolebinding.yaml <<'EOF'
@@ -373,7 +390,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 9.** Creates the objects in `rolebinding.yaml`, or updates them if they exist.
+**Step 10.** Creates the objects in `rolebinding.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f rolebinding.yaml
@@ -385,7 +402,7 @@ You should see something like:
 rolebinding.rbac.authorization.k8s.io/read-pods created
 ```
 
-**Step 10.** Lists the RoleBindings.
+**Step 11.** Lists the RoleBindings.
 
 ```bash
 kubectl get rolebinding
@@ -398,7 +415,7 @@ NAME        ROLE              AGE
 read-pods   Role/pod-reader   0s
 ```
 
-**Step 11.** Shows the details of the RoleBinding `read-pods`, with its recent events at the bottom.
+**Step 12.** Shows the details of the RoleBinding `read-pods`, with its recent events at the bottom.
 
 ```bash
 kubectl describe rolebinding read-pods
@@ -419,10 +436,10 @@ Subjects:
   User  system:serviceaccount:default:external
 ```
 
-**Step 12.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/default/pods` and prints the answer.
+**Step 13.** Sends an HTTP request to `the address` and prints the answer.
 
 ```bash
-curl -k https://controlplane:6443/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
+curl -k $APISERVER/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
 ```
 
 You should see something like:
@@ -434,17 +451,17 @@ You should see something like:
   "kind": "PodList",
   "apiVersion": "v1",
   "metadata": {
-    "resourceVersion": "697"
+    "resourceVersion": "758"
   },
   "items": [
     {
       "metadata": {
         "name": "external-pod",
         "namespace": "default",
-        "uid": "e5cf2af7-8dbb-4c20-9c5c-75b18976d665",
-        "resourceVersion": "688",
+        "uid": "7b1df098-c096-468e-90a4-0f78088cbf62",
+        "resourceVersion": "754",
         "generation": 1,
-        "creationTimestamp": "2026-10-27T12:58:27Z",
+        "creationTimestamp": "2026-10-27T23:23:04Z",
         "labels": {
 … (291 more lines)
 ```
@@ -469,7 +486,7 @@ You should see something like:
 
 ### What you will do
 
-Follow [cluster-permissions.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/cluster-permissions.md),
+Follow [04-clusterroles-and-bindings.md](https://github.com/kumbulanit/CKA/blob/main/05-security/04-clusterroles-and-bindings.md),
 with the same token:
 
 1. Delete the Role and RoleBinding from the last task (`kubectl delete -f role.yaml`, then
@@ -492,7 +509,15 @@ TOKEN=$(kubectl create token external)
 
 It prints nothing when it works.
 
-**Step 2.** Deletes the objects in `role.yaml`.
+**Step 2.** Saves `$APISERVER`: shows the kubeconfig.
+
+```bash
+APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+```
+
+It prints nothing when it works.
+
+**Step 3.** Deletes the objects in `role.yaml`.
 
 ```bash
 kubectl delete -f role.yaml
@@ -504,7 +529,7 @@ You should see something like:
 role.rbac.authorization.k8s.io "pod-reader" deleted from default namespace
 ```
 
-**Step 3.** Deletes the objects in `rolebinding.yaml`.
+**Step 4.** Deletes the objects in `rolebinding.yaml`.
 
 ```bash
 kubectl delete -f rolebinding.yaml
@@ -516,7 +541,7 @@ You should see something like:
 rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
 ```
 
-**Step 4.** Writes the file `cluster-role.yaml`.
+**Step 5.** Writes the file `cluster-role.yaml`.
 
 ```bash
 cat > cluster-role.yaml <<'EOF'
@@ -533,7 +558,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 5.** Creates the objects in `cluster-role.yaml`, or updates them if they exist.
+**Step 6.** Creates the objects in `cluster-role.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f cluster-role.yaml
@@ -545,7 +570,7 @@ You should see something like:
 clusterrole.rbac.authorization.k8s.io/pod-reader created
 ```
 
-**Step 6.** Lists the ClusterRoles.
+**Step 7.** Lists the ClusterRoles.
 
 ```bash
 kubectl get clusterrole
@@ -555,27 +580,27 @@ You should see something like:
 
 ```text
 NAME                                                                   CREATED AT
-admin                                                                  2026-10-27T12:57:49Z
-cluster-admin                                                          2026-10-27T12:57:49Z
-edit                                                                   2026-10-27T12:57:49Z
-kindnet                                                                2026-10-27T12:57:52Z
-kubeadm:get-nodes                                                      2026-10-27T12:57:49Z
-local-path-provisioner-role                                            2026-10-27T12:57:52Z
-pod-reader                                                             2026-10-27T12:58:40Z
-system:aggregate-to-admin                                              2026-10-27T12:57:49Z
-system:aggregate-to-edit                                               2026-10-27T12:57:49Z
-system:aggregate-to-view                                               2026-10-27T12:57:49Z
-system:auth-delegator                                                  2026-10-27T12:57:49Z
-system:basic-user                                                      2026-10-27T12:57:49Z
-system:certificates.k8s.io:certificatesigningrequests:nodeclient       2026-10-27T12:57:49Z
-system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   2026-10-27T12:57:49Z
-system:certificates.k8s.io:kube-apiserver-client-approver              2026-10-27T12:57:49Z
-system:certificates.k8s.io:kube-apiserver-client-kubelet-approver      2026-10-27T12:57:49Z
-system:certificates.k8s.io:kubelet-serving-approver                    2026-10-27T12:57:49Z
+admin                                                                  2026-10-27T23:22:16Z
+cluster-admin                                                          2026-10-27T23:22:16Z
+edit                                                                   2026-10-27T23:22:16Z
+kindnet                                                                2026-10-27T23:22:19Z
+kubeadm:get-nodes                                                      2026-10-27T23:22:17Z
+local-path-provisioner-role                                            2026-10-27T23:22:19Z
+pod-reader                                                             2026-10-27T23:23:25Z
+system:aggregate-to-admin                                              2026-10-27T23:22:16Z
+system:aggregate-to-edit                                               2026-10-27T23:22:16Z
+system:aggregate-to-view                                               2026-10-27T23:22:16Z
+system:auth-delegator                                                  2026-10-27T23:22:16Z
+system:basic-user                                                      2026-10-27T23:22:16Z
+system:certificates.k8s.io:certificatesigningrequests:nodeclient       2026-10-27T23:22:16Z
+system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   2026-10-27T23:22:17Z
+system:certificates.k8s.io:kube-apiserver-client-approver              2026-10-27T23:22:17Z
+system:certificates.k8s.io:kube-apiserver-client-kubelet-approver      2026-10-27T23:22:17Z
+system:certificates.k8s.io:kubelet-serving-approver                    2026-10-27T23:22:17Z
 … (57 more lines)
 ```
 
-**Step 7.** Shows the details of the ClusterRole `pod-reader`, with its recent events at the bottom.
+**Step 8.** Shows the details of the ClusterRole `pod-reader`, with its recent events at the bottom.
 
 ```bash
 kubectl describe clusterrole pod-reader
@@ -593,7 +618,7 @@ PolicyRule:
   pods       []                 []              [list]
 ```
 
-**Step 8.** Writes the file `cluster-role-binding.yaml`.
+**Step 9.** Writes the file `cluster-role-binding.yaml`.
 
 ```bash
 cat > cluster-role-binding.yaml <<'EOF'
@@ -614,7 +639,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 9.** Creates the objects in `cluster-role-binding.yaml`, or updates them if they exist.
+**Step 10.** Creates the objects in `cluster-role-binding.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f cluster-role-binding.yaml
@@ -626,7 +651,7 @@ You should see something like:
 clusterrolebinding.rbac.authorization.k8s.io/list-pods-global created
 ```
 
-**Step 10.** Lists the ClusterRoleBindings.
+**Step 11.** Lists the ClusterRoleBindings.
 
 ```bash
 kubectl get clusterrolebinding
@@ -636,27 +661,27 @@ You should see something like:
 
 ```text
 NAME                                                            ROLE                                                                               AGE
-cluster-admin                                                   ClusterRole/cluster-admin                                                          52s
-kindnet                                                         ClusterRole/kindnet                                                                49s
-kubeadm:apiserver-kubelet-client                                ClusterRole/system:kubelet-api-admin                                               51s
-kubeadm:cluster-admins                                          ClusterRole/cluster-admin                                                          53s
-kubeadm:get-nodes                                               ClusterRole/kubeadm:get-nodes                                                      52s
-kubeadm:kubelet-bootstrap                                       ClusterRole/system:node-bootstrapper                                               52s
-kubeadm:node-autoapprove-bootstrap                              ClusterRole/system:certificates.k8s.io:certificatesigningrequests:nodeclient       51s
-kubeadm:node-autoapprove-certificate-rotation                   ClusterRole/system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   51s
-kubeadm:node-proxier                                            ClusterRole/system:node-proxier                                                    51s
+cluster-admin                                                   ClusterRole/cluster-admin                                                          68s
+kindnet                                                         ClusterRole/kindnet                                                                66s
+kubeadm:apiserver-kubelet-client                                ClusterRole/system:kubelet-api-admin                                               68s
+kubeadm:cluster-admins                                          ClusterRole/cluster-admin                                                          70s
+kubeadm:get-nodes                                               ClusterRole/kubeadm:get-nodes                                                      68s
+kubeadm:kubelet-bootstrap                                       ClusterRole/system:node-bootstrapper                                               68s
+kubeadm:node-autoapprove-bootstrap                              ClusterRole/system:certificates.k8s.io:certificatesigningrequests:nodeclient       68s
+kubeadm:node-autoapprove-certificate-rotation                   ClusterRole/system:certificates.k8s.io:certificatesigningrequests:selfnodeclient   68s
+kubeadm:node-proxier                                            ClusterRole/system:node-proxier                                                    67s
 list-pods-global                                                ClusterRole/pod-reader                                                             0s
-local-path-provisioner-bind                                     ClusterRole/local-path-provisioner-role                                            49s
-system:basic-user                                               ClusterRole/system:basic-user                                                      52s
-system:controller:attachdetach-controller                       ClusterRole/system:controller:attachdetach-controller                              52s
-system:controller:certificate-controller                        ClusterRole/system:controller:certificate-controller                               52s
-system:controller:clusterrole-aggregation-controller            ClusterRole/system:controller:clusterrole-aggregation-controller                   52s
-system:controller:cronjob-controller                            ClusterRole/system:controller:cronjob-controller                                   52s
-system:controller:daemon-set-controller                         ClusterRole/system:controller:daemon-set-controller                                52s
+local-path-provisioner-bind                                     ClusterRole/local-path-provisioner-role                                            66s
+system:basic-user                                               ClusterRole/system:basic-user                                                      68s
+system:controller:attachdetach-controller                       ClusterRole/system:controller:attachdetach-controller                              68s
+system:controller:certificate-controller                        ClusterRole/system:controller:certificate-controller                               68s
+system:controller:clusterrole-aggregation-controller            ClusterRole/system:controller:clusterrole-aggregation-controller                   68s
+system:controller:cronjob-controller                            ClusterRole/system:controller:cronjob-controller                                   68s
+system:controller:daemon-set-controller                         ClusterRole/system:controller:daemon-set-controller                                68s
 … (44 more lines)
 ```
 
-**Step 11.** Shows the details of the ClusterRoleBinding `list-pods-global`, with its recent events at the bottom.
+**Step 12.** Shows the details of the ClusterRoleBinding `list-pods-global`, with its recent events at the bottom.
 
 ```bash
 kubectl describe clusterrolebinding list-pods-global
@@ -677,10 +702,10 @@ Subjects:
   User  system:serviceaccount:default:external
 ```
 
-**Step 12.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/default/pods` and prints the answer.
+**Step 13.** Sends an HTTP request to `the address` and prints the answer.
 
 ```bash
-curl -k https://controlplane:6443/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
+curl -k $APISERVER/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
 ```
 
 You should see something like:
@@ -692,31 +717,31 @@ You should see something like:
   "kind": "PodList",
   "apiVersion": "v1",
   "metadata": {
-    "resourceVersion": "701"
+    "resourceVersion": "762"
   },
   "items": [
     {
       "metadata": {
         "name": "external-pod",
         "namespace": "default",
-        "uid": "e5cf2af7-8dbb-4c20-9c5c-75b18976d665",
-        "resourceVersion": "688",
+        "uid": "7b1df098-c096-468e-90a4-0f78088cbf62",
+        "resourceVersion": "754",
         "generation": 1,
-        "creationTimestamp": "2026-10-27T12:58:27Z",
+        "creationTimestamp": "2026-10-27T23:23:04Z",
         "labels": {
 … (292 more lines)
 ```
 
-**Step 13.** Creates the namespace `external`.
+**Step 14.** Creates the namespace `external`.
 
 ```bash
 kubectl create namespace external
 ```
 
-**Step 14.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/external/pods` and prints the answer.
+**Step 15.** Sends an HTTP request to `the address` and prints the answer.
 
 ```bash
-curl -k https://controlplane:6443/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
+curl -k $APISERVER/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
 ```
 
 You should see something like:
@@ -724,28 +749,28 @@ You should see something like:
 ```text
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100   110  100   110    0     0   1800      0 --:--:-- --:--:-- --:--:--  1803
+100   110  100   110    0     0   1797      0 --:--:-- --:--:-- --:--:--  1803
 {
   "kind": "PodList",
   "apiVersion": "v1",
   "metadata": {
-    "resourceVersion": "705"
+    "resourceVersion": "765"
   },
   "items": []
-}@@PB-STEP 14@@
+}@@PB-STEP 15@@
 clusterrolebinding.rbac.authorization.k8s.io "list-pods-global" deleted
 ```
 
-**Step 15.** Deletes the ClusterRoleBinding `list-pods-global`.
+**Step 16.** Deletes the ClusterRoleBinding `list-pods-global`.
 
 ```bash
 kubectl delete clusterrolebinding list-pods-global
 ```
 
-**Step 16.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/external/pods` and prints the answer.
+**Step 17.** Sends an HTTP request to `the address` and prints the answer.
 
 ```bash
-curl -k https://controlplane:6443/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
+curl -k $APISERVER/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
 ```
 
 You should see something like:
@@ -753,7 +778,7 @@ You should see something like:
 ```text
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100   325  100   325    0     0  79287      0 --:--:-- --:--:-- --:--:-- 81250
+100   325  100   325    0     0  84306      0 --:--:-- --:--:-- --:--:--  105k
 {
   "kind": "Status",
   "apiVersion": "v1",
@@ -765,10 +790,10 @@ You should see something like:
     "kind": "pods"
   },
   "code": 403
-}@@PB-STEP 16@@
+}@@PB-STEP 17@@
 ```
 
-**Step 17.** Writes the file `clusterrole-to-rolebinding.yaml`.
+**Step 18.** Writes the file `clusterrole-to-rolebinding.yaml`.
 
 ```bash
 cat > clusterrole-to-rolebinding.yaml <<'EOF'
@@ -788,7 +813,7 @@ roleRef:
 EOF
 ```
 
-**Step 18.** Creates the objects in `clusterrole-to-rolebinding.yaml`, or updates them if they exist.
+**Step 19.** Creates the objects in `clusterrole-to-rolebinding.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f clusterrole-to-rolebinding.yaml
@@ -800,10 +825,10 @@ You should see something like:
 rolebinding.rbac.authorization.k8s.io/read-pods created
 ```
 
-**Step 19.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/external/pods` and prints the answer.
+**Step 20.** Sends an HTTP request to `the address` and prints the answer.
 
 ```bash
-curl -k https://controlplane:6443/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
+curl -k $APISERVER/api/v1/namespaces/external/pods --header "Authorization: Bearer $TOKEN"
 ```
 
 You should see something like:
@@ -811,7 +836,7 @@ You should see something like:
 ```text
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100   325  100   325    0     0  82195      0 --:--:-- --:--:-- --:--:--  105k
+100   325  100   325    0     0  82529      0 --:--:-- --:--:-- --:--:--  105k
 {
   "kind": "Status",
   "apiVersion": "v1",
@@ -823,17 +848,17 @@ You should see something like:
     "kind": "pods"
   },
   "code": 403
-}@@PB-STEP 19@@
+}@@PB-STEP 20@@
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0{
 … (306 more lines)
 ```
 
-**Step 20.** Sends an HTTP request to `https://controlplane:6443/api/v1/namespaces/default/pods` and prints the answer.
+**Step 21.** Sends an HTTP request to `the address` and prints the answer.
 
 ```bash
-curl -k https://controlplane:6443/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
+curl -k $APISERVER/api/v1/namespaces/default/pods --header "Authorization: Bearer $TOKEN"
 ```
 
 ### If you see something else
@@ -857,7 +882,7 @@ curl -k https://controlplane:6443/api/v1/namespaces/default/pods --header "Autho
 
 ### What you will do
 
-Follow [certificate-steps.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/certificate-steps.md)
+Follow [07-certificates-for-users.md](https://github.com/kumbulanit/CKA/blob/main/05-security/07-certificates-for-users.md)
 from step 1 (kubectl is already set up here). First delete the RoleBinding from the last task:
 `kubectl delete -f clusterrole-to-rolebinding.yaml`. Then:
 
@@ -866,7 +891,7 @@ from step 1 (kubectl is already set up here). First delete the RoleBinding from 
 2. Write **csr-requests.yaml**: a CertificateSigningRequest **zeal-csr** with the base64 CSR, signer
    `kubernetes.io/kube-apiserver-client` and usage `client auth`. Apply and approve it.
 3. Save the issued certificate as **zeal.crt**.
-4. Add the user **zeal** to your kubeconfig and a context **zeal-context** (cluster `kubernetes`).
+4. Add the user **zeal** to your kubeconfig and a context **zeal-context** (cluster `minikube`).
    `kubectl --context=zeal-context get pods` is Forbidden.
 5. Create the Role pod-reader and a RoleBinding read-pods for the user **zeal**, run the same command
    again (now it works), then delete both.
@@ -926,7 +951,7 @@ cat zeal.csr | base64 | tr -d '\n'
 You should see something like:
 
 ```text
-LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1pUQ0NBVTBDQVFBd0lERU5NQXNHQTFVRUF3d0VlbVZoYkRFUE1BMEdBMVVFQ2d3R2EzQnNZV0p6TUlJQgpJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBbmF6ZzJQL1pPUVZTT3VIZDJGbEdoRTBECjAyOVZUNDlldmUzZTVGTHlRTXNvYVZrcUZabkJ0aExHajc5QlpjRVdjOXVWekN1NTR3SExNQWJjVzRDQkZtZ20KdnNSUWJNcVV0WGVRVllqVlVWZC9VUWVzc2hScnltUnRaWTc2bmlRVWJ1VnBkNmVHU0J6RGFlNWpHTXlKWkROaAo5RWh4b2lqU0lVYVpsYVVXaDdRUWMyZ1RVV2VPdWc2RmNOZEIwSDRVeUVlTG9ZVSthZFNOWTNWTFF5YzltQXRXCjJla1JjMElYbTBTMFA5TXdXREZ2bG1EaVlYOTlVZGZUZ2MzRDQ2SmJQcVlJNGFTTTdOcWNmMWN4SURtbGRCVjAKRVVqWEJYVlhzRHd5SHozK0E2V0I4T1p0eGMzRHovTDl3Ym5tbmNlNGZyU1UzRTFhbGpldFJSdktxR2VlZXdJRApBUUFCb0FBd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFIbEI4bHVsclR1QU55MEVvQjRvNlNLcEQ0RFlML3MxCkhSeG1NeG4xSC9VSWlNV1NYWWFpR1VZTTVPMXljZ080N1NFWlhmVTBkcnFTVktMTVFtbEZUeEhmQ1FFNTRXbkEKQmsyOWIwUjlmbGhaT0tMR3VDbEVyblltVkU5bk00cU43V1RzaE5rWFRUSjJvV3VYNEJHS3ZCV0h0R0QvZzZhSwpHY1k3TXJrS2Z3T2xRUG1wYy9LY0Njb3E1MVRoeXI0Nmx5VnkrVUpsR2NMNE9XNHMvQWcrUTliQ0VaY216UlVHCkEvQ3RCTUZWZ04vSnlaYmN1a3BIZ3J1T3VWbXgvQjNkY0tYcDAzWDFWdjNsOE16RldDUEM3M2hVUWJmcW1ITzcKZk9zYWNWM1NWc1ZCODFBc1RJNktLTm9QaWZiUElxNEViQk94OS9ZZ0lodmFXdS95Um9aWGQ1Zz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUgUkVRVUVTVC0tLS0tCg==@@PB-STEP 6@@
+LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1pUQ0NBVTBDQVFBd0lERU5NQXNHQTFVRUF3d0VlbVZoYkRFUE1BMEdBMVVFQ2d3R2EzQnNZV0p6TUlJQgpJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdUo4TWlHOElrekJFZ1p3dDJIc3VrM3h6CkNWeVdtM1lINVFUWmhIVWVLRWdNVFhPT2hsd1M2S09xWWVSb3c0enArRm1ncFpJQ2dybFNvYnhDYWc3MUxwRG0KMExjZjc0cTQ0YW0zRXBmOFMvSWZYYTFFWFYweHdyR2VkL2J3WnJpU0tYYTFJUHIyeWVvSTQ0N2FjcC9MZzA1NgpBOFdBcEJaRmF2czBlVEpoRlBBem9mRXExU3JSZjJFUWgzejRadk11WHNSTTRhSTUvN2lneTFHamJEaDk3MWFDCmNHUjhGMU5nemdhc0hvUFVLMHBidjRuRFFWQ0ttS0FwU3VVSm4wWjNhS0x4anhVZE9xa1AxeWFEVGFJMjF4Z3MKNlJMTXNvRHUreHZ5N09VSmxlTmtWZHhFRFhKcGp4ZVRPV3lnNjEzdGdYNEYzWS83SU1udkhKMGI1cUYyU1FJRApBUUFCb0FBd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFJWXdhOFg5SEN0NG8rYzNMb0lKWVZPVUZkZm1vTVJOClZCdFRhZVFLRFI5M1lMbzJOblF0ZWNYWkM2WW1IVk0xejFSbGNBcE5UNFpuSXFtcVBSN3pNWEdTSjU0TDNhRG0KR2x1Vng2aFZDZEFlSVNRYXFZbS82M0Y0Y1V3dFVsZU5pSGdzdlFGcWhnV29JL1RqZ0prNERhU214Q0RCWUZacgozSUwwbjZ1YUVRakpwT3VaV2ViZSttYVNVU2c5OTA4cWJSUHVlOE8vd3c5VjNNNVlzOVNWMU1udkRPdmNEeTR1CmZMaVBZMUx4K2hrWmVKTmwwTzZ5K3M1THpoeERvNkcrRWNCTTMwYzlxdWV3eXNtN2sxWEJNUU1yNFZoY1htMjAKU3R4RjNTcDFuV3p5TXMwRmtHSjJzZlZqeFlxZ0tVOUNEejBWUTlsVkczMGt2Tnh3VWtSMGU3ND0KLS0tLS1FTkQgQ0VSVElGSUNBVEUgUkVRVUVTVC0tLS0tCg==@@PB-STEP 6@@
 ```
 
 **Step 7.** Writes the file `csr-requests.yaml`.
@@ -970,11 +995,11 @@ kubectl get csr
 You should see something like:
 
 ```text
-NAME        AGE   SIGNERNAME                                    REQUESTOR                  REQUESTEDDURATION   CONDITION
-csr-hmqvg   54s   kubernetes.io/kube-apiserver-client-kubelet   system:node:controlplane   <none>              Approved,Issued
-csr-lzftr   44s   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:abcdef    <none>              Approved,Issued
-csr-tkpz2   44s   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:abcdef    <none>              Approved,Issued
-zeal-csr    0s    kubernetes.io/kube-apiserver-client           kubernetes-admin           <none>              Pending
+NAME        AGE   SIGNERNAME                                    REQUESTOR                 REQUESTEDDURATION   CONDITION
+csr-b7z2h   62s   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:abcdef   <none>              Approved,Issued
+csr-j6xc5   72s   kubernetes.io/kube-apiserver-client-kubelet   system:node:minikube      <none>              Approved,Issued
+csr-mnzcv   61s   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:abcdef   <none>              Approved,Issued
+zeal-csr    0s    kubernetes.io/kube-apiserver-client           kubernetes-admin          <none>              Pending
 ```
 
 **Step 10.** Approves the certificate signing request `zeal-csr`.
@@ -1027,13 +1052,13 @@ You should see something like:
 
 ```text
 NAME
-kubernetes
+minikube
 ```
 
 **Step 15.** Adds a context `zeal-context`.
 
 ```bash
-kubectl config set-context zeal-context --cluster kubernetes --user=zeal
+kubectl config set-context zeal-context --cluster minikube --user=zeal
 ```
 
 You should see something like:
@@ -1128,7 +1153,7 @@ You should see something like:
 
 ```text
 NAME           READY   STATUS    RESTARTS   AGE
-external-pod   1/1     Running   0          15s
+external-pod   1/1     Running   0          23s
 ```
 
 **Step 22.** Deletes the objects in `role.yaml`.
@@ -1158,11 +1183,11 @@ rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
 ### If you see something else
 
 - The check says: _/root/certificates/zeal.crt is missing, or is not a certificate for CN=zeal signed by the cluster CA._
-- The check says: _Your kubeconfig has no context zeal-context for the cluster kubernetes and the user zeal._
+- The check says: _Your kubeconfig has no context zeal-context for the cluster minikube and the user zeal._
 - The check says: _kubectl --context=zeal-context does not log in as zeal. Check the certificate and key in set-credentials._
 - The check says: _The Role pod-reader or the RoleBinding read-pods is still there. The last step deletes them._
 - The CSR's `request` field is the CSR file in base64 on one line: `cat zeal.csr | base64 | tr -d '\n'`.
-- `kubectl config set-credentials zeal --client-certificate=zeal.crt --client-key=zeal.key`, then `kubectl config set-context zeal-context --cluster kubernetes --user=zeal`.
+- `kubectl config set-credentials zeal --client-certificate=zeal.crt --client-key=zeal.key`, then `kubectl config set-context zeal-context --cluster minikube --user=zeal`.
 
 ### Why it works
 
@@ -1176,7 +1201,7 @@ rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
 
 ### What you will do
 
-Follow [secret-data.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/secret-data.md):
+Follow [08-secrets.md](https://github.com/kumbulanit/CKA/blob/main/05-security/08-secrets.md):
 
 1. Create **firstsecret** from the literal `dbpassword=mypassword123`.
 2. Write `dbuser=admin` to **credentials.txt** and create **secondsecret** from that file.
@@ -1232,11 +1257,11 @@ data:
   dbpassword: bXlwYXNzd29yZDEyMw==
 kind: Secret
 metadata:
-  creationTimestamp: "2026-10-27T12:58:43Z"
+  creationTimestamp: "2026-10-27T23:23:28Z"
   name: firstsecret
   namespace: default
-  resourceVersion: "718"
-  uid: a8682f25-96e1-4089-950f-08a7ead77cb5
+  resourceVersion: "784"
+  uid: e571faeb-8402-4cd5-ad22-aca1dcaa3a87
 type: Opaque
 ```
 
@@ -1328,7 +1353,7 @@ secret/stringdata created
 
 ### What you will do
 
-Follow [mounting-secrets.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/mounting-secrets.md)
+Follow [09-mounting-secrets.md](https://github.com/kumbulanit/CKA/blob/main/05-security/09-mounting-secrets.md)
 (it uses firstsecret from the last task):
 
 1. Write and apply **secretpod.yaml**: a pod **secretmount** (`nginx`) that mounts firstsecret
@@ -1462,17 +1487,17 @@ kubectl exec secret-env -- printenv SECRET_USERNAME
 
 ### What you will do
 
-Follow sections 2 to 4 of [Configuring TLS access to API.md](https://github.com/kumbulanit/CKA/blob/main/05-security/Configuring%20TLS%20access%20to%20API.md)
-on controlplane:
+Follow sections 2 to 4 of [10-tls-access-to-api.md](https://github.com/kumbulanit/CKA/blob/main/05-security/10-tls-access-to-api.md)
+on minikube:
 
 1. Inspect `/etc/kubernetes/pki/apiserver.crt` with `openssl x509` (its SANs, subject, issuer and
    dates), and find the certificate files in the kube-apiserver manifest.
 2. Check every certificate's expiry with `kubeadm certs check-expiration`.
-3. Add the names `controlplane`, `k8s.example.internal` and `192.168.56.100` to the API server
+3. Add the names `minikube`, `k8s.example.internal` and `192.168.56.100` to the API server
    certificate: save the ClusterConfiguration to **kubeadm.yaml**, add them under
    `apiServer.certSANs`, move the old certificate and key to your home folder, and run
    `kubeadm init phase certs apiserver --config kubeadm.yaml`.
-4. Check the SANs again, and `curl --cacert /etc/kubernetes/pki/ca.crt https://controlplane:6443/version`.
+4. Check the SANs again, and `curl --cacert /etc/kubernetes/pki/ca.crt https://minikube:6443/version`.
 
 ### Step by step
 
@@ -1486,7 +1511,7 @@ You should see something like:
 
 ```text
             X509v3 Subject Alternative Name: 
-                DNS:controlplane, DNS:kubernetes, DNS:kubernetes.default, DNS:kubernetes.default.svc, DNS:kubernetes.default.svc.cluster.local, DNS:localhost, DNS:pb-2a752efc-control-plane, IP Address:10.96.0.1, IP Address:192.168.147.2, IP Address:127.0.0.1
+                DNS:kubernetes, DNS:kubernetes.default, DNS:kubernetes.default.svc, DNS:kubernetes.default.svc.cluster.local, DNS:localhost, DNS:minikube, DNS:pb-5943130b-control-plane, IP Address:10.96.0.1, IP Address:192.168.147.4, IP Address:127.0.0.1
 ```
 
 **Step 2.** Signs the certificate with the cluster CA.
@@ -1500,8 +1525,8 @@ You should see something like:
 ```text
 subject=CN=kube-apiserver
 issuer=CN=kubernetes
-notBefore=Oct 27 12:52:43 2026 GMT
-notAfter=Oct 27 12:57:43 2027 GMT
+notBefore=Oct 27 23:17:11 2026 GMT
+notAfter=Oct 27 23:22:11 2027 GMT
 ```
 
 **Step 3.** Searches for the text.
@@ -1532,22 +1557,22 @@ You should see something like:
 [check-expiration] Use 'kubeadm init phase upload-config kubeadm --config your-config-file' to re-upload it.
 
 CERTIFICATE                EXPIRES                  RESIDUAL TIME   CERTIFICATE AUTHORITY   EXTERNALLY MANAGED
-admin.conf                 Oct 27, 2027 12:57 UTC   364d            ca                      no      
-apiserver                  Oct 27, 2027 12:57 UTC   364d            ca                      no      
-apiserver-etcd-client      Oct 27, 2027 12:57 UTC   364d            etcd-ca                 no      
-apiserver-kubelet-client   Oct 27, 2027 12:57 UTC   364d            ca                      no      
-controller-manager.conf    Oct 27, 2027 12:57 UTC   364d            ca                      no      
-etcd-healthcheck-client    Oct 27, 2027 12:57 UTC   364d            etcd-ca                 no      
-etcd-peer                  Oct 27, 2027 12:57 UTC   364d            etcd-ca                 no      
-etcd-server                Oct 27, 2027 12:57 UTC   364d            etcd-ca                 no      
-front-proxy-client         Oct 27, 2027 12:57 UTC   364d            front-proxy-ca          no      
-scheduler.conf             Oct 27, 2027 12:57 UTC   364d            ca                      no      
-super-admin.conf           Oct 27, 2027 12:57 UTC   364d            ca                      no      
+admin.conf                 Oct 27, 2027 23:22 UTC   364d            ca                      no      
+apiserver                  Oct 27, 2027 23:22 UTC   364d            ca                      no      
+apiserver-etcd-client      Oct 27, 2027 23:22 UTC   364d            etcd-ca                 no      
+apiserver-kubelet-client   Oct 27, 2027 23:22 UTC   364d            ca                      no      
+controller-manager.conf    Oct 27, 2027 23:22 UTC   364d            ca                      no      
+etcd-healthcheck-client    Oct 27, 2027 23:22 UTC   364d            etcd-ca                 no      
+etcd-peer                  Oct 27, 2027 23:22 UTC   364d            etcd-ca                 no      
+etcd-server                Oct 27, 2027 23:22 UTC   364d            etcd-ca                 no      
+front-proxy-client         Oct 27, 2027 23:22 UTC   364d            front-proxy-ca          no      
+scheduler.conf             Oct 27, 2027 23:22 UTC   364d            ca                      no      
+super-admin.conf           Oct 27, 2027 23:22 UTC   364d            ca                      no      
 
 CERTIFICATE AUTHORITY   EXPIRES                  RESIDUAL TIME   EXTERNALLY MANAGED
-ca                      Oct 24, 2036 12:57 UTC   9y              no      
-etcd-ca                 Oct 24, 2036 12:57 UTC   9y              no      
-front-proxy-ca          Oct 24, 2036 12:57 UTC   9y              no
+ca                      Oct 24, 2036 23:22 UTC   9y              no      
+etcd-ca                 Oct 24, 2036 23:22 UTC   9y              no      
+front-proxy-ca          Oct 24, 2036 23:22 UTC   9y              no
 ```
 
 **Step 5.** Prints one field of the ConfigMap `kubeadm-config` in the namespace `kube-system`.
@@ -1562,9 +1587,9 @@ It prints nothing when it works.
 
 ```bash
 if grep -q 'certSANs:' kubeadm.yaml; then
-  sed -i '/certSANs:/a\  - controlplane\n  - k8s.example.internal\n  - 192.168.56.100' kubeadm.yaml
+  sed -i '/certSANs:/a\  - minikube\n  - k8s.example.internal\n  - 192.168.56.100' kubeadm.yaml
 else
-  sed -i 's/^apiServer:$/apiServer:\n  certSANs:\n  - controlplane\n  - k8s.example.internal\n  - 192.168.56.100/' kubeadm.yaml
+  sed -i 's/^apiServer:$/apiServer:\n  certSANs:\n  - minikube\n  - k8s.example.internal\n  - 192.168.56.100/' kubeadm.yaml
 fi
 ```
 
@@ -1588,7 +1613,7 @@ You should see something like:
 
 ```text
 [certs] Generating "apiserver" certificate and key
-[certs] apiserver serving cert is signed for DNS names [controlplane k8s.example.internal kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local localhost pb-2a752efc-control-plane] and IPs [10.96.0.1 192.168.147.2 192.168.56.100 127.0.0.1]
+[certs] apiserver serving cert is signed for DNS names [k8s.example.internal kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local localhost minikube pb-5943130b-control-plane] and IPs [10.96.0.1 192.168.147.4 192.168.56.100 127.0.0.1]
 ```
 
 **Step 9.** Prints the certificate in readable form.
@@ -1601,7 +1626,7 @@ You should see something like:
 
 ```text
             X509v3 Subject Alternative Name: 
-                DNS:controlplane, DNS:k8s.example.internal, DNS:kubernetes, DNS:kubernetes.default, DNS:kubernetes.default.svc, DNS:kubernetes.default.svc.cluster.local, DNS:localhost, DNS:pb-2a752efc-control-plane, IP Address:10.96.0.1, IP Address:192.168.147.2, IP Address:192.168.56.100, IP Address:127.0.0.1
+                DNS:k8s.example.internal, DNS:kubernetes, DNS:kubernetes.default, DNS:kubernetes.default.svc, DNS:kubernetes.default.svc.cluster.local, DNS:localhost, DNS:minikube, DNS:pb-5943130b-control-plane, IP Address:10.96.0.1, IP Address:192.168.147.4, IP Address:192.168.56.100, IP Address:127.0.0.1
 ```
 
 **Step 10.** Waits 10 seconds.
@@ -1612,10 +1637,10 @@ sleep 10
 
 It prints nothing when it works.
 
-**Step 11.** Sends an HTTP request to `https://controlplane:6443/version` and prints the answer.
+**Step 11.** Sends an HTTP request to `https://minikube:6443/version` and prints the answer.
 
 ```bash
-curl --cacert /etc/kubernetes/pki/ca.crt https://controlplane:6443/version
+curl --cacert /etc/kubernetes/pki/ca.crt https://minikube:6443/version
 ```
 
 You should see something like:
@@ -1623,7 +1648,7 @@ You should see something like:
 ```text
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100   379  100   379    0     0  35754      0 --:--:-- --:--:-- --:--:-- 37900
+100   379  100   379    0     0   9408      0 --:--:-- --:--:-- --:--:--  9717
 {
   "major": "1",
   "minor": "36",
@@ -1645,7 +1670,7 @@ You should see something like:
 
 - The check says: _The old apiserver.crt and apiserver.key are not in /root (step 3 moves them there)._
 - The check says: _/etc/kubernetes/pki/apiserver.crt does not list k8s.example.internal and 192.168.56.100 yet._
-- The check says: _curl --cacert /etc/kubernetes/pki/ca.crt https://controlplane:6443/version does not answer._
+- The check says: _curl --cacert /etc/kubernetes/pki/ca.crt https://minikube:6443/version does not answer._
 - In kubeadm.yaml, `certSANs` is a list under `apiServer:`; add the three names as `- name` lines at the same indentation as any that are there.
 - kubeadm will not overwrite an existing certificate, which is why the old one is moved away first.
 
@@ -1661,7 +1686,7 @@ You should see something like:
 
 ### What you will do
 
-Follow the first part of [security-context-and-network-policy.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/security-context-and-network-policy.md):
+Follow the first part of [11-security-context-and-network-policy.md](https://github.com/kumbulanit/CKA/blob/main/05-security/11-security-context-and-network-policy.md):
 
 1. Apply **privileged.yaml**: the pods **privileged** (`securityContext.privileged: true`) and
    **non-privileged**. Compare `ls /dev | wc -l` and `grep CapEff /proc/1/status` in both.
@@ -1722,11 +1747,11 @@ You should see something like:
 
 ```text
 NAME             READY   STATUS              RESTARTS   AGE
-external-pod     1/1     Running             0          40s
+external-pod     1/1     Running             0          60s
 non-privileged   0/1     ContainerCreating   0          0s
 privileged       0/1     ContainerCreating   0          0s
-secret-env       1/1     Running             0          23s
-secretmount      1/1     Running             0          23s
+secret-env       1/1     Running             0          35s
+secretmount      1/1     Running             0          35s
 ```
 
 **Step 4.** Waits until the pods `privileged`, `non-privileged` are Ready.
@@ -1844,7 +1869,7 @@ CapEff:    00000000a80425fb
 
 ### What you will do
 
-Follow the second part of [security-context-and-network-policy.md](https://github.com/kumbulanit/CKA/blob/main/05-security/domain-4-security/security-context-and-network-policy.md):
+Follow the second part of [11-security-context-and-network-policy.md](https://github.com/kumbulanit/CKA/blob/main/05-security/11-security-context-and-network-policy.md):
 
 1. Create a pod **pod01** from `nginx` and check from a temporary busybox pod that it answers
    (`wget -T 3 -qO- <POD01-IP>`).
@@ -1860,22 +1885,10 @@ Follow the second part of [security-context-and-network-policy.md](https://githu
 kubectl run pod01 --image=nginx
 ```
 
-You should see something like:
-
-```text
-pod/pod01 created
-```
-
 **Step 2.** Waits until the pod `pod01` is Ready.
 
 ```bash
 kubectl wait --for=condition=Ready pod/pod01 --timeout=120s
-```
-
-You should see something like:
-
-```text
-pod/pod01 condition met
 ```
 
 **Step 3.** Lists the pod `pod01`, with IP address and node.
@@ -1884,49 +1897,16 @@ pod/pod01 condition met
 kubectl get pod pod01 -o wide
 ```
 
-You should see something like:
-
-```text
-NAME    READY   STATUS    RESTARTS   AGE   IP           NODE     NOMINATED NODE   READINESS GATES
-pod01   1/1     Running   0          2s    10.244.2.5   node02   <none>           <none>
-```
-
 **Step 4.** Saves `$POD01_IP`: prints one field of the pod `pod01`.
 
 ```bash
 POD01_IP=$(kubectl get pod pod01 -o jsonpath='{.status.podIP}')
 ```
 
-It prints nothing when it works.
-
 **Step 5.** Starts a throwaway pod `test` that runs one command and is deleted afterwards.
 
 ```bash
 kubectl run test --image=busybox:1.37 --rm -i --restart=Never -- wget -T 3 -qO- $POD01_IP
-```
-
-You should see something like:
-
-```text
-<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-<style>
-html { color-scheme: light dark; }
-body { width: 35em; margin: 0 auto;
-font-family: Tahoma, Verdana, Arial, sans-serif; }
-</style>
-</head>
-<body>
-<h1>Welcome to nginx!</h1>
-<p>If you see this page, nginx is successfully installed and working.
-Further configuration is required for the web server, reverse proxy, 
-API gateway, load balancer, content cache, or other features.</p>
-
-<p>For online documentation and support please refer to
-<a href="https://nginx.org/">nginx.org</a>.<br/>
-… (12 more lines)
 ```
 
 **Step 6.** Writes the file `nsp-deny-pod.yaml`.
@@ -1948,18 +1928,10 @@ spec:
 EOF
 ```
 
-It prints nothing when it works.
-
 **Step 7.** Creates the objects in `nsp-deny-pod.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f nsp-deny-pod.yaml
-```
-
-You should see something like:
-
-```text
-networkpolicy.networking.k8s.io/default-deny-pod created
 ```
 
 **Step 8.** Lists the NetworkPolicies.
@@ -1968,34 +1940,10 @@ networkpolicy.networking.k8s.io/default-deny-pod created
 kubectl get networkpolicy
 ```
 
-You should see something like:
-
-```text
-NAME               POD-SELECTOR   AGE
-default-deny-pod   run=pod01      0s
-```
-
 **Step 9.** Shows the details of the NetworkPolicy `default-deny-pod`, with its recent events at the bottom.
 
 ```bash
 kubectl describe networkpolicy default-deny-pod
-```
-
-You should see something like:
-
-```text
-Name:         default-deny-pod
-Namespace:    default
-Created on:   2026-10-27 12:59:23 +0000 UTC
-Labels:       <none>
-Annotations:  <none>
-Spec:
-  PodSelector:     run=pod01
-  Allowing ingress traffic:
-    <none> (Selected pods are isolated for ingress connectivity)
-  Allowing egress traffic:
-    <none> (Selected pods are isolated for egress connectivity)
-  Policy Types: Ingress, Egress
 ```
 
 **Step 10.** Waits 5 seconds.
@@ -2004,22 +1952,10 @@ Spec:
 sleep 5
 ```
 
-It prints nothing when it works.
-
 **Step 11.** Starts a throwaway pod `test` that runs one command and is deleted afterwards.
 
 ```bash
 kubectl run test --image=busybox:1.37 --rm -i --restart=Never -- wget -T 3 -qO- $POD01_IP
-```
-
-You should see something like:
-
-```text
-All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
-If you don't see a command prompt, try pressing enter.
-wget: download timed out
-pod "test" deleted from default namespace
-pod default/test terminated (Error)
 ```
 
 ### If you see something else

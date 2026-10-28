@@ -5,18 +5,18 @@
 # root on controlplane on a kubeadm cluster), for one lab
 # (./day3.sh pv-pvc) or for the whole day (./day3.sh). ./day3.sh --list shows the labs.
 #
-# The troubleshooting labs set up their own broken scenarios: see 08-troubleshooting/00-Practice-Setup.md.
+# The troubleshooting labs set up their own broken scenarios: see 08-troubleshooting/00-practice-setup.md.
 # shellcheck source-path=SCRIPTDIR disable=SC2034
 source "$(dirname "$0")/lib.sh"
 
 LABS=(
-  "metrics-server|metrics-server (--kubelet-insecure-tls), Deployment nginx with an HPA (how to setup metrics server)"
-  "monitor-pods|Pods elephant, lion and rabbit for kubectl top (03-Practice-Test-Monitor-Cluster-Components)"
-  "app-logs|Pods webapp-1 and webapp-2 that write logs (06-Practice-Test-Managing-Application-Logs)"
-  "prometheus|Prometheus and Grafana with Helm; heavy, so only when named (setting up promtheus)"
-  "pv-pvc|PersistentVolume pv-log, claim claim-log-1 and pod webapp using it (10-Practice-Test-Persistent-Volume-Claims)"
-  "storage-class|local-path provisioner with myclaim and mypod (12-Storage-Class)"
-  "local-storage|StorageClasses local-storage and delayed-volume-sc, local-pv on node01 (minikube-m02), local-pvc and pod nginx (13-Practice-Test-Storage-Class)"
+  "metrics-server|metrics-server (--kubelet-insecure-tls), Deployment nginx with an HPA (07-logging-monitoring/03-metrics-server-and-autoscaling)"
+  "monitor-pods|Pods elephant, lion and rabbit for kubectl top (07-logging-monitoring/04-practice-test-monitor-cluster-components)"
+  "app-logs|Pods webapp-1 and webapp-2 that write logs (07-logging-monitoring/06-practice-test-managing-application-logs)"
+  "prometheus|Prometheus and Grafana with Helm; heavy, so only when named (07-logging-monitoring/07-prometheus-and-grafana)"
+  "pv-pvc|PersistentVolume pv-log, claim claim-log-1 and pod webapp using it (06-storage/10-practice-test-persistent-volume-claims)"
+  "storage-class|local-path provisioner with myclaim and mypod (06-storage/11-storage-classes)"
+  "local-storage|StorageClasses local-storage and delayed-volume-sc, local-pv on node01 (minikube-m02), local-pvc and pod nginx (06-storage/12-practice-test-storage-classes)"
 )
 OPTIONAL=(prometheus)
 

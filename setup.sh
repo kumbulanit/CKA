@@ -5,7 +5,7 @@
 #   git clone https://github.com/kumbulanit/CKA.git && cd CKA
 #   sudo ./setup.sh
 #
-# It installs the same tools as the minikube lesson (02-installation/install-kubernetes.md): Docker, minikube, kubectl v1.36 and helm, plus git, curl,
+# It installs the same tools as the minikube lesson (02-installation/01-install-minikube.md): Docker, minikube, kubectl v1.36 and helm, plus git, curl,
 # jq, vim, nano and bash completion. Then, as the user who ran sudo, it creates and starts a
 # minikube cluster on Docker: Kubernetes v1.36.5 with Calico, 3 nodes (minikube is the control
 # plane; minikube-m02 and minikube-m03 are the workers). It takes about 10 minutes the first time.
@@ -29,10 +29,18 @@ user=${SUDO_USER:-}
 [ -n "$user" ] && [ "$user" != root ] \
   || die "run it with sudo from your own user (not as root): minikube does not run on Docker as root"
 home=$(getent passwd "$user" | cut -d: -f6)
+repo=$(cd "$(dirname "$0")" && pwd)
 arch=$(dpkg --print-architecture)
 export DEBIAN_FRONTEND=noninteractive
 # sudo -u reads the user's groups again, so the docker group added below applies straight away.
 as_user() { sudo -u "$user" -H "$@"; }
+
+step "The course folder $repo belongs to $user"
+# The lessons create files in their folders, as $user. If the repository was cloned with sudo,
+# its files belong to root, so give them to $user.
+if [ -n "$(find "$repo" ! -user "$user" -print -quit)" ]; then
+  chown -R "$user:$(id -gn "$user")" "$repo"
+fi
 
 step "Packages"
 apt-get update -q

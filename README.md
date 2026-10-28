@@ -14,6 +14,8 @@ sudo ./setup.sh
 
 [setup.sh](./setup.sh) installs all the tools the course uses: Docker, minikube, kubectl v1.36 and helm, plus git, curl, jq, vim, nano and bash completion (with `k` as a short name for `kubectl`). Then it creates and starts a minikube cluster on Docker: Kubernetes **v1.36.5** with Calico, three nodes. Run it with `sudo` from your own user, not as root. Running it again is safe; it also starts the cluster again after the server restarts.
 
+Clone the repository as your own user (without `sudo`), in your home folder: the lessons are done as that user, inside the lesson folders (`cd ~/CKA/01-core-concepts`), and some steps create files there. If the folder was cloned with `sudo`, `setup.sh` gives it back to your user.
+
 Log out and in once (or run `newgrp docker`) so `minikube` works without `sudo`. Then, as your own user:
 
 ```sh
@@ -45,7 +47,7 @@ sudo ./scripts/one-server.sh shell         # root@controlplane; shell node01 ope
 sudo ./scripts/one-server.sh delete        # remove them
 ```
 
-`sudo ./scripts/one-server.sh install` installs the kubeadm cluster on them in one go, with [scripts/install-cluster.sh](./scripts/install-cluster.sh) (the same steps as the [installation guide](./02-installation/Kubernetes%20installation%20using%20kubeadm.md)). On separate machines, run that script as root on each one, controlplane first, with your three IP addresses: `sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.168.56.12`. It prints the command to run on node01 and node02.
+`sudo ./scripts/one-server.sh install` installs the kubeadm cluster on them in one go, with [scripts/install-cluster.sh](./scripts/install-cluster.sh) (the same steps as the [installation guide](./02-installation/02-install-kubeadm.md)). On separate machines, run that script as root on each one, controlplane first, with your three IP addresses: `sudo ./scripts/install-cluster.sh controlplane 192.168.56.10 192.168.56.11 192.168.56.12`. It prints the command to run on node01 and node02.
 
 ## Scripts
 
@@ -63,7 +65,7 @@ sudo ./scripts/one-server.sh delete        # remove them
 | 2 | Workloads and scheduling; services and networking; security (modules 3–5) | [day2.sh](./scripts/catch-up/day2.sh) |
 | 3 | Storage; logging and monitoring; troubleshooting (modules 6–8) | [day3.sh](./scripts/catch-up/day3.sh) |
 
-The scripts can be run again safely. They leave out what changes the machines rather than the cluster (installing, adding node03, the v1.37 upgrade, draining), and the troubleshooting labs, which set themselves up with [00-Practice-Setup.md](./08-troubleshooting/00-Practice-Setup.md).
+The scripts can be run again safely. They leave out what changes the machines rather than the cluster (installing, adding node03, the v1.37 upgrade, draining), and the troubleshooting labs, which set themselves up with [00-practice-setup.md](./08-troubleshooting/00-practice-setup.md).
 
 ## Course outline
 
@@ -78,7 +80,7 @@ Each module has a step-by-step guide in [lab-guides](./lab-guides): every comman
 | 5 | Security | [05-security](./05-security) | [Module 5](./lab-guides/05-security.md) |
 | 6 | Storage | [06-storage](./06-storage) | [Module 6](./lab-guides/06-storage.md) |
 | 7 | Logging and monitoring | [07-logging-monitoring](./07-logging-monitoring) | [Module 7](./lab-guides/07-logging-monitoring.md) |
-| 8 | Troubleshooting (set up the broken scenarios with [00-Practice-Setup.md](./08-troubleshooting/00-Practice-Setup.md)) | [08-troubleshooting](./08-troubleshooting) | [Module 8](./lab-guides/08-troubleshooting.md) |
+| 8 | Troubleshooting (set up the broken scenarios with [00-practice-setup.md](./08-troubleshooting/00-practice-setup.md)) | [08-troubleshooting](./08-troubleshooting) | [Module 8](./lab-guides/08-troubleshooting.md) |
 | | Practice questions | [practice-tests](./practice-tests) | |
 
 ## Conventions

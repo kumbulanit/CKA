@@ -10,20 +10,20 @@
 # shellcheck source-path=SCRIPTDIR disable=SC2034
 source "$(dirname "$0")/lib.sh"
 
-sched="$repo/03-scheduling/workloads-and-scheduling"
-sec="$repo/05-security/domain-4-security"
+sched="$repo/03-scheduling"
+sec="$repo/05-security"
 
 LABS=(
-  "labels|Pods pod-1, pod-2 (env=stage), pod-3 (env=prod) and nginx (env=dev) (labels)"
-  "deployments|my-deployment (3 replicas) and kplabs-deployment updated to httpd, 10 replicas (deployment-cli, imp-dep-commands)"
-  "workloads|kplabs-daemonset, kplabs-cronjob and kplabs-job (daemonset.yaml, cronjob.yaml, jobs.yaml)"
-  "node-labels|Node labels disk=hdd/ssd/hdd and environment=production on node01 (minikube-m02), pods service-pod and kplabs-node-affinity (nodeSelector, node-affinity, node selectors)"
-  "services|nginx-deployment behind kplabs-service-selector, namespace teama with an nginx pod (service-selector, namespace)"
-  "ingress|Helm, ingress-nginx on NodePort 30080, service-pod-1/2 behind service1/2 and name-virtual-host-ingress (install-helm, ingress, deploy-ingress-controller)"
-  "service-accounts|custom-sa with custom-pod, external with external-pod, Role pod-reader bound to external (sa-practical, authentication, authorization)"
-  "secrets|Secrets firstsecret, secondsecret, thirdsecret, stringdata and pods secretmount, secret-env (secret-data, mounting-secrets)"
-  "certificates|User zeal: key and certificate in ~/certificates, zeal-context, Role pod-reader in teama bound to zeal (certificate-steps, teama-role)"
-  "security-context|Pods privileged, non-privileged and privileged1 (security-context-and-network-policy)"
+  "labels|Pods pod-1, pod-2 (env=stage), pod-3 (env=prod) and nginx (env=dev) (03-scheduling/01-labels-and-selectors)"
+  "deployments|my-deployment (3 replicas) and kplabs-deployment updated to httpd, 10 replicas (03-scheduling/06-deployment-commands, 07-deployment-manifest-cli)"
+  "workloads|kplabs-daemonset, kplabs-cronjob and kplabs-job (03-scheduling/09-daemonsets, 21-jobs-and-cronjobs)"
+  "node-labels|Node labels disk=hdd/ssd/hdd and environment=production on node01 (minikube-m02), pods service-pod and kplabs-node-affinity (03-scheduling/10-node-selectors, 11-node-selector-practical, 13-node-affinity)"
+  "services|nginx-deployment behind kplabs-service-selector, namespace teama with an nginx pod (04-networking/04-service-selector, 09-namespaces)"
+  "ingress|Helm, ingress-nginx on NodePort 30080, service-pod-1/2 behind service1/2 and name-virtual-host-ingress (04-networking/10-install-helm, 12-ingress, 13-deploy-ingress-controller)"
+  "service-accounts|custom-sa with custom-pod, external with external-pod, Role pod-reader bound to external (04-networking/16-service-accounts-practical, 05-security/02-authentication-with-tokens, 03-authorization)"
+  "secrets|Secrets firstsecret, secondsecret, thirdsecret, stringdata and pods secretmount, secret-env (05-security/08-secrets, 09-mounting-secrets)"
+  "certificates|User zeal: key and certificate in ~/certificates, zeal-context, Role pod-reader in teama bound to zeal (05-security/07-certificates-for-users, 06-access-control-namespace)"
+  "security-context|Pods privileged, non-privileged and privileged1 (05-security/11-security-context-and-network-policy)"
 )
 
 lab_labels() {
@@ -44,9 +44,9 @@ lab_deployments() {
 }
 
 lab_workloads() {
-  apply < "$sched/daemonset.yaml"
-  apply < "$sched/cronjob.yaml"
-  apply < "$sched/jobs.yaml"
+  apply < "$sched/09-daemonsets.yaml"
+  apply < "$sched/21-jobs-and-cronjobs-cronjob.yaml"
+  apply < "$sched/21-jobs-and-cronjobs-jobs.yaml"
 }
 
 lab_node_labels() {
@@ -292,7 +292,7 @@ EOF
 }
 
 lab_certificates() {
-  local dir=$HOME/certificates   # /root/certificates as root on controlplane, as in the lesson
+  local dir=$HOME/certificates   # ~/certificates, as in the lesson (/root/certificates as root on controlplane)
   mkdir -p "$dir"
   cd "$dir" || return
   if [ ! -s zeal.crt ]; then
@@ -325,14 +325,14 @@ EOF
   kubectl config set-context zeal-context --cluster "$CLUSTER" --user=zeal
   cd - >/dev/null || return
   namespace teama
-  apply < "$sec/teama-role.yaml"
-  apply < "$sec/teama-rolebinding.yaml"
+  apply < "$sec/06-access-control-namespace-teama-role.yaml"
+  apply < "$sec/06-access-control-namespace-teama-rolebinding.yaml"
   echo "Try it: kubectl --context=zeal-context get pods -n teama"
 }
 
 lab_security_context() {
-  apply < "$sec/privileged.yaml"
-  apply < "$sec/capabilities.yaml"
+  apply < "$sec/11-security-context-and-network-policy-privileged.yaml"
+  apply < "$sec/11-security-context-and-network-policy-capabilities.yaml"
 }
 
 run_labs "$@"

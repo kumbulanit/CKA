@@ -27,13 +27,13 @@ sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10
 kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-The steps below use the node names of the lessons. On minikube, `controlplane` is `minikube` (`minikube ssh`), `node01` is `minikube-m02` (`minikube ssh -n minikube-m02`) and `node02` is `minikube-m03`; run `kubectl` as your own user on the server. The outputs were recorded in Desired Labs, whose nodes have the lessons' names. In Desired Labs, starting the lab gives you that cluster, with `root@controlplane` in the terminal.
+The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, where the terminal is already root on `minikube` and the API server answers on port 6443 (8443 on minikube): addresses, ports and ages on yours will differ.
 
 ## Lab 3.1: Labels and selectors
 
 ### What you will do
 
-Follow [labels.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/labels.md):
+Follow [01-labels-and-selectors.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/01-labels-and-selectors.md):
 
 1. Create the pods **pod-1**, **pod-2** and **pod-3** from `nginx` and show their labels.
 2. Label them `env=dev`, `env=stage` and `env=prod`, then list the pods with `-l env=dev` and `-l env!=dev`.
@@ -90,9 +90,9 @@ You should see something like:
 
 ```text
 NAME    READY   STATUS              RESTARTS   AGE   LABELS
-pod-1   0/1     ContainerCreating   0          0s    run=pod-1
-pod-2   0/1     ContainerCreating   0          0s    run=pod-2
-pod-3   0/1     ContainerCreating   0          0s    run=pod-3
+pod-1   0/1     ContainerCreating   0          1s    run=pod-1
+pod-2   0/1     ContainerCreating   0          1s    run=pod-2
+pod-3   0/1     ContainerCreating   0          1s    run=pod-3
 ```
 
 **Step 5.** Adds the label `env=dev` to the pod `pod-1`, `env=dev`.
@@ -141,9 +141,9 @@ You should see something like:
 
 ```text
 NAME    READY   STATUS              RESTARTS   AGE   LABELS
-pod-1   0/1     ContainerCreating   0          0s    env=dev,run=pod-1
-pod-2   0/1     ContainerCreating   0          0s    env=stage,run=pod-2
-pod-3   0/1     ContainerCreating   0          0s    env=prod,run=pod-3
+pod-1   0/1     ContainerCreating   0          1s    env=dev,run=pod-1
+pod-2   0/1     ContainerCreating   0          1s    env=stage,run=pod-2
+pod-3   0/1     ContainerCreating   0          1s    env=prod,run=pod-3
 ```
 
 **Step 9.** Lists the pods that match the label selector `env=dev`.
@@ -156,7 +156,7 @@ You should see something like:
 
 ```text
 NAME    READY   STATUS              RESTARTS   AGE
-pod-1   0/1     ContainerCreating   0          0s
+pod-1   0/1     ContainerCreating   0          1s
 ```
 
 **Step 10.** Lists the pods that match the label selector `env!=dev`.
@@ -169,8 +169,8 @@ You should see something like:
 
 ```text
 NAME    READY   STATUS              RESTARTS   AGE
-pod-2   0/1     ContainerCreating   0          0s
-pod-3   0/1     ContainerCreating   0          0s
+pod-2   0/1     ContainerCreating   0          1s
+pod-3   0/1     ContainerCreating   0          1s
 ```
 
 **Step 11.** Removes a label from the pod `pod-1`, `env-`.
@@ -195,9 +195,9 @@ You should see something like:
 
 ```text
 NAME    READY   STATUS              RESTARTS   AGE   LABELS
-pod-1   0/1     ContainerCreating   0          0s    run=pod-1
-pod-2   0/1     ContainerCreating   0          0s    env=stage,run=pod-2
-pod-3   0/1     ContainerCreating   0          0s    env=prod,run=pod-3
+pod-1   0/1     ContainerCreating   0          1s    run=pod-1
+pod-2   0/1     ContainerCreating   0          1s    env=stage,run=pod-2
+pod-3   0/1     ContainerCreating   0          1s    env=prod,run=pod-3
 ```
 
 **Step 13.** Writes the manifest of the pod `nginx` without creating it.
@@ -239,9 +239,9 @@ You should see something like:
 ```text
 NAME    READY   STATUS              RESTARTS   AGE   LABELS
 nginx   0/1     ContainerCreating   0          0s    env=dev,run=nginx
-pod-1   0/1     ContainerCreating   0          0s    run=pod-1
-pod-2   0/1     ContainerCreating   0          0s    env=stage,run=pod-2
-pod-3   0/1     ContainerCreating   0          0s    env=prod,run=pod-3
+pod-1   0/1     ContainerCreating   0          1s    run=pod-1
+pod-2   0/1     ContainerCreating   0          1s    env=stage,run=pod-2
+pod-3   0/1     ContainerCreating   0          1s    env=prod,run=pod-3
 ```
 
 **Step 17.** Adds the label `status=running` to the pods `status=running`.
@@ -270,9 +270,9 @@ You should see something like:
 ```text
 NAME    READY   STATUS              RESTARTS   AGE   LABELS
 nginx   0/1     ContainerCreating   0          0s    env=dev,run=nginx,status=running
-pod-1   0/1     ContainerCreating   0          0s    run=pod-1,status=running
-pod-2   0/1     ContainerCreating   0          0s    env=stage,run=pod-2,status=running
-pod-3   0/1     ContainerCreating   0          0s    env=prod,run=pod-3,status=running
+pod-1   0/1     ContainerCreating   0          1s    run=pod-1,status=running
+pod-2   0/1     ContainerCreating   0          1s    env=stage,run=pod-2,status=running
+pod-3   0/1     ContainerCreating   0          1s    env=prod,run=pod-3,status=running
 ```
 
 **Step 19.** Waits until the pods `pod-1`, `pod-2`, `pod-3`, `nginx` are Ready. Let them start before deleting.
@@ -326,7 +326,7 @@ pod "pod-3" deleted from default namespace
 
 ### What you will do
 
-Follow [replicaset.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/replicaset.md):
+Follow [02-replicaset.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/02-replicaset.md):
 
 1. Write **replicaset.yaml**: a ReplicaSet **kplabs-replicaset** with **5** replicas, selector
    `tier: frontend`, and a container `php-redis` from `nginx`. Apply it.
@@ -397,11 +397,11 @@ You should see something like:
 
 ```text
 NAME                      READY   STATUS              RESTARTS   AGE
-kplabs-replicaset-5ck84   0/1     ContainerCreating   0          0s
-kplabs-replicaset-66nxw   0/1     ContainerCreating   0          0s
-kplabs-replicaset-tv6v4   0/1     ContainerCreating   0          0s
-kplabs-replicaset-zs4vc   0/1     ContainerCreating   0          0s
-kplabs-replicaset-zxvdd   0/1     ContainerCreating   0          0s
+kplabs-replicaset-f9v5q   0/1     ContainerCreating   0          0s
+kplabs-replicaset-g7dtm   0/1     ContainerCreating   0          0s
+kplabs-replicaset-kbw4n   0/1     ContainerCreating   0          0s
+kplabs-replicaset-ktdcj   0/1     ContainerCreating   0          0s
+kplabs-replicaset-mn5n7   0/1     ContainerCreating   0          0s
 ```
 
 **Step 5.** Deletes the pod that the inner command finds. One pod of the ReplicaSet.
@@ -413,7 +413,7 @@ kubectl delete pod $(kubectl get pods -l tier=frontend -o jsonpath='{.items[0].m
 You should see something like:
 
 ```text
-pod "kplabs-replicaset-5ck84" deleted from default namespace
+pod "kplabs-replicaset-f9v5q" deleted from default namespace
 ```
 
 **Step 6.** Lists the pods with their labels.
@@ -426,11 +426,11 @@ You should see something like:
 
 ```text
 NAME                      READY   STATUS              RESTARTS   AGE   LABELS
-kplabs-replicaset-66nxw   0/1     ContainerCreating   0          2s    tier=frontend
-kplabs-replicaset-qqdxd   0/1     ContainerCreating   0          2s    tier=frontend
-kplabs-replicaset-tv6v4   0/1     ContainerCreating   0          2s    tier=frontend
-kplabs-replicaset-zs4vc   0/1     ContainerCreating   0          2s    tier=frontend
-kplabs-replicaset-zxvdd   0/1     ContainerCreating   0          2s    tier=frontend
+kplabs-replicaset-g7dtm   0/1     ContainerCreating   0          2s    tier=frontend
+kplabs-replicaset-kbw4n   0/1     ContainerCreating   0          2s    tier=frontend
+kplabs-replicaset-ktdcj   0/1     ContainerCreating   0          2s    tier=frontend
+kplabs-replicaset-mn5n7   0/1     ContainerCreating   0          2s    tier=frontend
+kplabs-replicaset-z2bkm   0/1     ContainerCreating   0          2s    tier=frontend
 ```
 
 **Step 7.** Deletes the objects in `replicaset.yaml`.
@@ -469,8 +469,8 @@ replicaset.apps "kplabs-replicaset" deleted from default namespace
 
 ### What you will do
 
-Follow [deployment.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/deployment.md)
-and [rollback-deployment.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/rollback-deployment.md):
+Follow [03-deployment.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/03-deployment.md)
+and [04-rollback-deployment.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/04-rollback-deployment.md):
 
 1. Write **deployment.yaml**: a Deployment **kplabs-deployment** with **5** replicas, selector
    `tier: frontend`, and a container `php-redis` from `nginx`. Apply it and list the ReplicaSets.
@@ -561,9 +561,9 @@ kubectl rollout status deployment/kplabs-deployment --timeout=180s
 You should see something like:
 
 ```text
-Waiting for deployment spec update to be observed...
+Waiting for deployment "kplabs-deployment" rollout to finish: 0 out of 5 new replicas have been updated...
+Waiting for deployment "kplabs-deployment" rollout to finish: 0 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 2 out of 5 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 2 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 3 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 3 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 3 out of 5 new replicas have been updated...
@@ -571,15 +571,15 @@ Waiting for deployment "kplabs-deployment" rollout to finish: 3 out of 5 new rep
 Waiting for deployment "kplabs-deployment" rollout to finish: 3 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 3 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 3 out of 5 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 4 out of 5 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 4 out of 5 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 4 out of 5 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 4 out of 5 new replicas have been updated...
+Waiting for deployment "kplabs-deployment" rollout to finish: 3 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 4 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 4 out of 5 new replicas have been updated...
 Waiting for deployment "kplabs-deployment" rollout to finish: 2 old replicas are pending termination...
 Waiting for deployment "kplabs-deployment" rollout to finish: 2 old replicas are pending termination...
-… (9 more lines)
+Waiting for deployment "kplabs-deployment" rollout to finish: 2 old replicas are pending termination...
+Waiting for deployment "kplabs-deployment" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "kplabs-deployment" rollout to finish: 1 old replicas are pending termination...
+… (6 more lines)
 ```
 
 **Step 7.** Shows the details of the Deployment `kplabs-deployment`, with its recent events at the bottom.
@@ -593,7 +593,7 @@ You should see something like:
 ```text
 Name:                   kplabs-deployment
 Namespace:              default
-CreationTimestamp:      Tue, 27 Oct 2026 05:46:11 +0000
+CreationTimestamp:      Tue, 27 Oct 2026 22:52:56 +0000
 Labels:                 <none>
 Annotations:            deployment.kubernetes.io/revision: 2
 Selector:               tier=frontend
@@ -700,8 +700,8 @@ You should see something like:
 
 ```text
 NAME                           DESIRED   CURRENT   READY   AGE
-kplabs-deployment-68c965f48c   4         5         5       23s
-kplabs-deployment-bd74db5b7    2         0         0       23s
+kplabs-deployment-68c965f48c   5         5         5       29s
+kplabs-deployment-bd74db5b7    2         0         0       29s
 ```
 
 **Step 13.** Shows the details of the Deployment `kplabs-deployment`, with its recent events at the bottom.
@@ -715,11 +715,11 @@ You should see something like:
 ```text
 Name:                   kplabs-deployment
 Namespace:              default
-CreationTimestamp:      Tue, 27 Oct 2026 05:46:11 +0000
+CreationTimestamp:      Tue, 27 Oct 2026 22:52:56 +0000
 Labels:                 <none>
 Annotations:            deployment.kubernetes.io/revision: 3
 Selector:               tier=frontend
-Replicas:               5 desired | 2 updated | 6 total | 4 available | 3 unavailable
+Replicas:               5 desired | 2 updated | 7 total | 5 available | 1 unavailable
 StrategyType:           RollingUpdate
 MinReadySeconds:        0
 RollingUpdateStrategy:  25% max unavailable, 25% max surge
@@ -771,7 +771,7 @@ REVISION  CHANGE-CAUSE
 
 ### What you will do
 
-Follow [imp-dep-commands.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/imp-dep-commands.md).
+Follow [06-deployment-commands.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/06-deployment-commands.md).
 First delete the deployment from the last task: `kubectl delete -f deployment.yaml`. Then:
 
 1. Create the deployment **kplabs-deployment** from `nginx` with `kubectl create deployment`.
@@ -790,30 +790,16 @@ First delete the deployment from the last task: `kubectl delete -f deployment.ya
 kubectl delete -f deployment.yaml --ignore-not-found
 ```
 
-You should see something like:
-
-```text
-deployment.apps "kplabs-deployment" deleted from default namespace
-```
-
 **Step 2.** Waits until the Deployment `kplabs-deployment` is deleted.
 
 ```bash
 kubectl wait --for=delete deployment/kplabs-deployment --timeout=60s 2>/dev/null || true
 ```
 
-It prints nothing when it works.
-
 **Step 3.** Creates the Deployment `kplabs-deployment` from the image `nginx`.
 
 ```bash
 kubectl create deployment kplabs-deployment --image=nginx
-```
-
-You should see something like:
-
-```text
-deployment.apps/kplabs-deployment created
 ```
 
 **Step 4.** Lists the pods.
@@ -822,34 +808,10 @@ deployment.apps/kplabs-deployment created
 kubectl get pods
 ```
 
-You should see something like:
-
-```text
-NAME                                 READY   STATUS              RESTARTS   AGE
-kplabs-deployment-7d98d64667-mdxft   0/1     ContainerCreating   0          0s
-kplabs-deployment-bd74db5b7-4v6l4    1/1     Terminating         0          28s
-kplabs-deployment-bd74db5b7-fbvt6    1/1     Terminating         0          5s
-kplabs-deployment-bd74db5b7-hclj5    1/1     Terminating         0          5s
-kplabs-deployment-bd74db5b7-hgktj    1/1     Terminating         0          3s
-kplabs-deployment-bd74db5b7-htr6z    1/1     Terminating         0          5s
-kplabs-deployment-bd74db5b7-kg94g    1/1     Terminating         0          3s
-kplabs-replicaset-66nxw              1/1     Terminating         0          31s
-kplabs-replicaset-qqdxd              1/1     Terminating         0          31s
-kplabs-replicaset-tv6v4              1/1     Terminating         0          31s
-kplabs-replicaset-zs4vc              1/1     Terminating         0          31s
-kplabs-replicaset-zxvdd              1/1     Terminating         0          31s
-```
-
 **Step 5.** Changes the image of the Deployment `kplabs-deployment`, which starts a rollout.
 
 ```bash
 kubectl set image deployment/kplabs-deployment nginx=apache
-```
-
-You should see something like:
-
-```text
-deployment.apps/kplabs-deployment image updated
 ```
 
 **Step 6.** Waits until the rollout of the Deployment `kplabs-deployment` has finished.
@@ -858,26 +820,10 @@ deployment.apps/kplabs-deployment image updated
 kubectl rollout status deployment/kplabs-deployment --timeout=30s
 ```
 
-You should see something like:
-
-```text
-Waiting for deployment "kplabs-deployment" rollout to finish: 1 old replicas are pending termination...
-Waiting for deployment "kplabs-deployment" rollout to finish: 1 old replicas are pending termination...
-error: timed out waiting for the condition
-```
-
 **Step 7.** Lists the pods.
 
 ```bash
 kubectl get pods
-```
-
-You should see something like:
-
-```text
-NAME                                 READY   STATUS             RESTARTS   AGE
-kplabs-deployment-7c77fb87d7-s9vlj   0/1     ImagePullBackOff   0          31s
-kplabs-deployment-7d98d64667-mdxft   1/1     Running            0          31s
 ```
 
 **Step 8.** Shows the revisions of the Deployment `kplabs-deployment`.
@@ -886,25 +832,10 @@ kplabs-deployment-7d98d64667-mdxft   1/1     Running            0          31s
 kubectl rollout history deployment kplabs-deployment
 ```
 
-You should see something like:
-
-```text
-deployment.apps/kplabs-deployment 
-REVISION  CHANGE-CAUSE
-1         <none>
-2         <none>
-```
-
 **Step 9.** Rolls back the Deployment `kplabs-deployment`.
 
 ```bash
 kubectl rollout undo deployment/kplabs-deployment
-```
-
-You should see something like:
-
-```text
-deployment.apps/kplabs-deployment rolled back
 ```
 
 **Step 10.** Changes the image of the Deployment `kplabs-deployment`, which starts a rollout.
@@ -913,22 +844,10 @@ deployment.apps/kplabs-deployment rolled back
 kubectl set image deployment/kplabs-deployment nginx=httpd
 ```
 
-You should see something like:
-
-```text
-deployment.apps/kplabs-deployment image updated
-```
-
 **Step 11.** Adds the annotation `kubernetes.io/change-cause` to the Deployment `kplabs-deployment` (rollout history shows it as the reason for the change).
 
 ```bash
 kubectl annotate deployment/kplabs-deployment kubernetes.io/change-cause="image updated to httpd"
-```
-
-You should see something like:
-
-```text
-deployment.apps/kplabs-deployment annotated
 ```
 
 **Step 12.** Shows the revisions of the Deployment `kplabs-deployment`.
@@ -937,26 +856,10 @@ deployment.apps/kplabs-deployment annotated
 kubectl rollout history deployment kplabs-deployment
 ```
 
-You should see something like:
-
-```text
-deployment.apps/kplabs-deployment 
-REVISION  CHANGE-CAUSE
-2         <none>
-3         <none>
-4         image updated to httpd
-```
-
 **Step 13.** Sets the Deployment `kplabs-deployment` to 10 replicas.
 
 ```bash
 kubectl scale deployment/kplabs-deployment --replicas=10
-```
-
-You should see something like:
-
-```text
-deployment.apps/kplabs-deployment scaled
 ```
 
 **Step 14.** Waits until the rollout of the Deployment `kplabs-deployment` has finished.
@@ -965,41 +868,10 @@ deployment.apps/kplabs-deployment scaled
 kubectl rollout status deployment/kplabs-deployment --timeout=180s
 ```
 
-You should see something like:
-
-```text
-Waiting for deployment "kplabs-deployment" rollout to finish: 1 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 7 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 7 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 7 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 7 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 7 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 7 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 7 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 7 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 8 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 8 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 8 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 8 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 8 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 9 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 9 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 9 out of 10 new replicas have been updated...
-Waiting for deployment "kplabs-deployment" rollout to finish: 3 old replicas are pending termination...
-… (14 more lines)
-```
-
 **Step 15.** Lists the Deployments.
 
 ```bash
 kubectl get deployments
-```
-
-You should see something like:
-
-```text
-NAME                READY   UP-TO-DATE   AVAILABLE   AGE
-kplabs-deployment   10/10   10           10          49s
 ```
 
 **Step 16.** Lists the pods.
@@ -1008,36 +880,10 @@ kplabs-deployment   10/10   10           10          49s
 kubectl get pods
 ```
 
-You should see something like:
-
-```text
-NAME                                 READY   STATUS        RESTARTS   AGE
-kplabs-deployment-7d98d64667-26mgl   1/1     Terminating   0          18s
-kplabs-deployment-7d98d64667-fft82   1/1     Terminating   0          18s
-kplabs-deployment-7d98d64667-m7clc   1/1     Terminating   0          18s
-kplabs-deployment-7d98d64667-x2dpp   1/1     Terminating   0          18s
-kplabs-deployment-859dd947d7-68kfj   1/1     Running       0          18s
-kplabs-deployment-859dd947d7-f6dvb   1/1     Running       0          18s
-kplabs-deployment-859dd947d7-f86vs   1/1     Running       0          9s
-kplabs-deployment-859dd947d7-gmztc   1/1     Running       0          18s
-kplabs-deployment-859dd947d7-jc97v   1/1     Running       0          18s
-kplabs-deployment-859dd947d7-k6ff6   1/1     Running       0          18s
-kplabs-deployment-859dd947d7-mr9qt   1/1     Running       0          8s
-kplabs-deployment-859dd947d7-q974b   1/1     Running       0          18s
-kplabs-deployment-859dd947d7-sxx82   1/1     Running       0          18s
-kplabs-deployment-859dd947d7-szlwt   1/1     Running       0          6s
-```
-
 **Step 17.** Deletes the Deployment `kplabs-deployment`.
 
 ```bash
 kubectl delete deployment kplabs-deployment
-```
-
-You should see something like:
-
-```text
-deployment.apps "kplabs-deployment" deleted from default namespace
 ```
 
 ### If you see something else
@@ -1062,8 +908,8 @@ deployment.apps "kplabs-deployment" deleted from default namespace
 
 ### What you will do
 
-Follow [deployment-cli.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/deployment-cli.md)
-and [manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/manifest-cli.md):
+Follow [07-deployment-manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/07-deployment-manifest-cli.md)
+and [08-manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/08-manifest-cli.md):
 
 1. Print the manifest of a deployment **my-deployment** from `nginx`, first with 1 replica, then with
    3 replicas, without creating anything (`--dry-run=client -o yaml`).
@@ -1153,8 +999,9 @@ kubectl rollout status deployment/my-deployment --timeout=120s
 You should see something like:
 
 ```text
+Waiting for deployment spec update to be observed...
+Waiting for deployment "my-deployment" rollout to finish: 0 out of 3 new replicas have been updated...
 Waiting for deployment "my-deployment" rollout to finish: 0 of 3 updated replicas are available...
-Waiting for deployment "my-deployment" rollout to finish: 1 of 3 updated replicas are available...
 Waiting for deployment "my-deployment" rollout to finish: 2 of 3 updated replicas are available...
 deployment "my-deployment" successfully rolled out
 ```
@@ -1168,8 +1015,9 @@ kubectl get deployment
 You should see something like:
 
 ```text
-NAME            READY   UP-TO-DATE   AVAILABLE   AGE
-my-deployment   3/3     3            3           4s
+NAME                READY   UP-TO-DATE   AVAILABLE   AGE
+kplabs-deployment   10/10   10           10          12m
+my-deployment       3/3     3            3           5s
 ```
 
 **Step 6.** Lists the pods.
@@ -1181,14 +1029,20 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME                                 READY   STATUS        RESTARTS   AGE
-kplabs-deployment-7d98d64667-26mgl   1/1     Terminating   0          23s
-kplabs-deployment-7d98d64667-fft82   1/1     Terminating   0          23s
-kplabs-deployment-7d98d64667-m7clc   1/1     Terminating   0          23s
-kplabs-deployment-7d98d64667-x2dpp   1/1     Terminating   0          23s
-my-deployment-d49dfc846-jdn29        1/1     Running       0          4s
-my-deployment-d49dfc846-jzz6t        1/1     Running       0          4s
-my-deployment-d49dfc846-xk29v        1/1     Running       0          4s
+NAME                                 READY   STATUS    RESTARTS   AGE
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          86s
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          11m
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          11m
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          11m
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          11m
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          11m
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          11m
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          88s
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          11m
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          89s
+my-deployment-d49dfc846-65t7b        1/1     Running   0          4s
+my-deployment-d49dfc846-xjf7v        1/1     Running   0          4s
+my-deployment-d49dfc846-xv9cr        1/1     Running   0          4s
 ```
 
 **Step 7.** Deletes the Deployment `my-deployment`.
@@ -1223,7 +1077,7 @@ deployment.apps "my-deployment" deleted from default namespace
 
 ### What you will do
 
-Apply [daemonset.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/daemonset.yaml):
+Apply [09-daemonsets.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/09-daemonsets.yaml):
 a DaemonSet **kplabs-daemonset** with selector `name: kplabs-all-pods` and a container `kplabs-pods`
 from `nginx`. Save it as **daemonset.yaml**, apply it, and look at which nodes its pods run on
 (`kubectl get pods -o wide`). Leave it running.
@@ -1292,25 +1146,31 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                                 READY   STATUS        RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl               1/1     Running       0          2s    10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8               1/1     Running       0          2s    10.244.2.25   node01   <none>           <none>
-kplabs-deployment-7d98d64667-26mgl   1/1     Terminating   0          26s   10.244.1.16   node02   <none>           <none>
-kplabs-deployment-7d98d64667-fft82   1/1     Terminating   0          26s   10.244.2.18   node01   <none>           <none>
-kplabs-deployment-7d98d64667-m7clc   1/1     Terminating   0          26s   10.244.1.20   node02   <none>           <none>
-kplabs-deployment-7d98d64667-x2dpp   1/1     Terminating   0          26s   10.244.2.20   node01   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE   IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          2s    10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          2s    10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          89s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          11m   10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          11m   10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          11m   10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          11m   10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          11m   10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          11m   10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          91s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          11m   10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          92s   10.244.2.19   minikube-m03   <none>           <none>
 ```
 
 ### If you see something else
 
 - The check says: _There is no DaemonSet called kplabs-daemonset._
-- The check says: _kplabs-daemonset should run one ready pod on each worker, node01 and node02._
+- The check says: _kplabs-daemonset should run one ready pod on each worker, minikube-m02 and minikube-m03._
 - A DaemonSet looks like a Deployment without `replicas`: `kind: DaemonSet`, `spec.selector` and `spec.template`.
-- `kubectl get pods -o wide` shows the NODE column. controlplane gets no pod because of its NoSchedule taint.
+- `kubectl get pods -o wide` shows the NODE column. minikube gets no pod because of its NoSchedule taint.
 
 ### Why it works
 
-**Why it works.** A DaemonSet runs one pod on every node that its pods can be scheduled on. node01 and node02 get one each. controlplane has the taint `node-role.kubernetes.io/control-plane:NoSchedule`, which these pods do not tolerate, so it gets none. Add a node and the DaemonSet puts a pod on it automatically.
+**Why it works.** A DaemonSet runs one pod on every node that its pods can be scheduled on. minikube-m02 and minikube-m03 get one each. minikube has the taint `node-role.kubernetes.io/control-plane:NoSchedule`, which these pods do not tolerate, so it gets none. Add a node and the DaemonSet puts a pod on it automatically.
 
 **In practice:** log collectors, monitoring agents, kube-proxy and network plugins such as Calico run as DaemonSets.
 
@@ -1324,10 +1184,10 @@ kplabs-deployment-7d98d64667-x2dpp   1/1     Terminating   0          26s   10.2
 
 ### What you will do
 
-Follow [nodeSelector.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/nodeSelector.md):
+Follow [11-node-selector-practical.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/11-node-selector-practical.md):
 
-1. Describe node01 to see its labels.
-2. Label the nodes: controlplane `disk=hdd`, node01 `disk=ssd`, node02 `disk=hdd`.
+1. Describe minikube-m02 to see its labels.
+2. Label the nodes: minikube `disk=hdd`, minikube-m02 `disk=ssd`, minikube-m03 `disk=hdd`.
 3. Write **nodeselector.yaml**: a pod **service-pod** from `nginx` with `nodeSelector` `disk: ssd`. Apply it.
 4. Check which node it runs on, then delete it with `kubectl delete -f nodeselector.yaml`.
 
@@ -1342,76 +1202,76 @@ kubectl get nodes
 You should see something like:
 
 ```text
-NAME           STATUS   ROLES           AGE     VERSION
-controlplane   Ready    control-plane   2m35s   v1.36.4
-node01         Ready    <none>          2m20s   v1.36.4
-node02         Ready    <none>          2m21s   v1.36.4
+NAME           STATUS   ROLES           AGE   VERSION
+minikube       Ready    control-plane   14m   v1.36.4
+minikube-m02   Ready    <none>          13m   v1.36.4
+minikube-m03   Ready    <none>          13m   v1.36.4
 ```
 
-**Step 2.** Shows the details of the node `node01`, with its recent events at the bottom.
+**Step 2.** Shows the details of the node `minikube-m02`, with its recent events at the bottom.
 
 ```bash
-kubectl describe node node01
+kubectl describe node minikube-m02
 ```
 
 You should see something like:
 
 ```text
-Name:               node01
+Name:               minikube-m02
 Roles:              <none>
 Labels:             beta.kubernetes.io/arch=arm64
                     beta.kubernetes.io/os=linux
                     kubernetes.io/arch=arm64
-                    kubernetes.io/hostname=node01
+                    kubernetes.io/hostname=minikube-m02
                     kubernetes.io/os=linux
 Annotations:        node.alpha.kubernetes.io/ttl: 0
                     volumes.kubernetes.io/controller-managed-attach-detach: true
-CreationTimestamp:  Tue, 27 Oct 2026 05:45:17 +0000
+CreationTimestamp:  Tue, 27 Oct 2026 22:52:00 +0000
 Taints:             <none>
 Unschedulable:      false
 Lease:
-  HolderIdentity:  node01
+  HolderIdentity:  minikube-m02
   AcquireTime:     <unset>
-  RenewTime:       Tue, 27 Oct 2026 05:47:29 +0000
+  RenewTime:       Tue, 27 Oct 2026 23:05:45 +0000
 Conditions:
   Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
-… (50 more lines)
+… (53 more lines)
 ```
 
-**Step 3.** Adds the label `disk=hdd` to the node `controlplane`, `disk=hdd`.
+**Step 3.** Adds the label `disk=hdd` to the node `minikube`, `disk=hdd`.
 
 ```bash
-kubectl label node controlplane disk=hdd
+kubectl label node minikube disk=hdd
 ```
 
 You should see something like:
 
 ```text
-node/controlplane labeled
+node/minikube labeled
 ```
 
-**Step 4.** Adds the label `disk=ssd` to the node `node01`, `disk=ssd`.
+**Step 4.** Adds the label `disk=ssd` to the node `minikube-m02`, `disk=ssd`.
 
 ```bash
-kubectl label node node01 disk=ssd
+kubectl label node minikube-m02 disk=ssd
 ```
 
 You should see something like:
 
 ```text
-node/node01 labeled
+node/minikube-m02 labeled
 ```
 
-**Step 5.** Adds the label `disk=hdd` to the node `node02`, `disk=hdd`.
+**Step 5.** Adds the label `disk=hdd` to the node `minikube-m03`, `disk=hdd`.
 
 ```bash
-kubectl label node node02 disk=hdd
+kubectl label node minikube-m03 disk=hdd
 ```
 
 You should see something like:
 
 ```text
-node/node02 labeled
+node/minikube-m03 labeled
 ```
 
 **Step 6.** Writes the file `nodeselector.yaml`.
@@ -1466,14 +1326,20 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                                 READY   STATUS        RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl               1/1     Running       0          5s    10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8               1/1     Running       0          5s    10.244.2.25   node01   <none>           <none>
-kplabs-deployment-7d98d64667-26mgl   1/1     Terminating   0          29s   10.244.1.16   node02   <none>           <none>
-kplabs-deployment-7d98d64667-fft82   1/1     Terminating   0          29s   10.244.2.18   node01   <none>           <none>
-kplabs-deployment-7d98d64667-m7clc   1/1     Terminating   0          29s   10.244.1.20   node02   <none>           <none>
-kplabs-deployment-7d98d64667-x2dpp   1/1     Terminating   0          29s   10.244.2.20   node01   <none>           <none>
-service-pod                          1/1     Running       0          2s    10.244.2.26   node01   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE   IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          5s    10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          5s    10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          92s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          11m   10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          11m   10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          11m   10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          11m   10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          11m   10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          11m   10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          94s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          11m   10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          95s   10.244.2.19   minikube-m03   <none>           <none>
+service-pod                          1/1     Running   0          2s    10.244.1.26   minikube-m02   <none>           <none>
 ```
 
 **Step 10.** Deletes the objects in `nodeselector.yaml`.
@@ -1490,15 +1356,15 @@ pod "service-pod" deleted from default namespace
 
 ### If you see something else
 
-- The check says: _The nodes are not labelled yet. controlplane and node02 should have disk=hdd, node01 disk=ssd._
-- The check says: _service-pod has not run on node01 yet._
+- The check says: _The nodes are not labelled yet. minikube and minikube-m03 should have disk=hdd, minikube-m02 disk=ssd._
+- The check says: _service-pod has not run on minikube-m02 yet._
 - The check says: _service-pod is still there. The last step deletes it._
-- `kubectl label node node01 disk=ssd` labels a node; `kubectl get nodes --show-labels` lists the labels.
+- `kubectl label node minikube-m02 disk=ssd` labels a node; `kubectl get nodes --show-labels` lists the labels.
 - `nodeSelector` goes under `spec`, next to `containers`.
 
 ### Why it works
 
-**Why it works.** `nodeSelector` is the simplest way to place a pod: the scheduler only considers nodes that have all the listed labels. node01 is the only node with `disk=ssd`, so service-pod goes there. The node labels stay after the pod is deleted; the next task uses them.
+**Why it works.** `nodeSelector` is the simplest way to place a pod: the scheduler only considers nodes that have all the listed labels. minikube-m02 is the only node with `disk=ssd`, so service-pod goes there. The node labels stay after the pod is deleted; the next task uses them.
 
 **In the exam:** `kubectl label node`, then `nodeSelector` under `spec`.
 
@@ -1508,7 +1374,7 @@ pod "service-pod" deleted from default namespace
 
 ### What you will do
 
-Follow [node-affinity.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/node-affinity.md)
+Follow [13-node-affinity.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/13-node-affinity.md)
 (it uses the `disk` labels from the last task):
 
 1. Write **nodeAffinity-required.yaml**: a pod **kplabs-node-affinity** from `nginx` that requires
@@ -1518,7 +1384,7 @@ Follow [node-affinity.md](https://github.com/kumbulanit/CKA/blob/main/03-schedul
    `Pending`. Delete it.
 4. Write **nodeAffinity-preferred.yaml**: a pod **kplabs-node-affinity-preferred** that prefers
    `memory In [high, medium]`. Apply it, see where it runs, and delete it.
-5. Apply [podaffinity-required.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/podaffinity-required.yaml)
+5. Apply [15-pod-affinity-podaffinity-required.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/15-pod-affinity-podaffinity-required.yaml)
    (pod **kplabs-pod-affinity**), see where it runs, and delete it.
 
 ### Step by step
@@ -1582,44 +1448,50 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                                 READY   STATUS        RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl               1/1     Running       0          11s   10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8               1/1     Running       0          11s   10.244.2.25   node01   <none>           <none>
-kplabs-deployment-7d98d64667-26mgl   1/1     Terminating   0          35s   10.244.1.16   node02   <none>           <none>
-kplabs-deployment-7d98d64667-fft82   1/1     Terminating   0          35s   10.244.2.18   node01   <none>           <none>
-kplabs-deployment-7d98d64667-m7clc   1/1     Terminating   0          35s   10.244.1.20   node02   <none>           <none>
-kplabs-deployment-7d98d64667-x2dpp   1/1     Terminating   0          35s   10.244.2.20   node01   <none>           <none>
-kplabs-node-affinity                 1/1     Running       0          2s    10.244.2.27   node01   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE    IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          11s    10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          11s    10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          98s    10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          11m    10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          11m    10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          11m    10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          11m    10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          11m    10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          11m    10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          100s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          11m    10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          101s   10.244.2.19   minikube-m03   <none>           <none>
+kplabs-node-affinity                 1/1     Running   0          2s     10.244.1.27   minikube-m02   <none>           <none>
 ```
 
-**Step 5.** Shows the details of the node `node01`, with its recent events at the bottom.
+**Step 5.** Shows the details of the node `minikube-m02`, with its recent events at the bottom.
 
 ```bash
-kubectl describe node node01
+kubectl describe node minikube-m02
 ```
 
 You should see something like:
 
 ```text
-Name:               node01
+Name:               minikube-m02
 Roles:              <none>
 Labels:             beta.kubernetes.io/arch=arm64
                     beta.kubernetes.io/os=linux
                     disk=ssd
                     kubernetes.io/arch=arm64
-                    kubernetes.io/hostname=node01
+                    kubernetes.io/hostname=minikube-m02
                     kubernetes.io/os=linux
 Annotations:        node.alpha.kubernetes.io/ttl: 0
                     volumes.kubernetes.io/controller-managed-attach-detach: true
-CreationTimestamp:  Tue, 27 Oct 2026 05:45:17 +0000
+CreationTimestamp:  Tue, 27 Oct 2026 22:52:00 +0000
 Taints:             <none>
 Unschedulable:      false
 Lease:
-  HolderIdentity:  node01
+  HolderIdentity:  minikube-m02
   AcquireTime:     <unset>
-  RenewTime:       Tue, 27 Oct 2026 05:47:39 +0000
+  RenewTime:       Tue, 27 Oct 2026 23:05:56 +0000
 Conditions:
-… (52 more lines)
+… (55 more lines)
 ```
 
 **Step 6.** Deletes the objects in `nodeAffinity-required.yaml`.
@@ -1675,14 +1547,20 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                                 READY   STATUS        RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl               1/1     Running       0          15s   10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8               1/1     Running       0          15s   10.244.2.25   node01   <none>           <none>
-kplabs-deployment-7d98d64667-26mgl   1/1     Terminating   0          39s   10.244.1.16   node02   <none>           <none>
-kplabs-deployment-7d98d64667-fft82   1/1     Terminating   0          39s   10.244.2.18   node01   <none>           <none>
-kplabs-deployment-7d98d64667-m7clc   1/1     Terminating   0          39s   10.244.1.20   node02   <none>           <none>
-kplabs-deployment-7d98d64667-x2dpp   1/1     Terminating   0          39s   10.244.2.20   node01   <none>           <none>
-kplabs-node-affinity                 1/1     Running       0          2s    10.244.1.24   node02   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE    IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          16s    10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          16s    10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          103s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          12m    10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          12m    10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          12m    10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          12m    10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          12m    10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          12m    10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          105s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          12m    10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          106s   10.244.2.19   minikube-m03   <none>           <none>
+kplabs-node-affinity                 1/1     Running   0          2s     10.244.2.23   minikube-m03   <none>           <none>
 ```
 
 **Step 11.** Deletes the objects in `nodeAffinity-required.yaml`.
@@ -1734,11 +1612,20 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME                                 READY   STATUS        RESTARTS   AGE
-kplabs-daemonset-dpbvl               1/1     Running       0          22s
-kplabs-daemonset-s2tl8               1/1     Running       0          22s
-kplabs-deployment-7d98d64667-m7clc   1/1     Terminating   0          46s
-kplabs-node-affinity                 0/1     Pending       0          5s
+NAME                                 READY   STATUS    RESTARTS   AGE
+kplabs-daemonset-pwjx5               1/1     Running   0          24s
+kplabs-daemonset-rgqgx               1/1     Running   0          24s
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          111s
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          12m
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          12m
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          12m
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          12m
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          12m
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          12m
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          113s
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          12m
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          114s
+kplabs-node-affinity                 0/1     Pending   0          5s
 ```
 
 **Step 16.** Shows the details of the pod `kplabs-node-affinity`, with its recent events at the bottom.
@@ -1767,7 +1654,7 @@ Containers:
     Host Port:    <none>
     Environment:  <none>
     Mounts:
-      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-2dc27 (ro)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-hjc4n (ro)
 … (18 more lines)
 ```
 
@@ -1844,10 +1731,20 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                             READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl           1/1     Running   0          25s   10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8           1/1     Running   0          25s   10.244.2.25   node01   <none>           <none>
-kplabs-node-affinity-preferred   1/1     Running   0          2s    10.244.2.28   node01   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE    IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          27s    10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          27s    10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          114s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          12m    10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          12m    10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          12m    10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          12m    10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          12m    10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          12m    10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          116s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          12m    10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          117s   10.244.2.19   minikube-m03   <none>           <none>
+kplabs-node-affinity-preferred       1/1     Running   0          2s     10.244.1.28   minikube-m02   <none>           <none>
 ```
 
 **Step 22.** Deletes the objects in `nodeAffinity-preferred.yaml`.
@@ -1922,10 +1819,20 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl   1/1     Running   0          29s   10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8   1/1     Running   0          29s   10.244.2.25   node01   <none>           <none>
-kplabs-pod-affinity      1/1     Running   0          2s    10.244.1.25   node02   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE    IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          32s    10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          32s    10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          119s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          12m    10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          12m    10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          12m    10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          12m    10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          12m    10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          12m    10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          2m1s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          12m    10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          2m2s   10.244.2.19   minikube-m03   <none>           <none>
+kplabs-pod-affinity                  1/1     Running   0          2s     10.244.1.29   minikube-m02   <none>           <none>
 ```
 
 **Step 27.** Deletes the objects in `podaffinity-required.yaml`.
@@ -1948,11 +1855,11 @@ pod "kplabs-pod-affinity" deleted from default namespace
 - The check says: _kplabs-node-affinity-preferred and kplabs-pod-affinity have not both run yet._
 - The check says: _Some of the pods are still there._
 - `affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[].matchExpressions[]` holds `key`, `operator` and `values`.
-- With NotIn, node01 is excluded and controlplane is tainted, so the pod goes to node02. No node has `disk=ssd2`, so that pod stays Pending; `kubectl describe pod` says why.
+- With NotIn, minikube-m02 is excluded and minikube is tainted, so the pod goes to minikube-m03. No node has `disk=ssd2`, so that pod stays Pending; `kubectl describe pod` says why.
 
 ### Why it works
 
-**Why it works.** Node affinity is a more expressive nodeSelector. `required...` rules must match (In ssd → node01; NotIn ssd → any node without `disk=ssd`, which is node02, since controlplane is tainted). If nothing matches (ssd2), the pod stays `Pending` and `describe` shows a `FailedScheduling` event. `preferred...` rules are only a preference: no node has a `memory` label, so the pod runs anyway. Pod affinity places pods next to other pods: kplabs-pod-affinity needs a node that already runs a pod without `app=frontend`, which the DaemonSet pods are.
+**Why it works.** Node affinity is a more expressive nodeSelector. `required...` rules must match (In ssd → minikube-m02; NotIn ssd → any node without `disk=ssd`, which is minikube-m03, since minikube is tainted). If nothing matches (ssd2), the pod stays `Pending` and `describe` shows a `FailedScheduling` event. `preferred...` rules are only a preference: no node has a `memory` label, so the pod runs anyway. Pod affinity places pods next to other pods: kplabs-pod-affinity needs a node that already runs a pod without `app=frontend`, which the DaemonSet pods are.
 
 **IgnoredDuringExecution** means changing a node's labels later does not evict pods that are already running.
 
@@ -1962,7 +1869,7 @@ pod "kplabs-pod-affinity" deleted from default namespace
 
 ### What you will do
 
-Apply [requests-limits.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/requests-limits.yaml):
+Apply [16-resource-limits-requests-limits.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/16-resource-limits-requests-limits.yaml):
 a pod **kplabs-pod** (container `kplabs-container` from `nginx`) that requests `640Mi` of memory and
 `0.5` CPU, with limits of `12800Mi` and `1` CPU. Save it as **requests-limits.yaml**, apply it, and
 describe the node it runs on to see the requests in **Allocated resources**. Leave it running.
@@ -2026,25 +1933,25 @@ kubectl describe node $(kubectl get pod kplabs-pod -o jsonpath='{.spec.nodeName}
 You should see something like:
 
 ```text
-Name:               node02
+Name:               minikube-m02
 Roles:              <none>
 Labels:             beta.kubernetes.io/arch=arm64
                     beta.kubernetes.io/os=linux
-                    disk=hdd
+                    disk=ssd
                     kubernetes.io/arch=arm64
-                    kubernetes.io/hostname=node02
+                    kubernetes.io/hostname=minikube-m02
                     kubernetes.io/os=linux
 Annotations:        node.alpha.kubernetes.io/ttl: 0
                     volumes.kubernetes.io/controller-managed-attach-detach: true
-CreationTimestamp:  Tue, 27 Oct 2026 05:45:16 +0000
+CreationTimestamp:  Tue, 27 Oct 2026 22:52:00 +0000
 Taints:             <none>
 Unschedulable:      false
 Lease:
-  HolderIdentity:  node02
+  HolderIdentity:  minikube-m02
   AcquireTime:     <unset>
-  RenewTime:       Tue, 27 Oct 2026 05:48:00 +0000
+  RenewTime:       Tue, 27 Oct 2026 23:06:26 +0000
 Conditions:
-… (50 more lines)
+… (55 more lines)
 ```
 
 ### If you see something else
@@ -2067,15 +1974,15 @@ Conditions:
 
 ### What you will do
 
-Follow [pod-without-scheduler.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/pod-without-scheduler.md).
+Follow [17-pod-without-scheduler.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/17-pod-without-scheduler.md).
 First delete kplabs-pod from the last task: `kubectl delete pod kplabs-pod`. Then:
 
 1. Write **kplabs-pod.yaml**: a pod **kplabs-pod** (container `kplabs-container` from `nginx`) with
-   `nodeName: node01`. Apply it, see where it runs, and delete it.
+   `nodeName: minikube-m02`. Apply it, see where it runs, and delete it.
 2. Find the kubelet's static pod folder (`grep staticPodPath /var/lib/kubelet/config.yaml`).
-3. On node01, write the static pod **static-web** (container `web` from `nginx`) to
-   `/etc/kubernetes/manifests/static-web.yaml`, and see it appear as `static-web-node01`.
-4. Remove it by deleting the file on node01.
+3. On minikube-m02, write the static pod **static-web** (container `web` from `nginx`) to
+   `/etc/kubernetes/manifests/static-web.yaml`, and see it appear as `static-web-minikube-m02`.
+4. Remove it by deleting the file on minikube-m02.
 
 ### Step by step
 
@@ -2100,7 +2007,7 @@ kind: Pod
 metadata:
   name: kplabs-pod
 spec:
-  nodeName: node01
+  nodeName: minikube-m02
   containers:
   - name: kplabs-container
     image: nginx
@@ -2142,10 +2049,20 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl   1/1     Running   0          39s   10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8   1/1     Running   0          39s   10.244.2.25   node01   <none>           <none>
-kplabs-pod               1/1     Running   0          3s    10.244.2.29   node01   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE     IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          43s     10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          43s     10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          2m10s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          12m     10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          12m     10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          12m     10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          12m     10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          12m     10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          12m     10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          2m12s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          12m     10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          2m13s   10.244.2.19   minikube-m03   <none>           <none>
+kplabs-pod                           1/1     Running   0          2s      10.244.1.31   minikube-m02   <none>           <none>
 ```
 
 **Step 6.** Deletes the objects in `kplabs-pod.yaml`.
@@ -2172,10 +2089,10 @@ You should see something like:
 staticPodPath: /etc/kubernetes/manifests
 ```
 
-**Step 8.** Writes the file `/etc/kubernetes/manifests/static-web.yaml`.
+**Step 8.** Writes these lines to `/etc/kubernetes/manifests/static-web.yaml` on `minikube-m02`.
 
 ```bash
-ssh node01 'cat <<EOF | sudo tee /etc/kubernetes/manifests/static-web.yaml
+minikube ssh -n minikube-m02 -- 'cat <<EOF | sudo tee /etc/kubernetes/manifests/static-web.yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -2185,10 +2102,10 @@ spec:
   - name: web
     image: nginx
 EOF'
-until kubectl get pod static-web-node01 >/dev/null 2>&1; do sleep 2; done
-kubectl wait --for=condition=Ready pod/static-web-node01 --timeout=120s
+until kubectl get pod static-web-minikube-m02 >/dev/null 2>&1; do sleep 2; done
+kubectl wait --for=condition=Ready pod/static-web-minikube-m02 --timeout=120s
 kubectl get pods -o wide
-ssh node01 sudo rm /etc/kubernetes/manifests/static-web.yaml
+minikube ssh -n minikube-m02 -- sudo rm /etc/kubernetes/manifests/static-web.yaml
 
 ```
 
@@ -2203,21 +2120,27 @@ spec:
   containers:
   - name: web
     image: nginx
-pod/static-web-node01 condition met
-NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl   1/1     Running   0          43s   10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8   1/1     Running   0          43s   10.244.2.25   node01   <none>           <none>
-static-web-node01        1/1     Running   0          2s    10.244.2.30   node01   <none>           <none>
+pod/static-web-minikube-m02 condition met
+NAME                                 READY   STATUS    RESTARTS   AGE     IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          48s     10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          48s     10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          2m15s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          12m     10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          12m     10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          12m     10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          12m     10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          12m     10.244.1.16   minikube-m02   <none>           <none>
+… (5 more lines)
 ```
 
 ### If you see something else
 
-- The check says: _/root/kplabs-pod.yaml is missing, or has no `nodeName: node01`._
+- The check says: _/root/kplabs-pod.yaml is missing, or has no `nodeName: minikube-m02`._
 - The check says: _kplabs-pod is still there. Delete it after step 1._
-- The check says: _The static pod static-web-node01 has not run yet._
-- The check says: _/etc/kubernetes/manifests/static-web.yaml is still on node01. Delete the file to remove the static pod._
+- The check says: _The static pod static-web-minikube-m02 has not run yet._
+- The check says: _/etc/kubernetes/manifests/static-web.yaml is still on minikube-m02. Delete the file to remove the static pod._
 - With `spec.nodeName` set, the scheduler skips the pod and the kubelet on that node starts it.
-- `ssh node01`, then write the manifest into /etc/kubernetes/manifests; `kubectl get pods -o wide` on controlplane shows the mirror pod.
+- `minikube ssh -n minikube-m02`, then write the manifest into /etc/kubernetes/manifests with sudo; `kubectl get pods -o wide` on minikube shows the mirror pod.
 
 ### Why it works
 
@@ -2231,32 +2154,32 @@ static-web-node01        1/1     Running   0          2s    10.244.2.30   node01
 
 ### What you will do
 
-Follow [taints-tolerations.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/taints-tolerations.md):
+Follow [19-taints-and-tolerations-practical.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/19-taints-and-tolerations-practical.md):
 
-1. Taint node01 with `key=value:NoSchedule` and check its taints.
-2. Create a deployment **nginx** with **4** replicas and see that no new pod lands on node01.
+1. Taint minikube-m02 with `key=value:NoSchedule` and check its taints.
+2. Create a deployment **nginx** with **4** replicas and see that no new pod lands on minikube-m02.
 3. Write **toleration-pod.yaml**: a pod **tolerated-pod** from `nginx` that tolerates the taint and
-   selects node01 (`kubernetes.io/hostname: node01`). Apply it and see where it runs.
+   selects minikube-m02 (`kubernetes.io/hostname: minikube-m02`). Apply it and see where it runs.
 4. Remove the taint, and delete the deployment and the pod.
 
 ### Step by step
 
-**Step 1.** Taints the nodes `node01`, `key=value:NoSchedule`: pods without a matching toleration stay off it.
+**Step 1.** Taints the nodes `minikube-m02`, `key=value:NoSchedule`: pods without a matching toleration stay off it.
 
 ```bash
-kubectl taint nodes node01 key=value:NoSchedule
+kubectl taint nodes minikube-m02 key=value:NoSchedule
 ```
 
 You should see something like:
 
 ```text
-node/node01 tainted
+node/minikube-m02 tainted
 ```
 
-**Step 2.** Shows the details of the node `node01`, with its recent events at the bottom.
+**Step 2.** Shows the details of the node `minikube-m02`, with its recent events at the bottom.
 
 ```bash
-kubectl describe node node01 | grep Taints
+kubectl describe node minikube-m02 | grep Taints
 ```
 
 You should see something like:
@@ -2303,13 +2226,23 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl   1/1     Running   0          51s   10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8   1/1     Running   0          51s   10.244.2.25   node01   <none>           <none>
-nginx-7f8fbb96d-7w7wc    1/1     Running   0          7s    10.244.1.29   node02   <none>           <none>
-nginx-7f8fbb96d-8v7kz    1/1     Running   0          7s    10.244.1.28   node02   <none>           <none>
-nginx-7f8fbb96d-x7r6l    1/1     Running   0          7s    10.244.1.30   node02   <none>           <none>
-nginx-7f8fbb96d-xq5ln    1/1     Running   0          7s    10.244.1.27   node02   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE     IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          57s     10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          57s     10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          2m24s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          12m     10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          12m     10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          12m     10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          12m     10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          12m     10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          12m     10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          2m26s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          12m     10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          2m27s   10.244.2.19   minikube-m03   <none>           <none>
+nginx-7f8fbb96d-9qwf7                1/1     Running   0          7s      10.244.2.26   minikube-m03   <none>           <none>
+nginx-7f8fbb96d-b5h7t                1/1     Running   0          7s      10.244.2.25   minikube-m03   <none>           <none>
+nginx-7f8fbb96d-b6mqk                1/1     Running   0          7s      10.244.2.27   minikube-m03   <none>           <none>
+nginx-7f8fbb96d-kf2g5                1/1     Running   0          8s      10.244.2.24   minikube-m03   <none>           <none>
 ```
 
 **Step 6.** Writes the file `toleration-pod.yaml`.
@@ -2330,7 +2263,7 @@ spec:
     value: value
     effect: NoSchedule
   nodeSelector:
-    kubernetes.io/hostname: node01
+    kubernetes.io/hostname: minikube-m02
 EOF
 ```
 
@@ -2369,26 +2302,36 @@ kubectl get pods -o wide
 You should see something like:
 
 ```text
-NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
-kplabs-daemonset-dpbvl   1/1     Running   0          54s   10.244.1.23   node02   <none>           <none>
-kplabs-daemonset-s2tl8   1/1     Running   0          54s   10.244.2.25   node01   <none>           <none>
-nginx-7f8fbb96d-7w7wc    1/1     Running   0          10s   10.244.1.29   node02   <none>           <none>
-nginx-7f8fbb96d-8v7kz    1/1     Running   0          10s   10.244.1.28   node02   <none>           <none>
-nginx-7f8fbb96d-x7r6l    1/1     Running   0          10s   10.244.1.30   node02   <none>           <none>
-nginx-7f8fbb96d-xq5ln    1/1     Running   0          10s   10.244.1.27   node02   <none>           <none>
-tolerated-pod            1/1     Running   0          3s    10.244.2.31   node01   <none>           <none>
+NAME                                 READY   STATUS    RESTARTS   AGE     IP            NODE           NOMINATED NODE   READINESS GATES
+kplabs-daemonset-pwjx5               1/1     Running   0          59s     10.244.2.22   minikube-m03   <none>           <none>
+kplabs-daemonset-rgqgx               1/1     Running   0          59s     10.244.1.25   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-666zg   1/1     Running   0          2m26s   10.244.1.22   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running   0          12m     10.244.1.18   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running   0          12m     10.244.2.18   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-cx96k   1/1     Running   0          12m     10.244.2.14   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-drj5j   1/1     Running   0          12m     10.244.1.15   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-j472l   1/1     Running   0          12m     10.244.1.16   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-mk54w   1/1     Running   0          12m     10.244.1.21   minikube-m02   <none>           <none>
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running   0          2m28s   10.244.2.20   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-wjl29   1/1     Running   0          12m     10.244.2.16   minikube-m03   <none>           <none>
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running   0          2m29s   10.244.2.19   minikube-m03   <none>           <none>
+nginx-7f8fbb96d-9qwf7                1/1     Running   0          9s      10.244.2.26   minikube-m03   <none>           <none>
+nginx-7f8fbb96d-b5h7t                1/1     Running   0          9s      10.244.2.25   minikube-m03   <none>           <none>
+nginx-7f8fbb96d-b6mqk                1/1     Running   0          9s      10.244.2.27   minikube-m03   <none>           <none>
+nginx-7f8fbb96d-kf2g5                1/1     Running   0          10s     10.244.2.24   minikube-m03   <none>           <none>
+tolerated-pod                        1/1     Running   0          2s      10.244.1.33   minikube-m02   <none>           <none>
 ```
 
-**Step 10.** Removes the taint from the nodes `node01`, `key=value:NoSchedule-`.
+**Step 10.** Removes the taint from the nodes `minikube-m02`, `key=value:NoSchedule-`.
 
 ```bash
-kubectl taint nodes node01 key=value:NoSchedule-
+kubectl taint nodes minikube-m02 key=value:NoSchedule-
 ```
 
 You should see something like:
 
 ```text
-node/node01 untainted
+node/minikube-m02 untainted
 ```
 
 **Step 11.** Deletes the Deployment `nginx`.
@@ -2418,18 +2361,18 @@ pod "tolerated-pod" deleted from default namespace
 ### If you see something else
 
 - The check says: _/root/toleration-pod.yaml is missing, or has no tolerations._
-- The check says: _tolerated-pod has not run on node01 yet._
+- The check says: _tolerated-pod has not run on minikube-m02 yet._
 - The check says: _The deployment nginx has not run with 4 replicas yet._
-- The check says: _node01 still has the taint. Remove it with `kubectl taint nodes node01 key=value:NoSchedule-`._
+- The check says: _minikube-m02 still has the taint. Remove it with `kubectl taint nodes minikube-m02 key=value:NoSchedule-`._
 - The check says: _The deployment nginx or the pod tolerated-pod is still there. The last step deletes them._
-- `kubectl taint nodes node01 key=value:NoSchedule` adds the taint; the same command ending in `-` removes it.
+- `kubectl taint nodes minikube-m02 key=value:NoSchedule` adds the taint; the same command ending in `-` removes it.
 - The toleration repeats the taint: `key: key`, `operator: Equal`, `value: value`, `effect: NoSchedule`.
 
 ### Why it works
 
-**Why it works.** A taint on a node repels pods: with `NoSchedule`, new pods that do not tolerate it are not placed there (pods already running stay). A toleration lets a pod onto a tainted node, but does not send it there; that is why tolerated-pod also has a nodeSelector for node01. A command ending in `-` removes the taint.
+**Why it works.** A taint on a node repels pods: with `NoSchedule`, new pods that do not tolerate it are not placed there (pods already running stay). A toleration lets a pod onto a tainted node, but does not send it there; that is why tolerated-pod also has a nodeSelector for minikube-m02. A command ending in `-` removes the taint.
 
-**In practice:** control-plane nodes are tainted this way, which is why your pods normally only run on node01 and node02.
+**In practice:** control-plane nodes are tainted this way, which is why your pods normally only run on minikube-m02 and minikube-m03.
 
 ---
 
@@ -2437,7 +2380,7 @@ pod "tolerated-pod" deleted from default namespace
 
 ### What you will do
 
-Apply [adapter.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/adapter.yaml):
+Apply [20-adapter-pattern.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/20-adapter-pattern.yaml):
 a ConfigMap **fluentd-config** and a pod **counter** with two containers that share a volume. `count`
 writes two log files, and the adapter `count-agent` (fluentd) reads them and writes them out in one
 format. Save it as **adapter.yaml**, apply it, and look at the files in `/var/log/fluent` inside
@@ -2566,8 +2509,8 @@ You should see something like:
 access
 
 /var/log/fluent/access:
-buffer.b65ecc004f07f2edb27f9af1cc6b1f94b.log
-buffer.b65ecc004f07f2edb27f9af1cc6b1f94b.log.meta
+buffer.b65eda81af96ed6dc47f2e12ea6a8dcc6.log
+buffer.b65eda81af96ed6dc47f2e12ea6a8dcc6.log.meta
 ```
 
 ### If you see something else
@@ -2590,8 +2533,8 @@ buffer.b65ecc004f07f2edb27f9af1cc6b1f94b.log.meta
 
 ### What you will do
 
-Apply [jobs.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/jobs.yaml)
-and [cronjob.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/cronjob.yaml):
+Apply [21-jobs-and-cronjobs-jobs.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/21-jobs-and-cronjobs-jobs.yaml)
+and [21-jobs-and-cronjobs-cronjob.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/21-jobs-and-cronjobs-cronjob.yaml):
 
 1. Save and apply **jobs.yaml**: a Job **kplabs-job** that runs `echo Hello World` in `busybox`.
    Check that it completes and read its logs.
@@ -2656,7 +2599,7 @@ You should see something like:
 
 ```text
 NAME         STATUS     COMPLETIONS   DURATION   AGE
-kplabs-job   Complete   1/1           8s         8s
+kplabs-job   Complete   1/1           10s        10s
 ```
 
 **Step 5.** Prints the logs of the Job `kplabs-job`.
@@ -2728,8 +2671,8 @@ You should see something like:
 
 ```text
 NAME                      STATUS     COMPLETIONS   DURATION   AGE
-kplabs-cronjob-29884670   Complete   1/1           5s         6s
-kplabs-job                Complete   1/1           8s         59s
+kplabs-cronjob-29885708   Complete   1/1           5s         8s
+kplabs-job                Complete   1/1           10s        41s
 ```
 
 **Step 10.** Prints the logs of the Job that the inner command finds.
@@ -2741,7 +2684,7 @@ kubectl logs job/$(kubectl get jobs -o name | grep kplabs-cronjob | head -1 | cu
 You should see something like:
 
 ```text
-Tue Oct 27 05:50:02 UTC 2026
+Tue Oct 27 23:08:02 UTC 2026
 Hello from the Kubernetes cluster
 ```
 
@@ -2767,13 +2710,13 @@ Hello from the Kubernetes cluster
 
 Apply the three probe examples:
 
-1. [livenessprobe.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/livenessprobe.yaml):
+1. [22-liveness-probes-livenessprobe.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/22-liveness-probes-livenessprobe.yaml):
    a pod **liveness** from `ubuntu` whose liveness probe runs `service nginx status`. There is no
    nginx in it, so watch the kubelet restart it.
-2. [liveness-http.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/liveness-http.yaml):
+2. [22-liveness-probes-liveness-http.yaml](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/22-liveness-probes-liveness-http.yaml):
    a pod **liveness-exec** from `nginx` whose probe asks for `/kplabs.html` on port 80. That page does
    not exist, so after 60 seconds it gets restarted too.
-3. [readinessprobe.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/workloads-and-scheduling/readinessprobe.md):
+3. [23-readiness-probe.md](https://github.com/kumbulanit/CKA/blob/main/03-scheduling/23-readiness-probe.md):
    a pod **readiness** from `ubuntu` that is only Ready once `/tmp/healthy` exists. Create the file
    with `kubectl exec` and check that the pod turns Ready.
 
@@ -2930,15 +2873,25 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME                            READY   STATUS      RESTARTS   AGE
-counter                         2/2     Running     0          116s
-kplabs-cronjob-29884670-rwmd5   0/1     Completed   0          27s
-kplabs-daemonset-dpbvl          1/1     Running     0          2m53s
-kplabs-daemonset-s2tl8          1/1     Running     0          2m53s
-kplabs-job-wr6td                0/1     Completed   0          80s
-liveness                        1/1     Running     0          20s
-liveness-exec                   1/1     Running     0          20s
-readiness                       1/1     Running     0          20s
+NAME                                 READY   STATUS      RESTARTS   AGE
+counter                              2/2     Running     0          103s
+kplabs-cronjob-29885708-z5p9f        0/1     Completed   0          34s
+kplabs-daemonset-pwjx5               1/1     Running     0          2m45s
+kplabs-daemonset-rgqgx               1/1     Running     0          2m45s
+kplabs-deployment-859dd947d7-666zg   1/1     Running     0          4m12s
+kplabs-deployment-859dd947d7-7kgsx   1/1     Running     0          14m
+kplabs-deployment-859dd947d7-7qt9w   1/1     Running     0          14m
+kplabs-deployment-859dd947d7-cx96k   1/1     Running     0          14m
+kplabs-deployment-859dd947d7-drj5j   1/1     Running     0          14m
+kplabs-deployment-859dd947d7-j472l   1/1     Running     0          14m
+kplabs-deployment-859dd947d7-mk54w   1/1     Running     0          14m
+kplabs-deployment-859dd947d7-s5r2j   1/1     Running     0          4m14s
+kplabs-deployment-859dd947d7-wjl29   1/1     Running     0          14m
+kplabs-deployment-859dd947d7-zhqx7   1/1     Running     0          4m15s
+kplabs-job-54jfs                     0/1     Completed   0          67s
+liveness                             1/1     Running     0          25s
+liveness-exec                        1/1     Running     0          25s
+readiness                            1/1     Running     0          25s
 ```
 
 ### If you see something else

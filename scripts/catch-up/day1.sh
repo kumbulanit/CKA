@@ -11,14 +11,14 @@
 source "$(dirname "$0")/lib.sh"
 
 LABS=(
-  "pods|Pods nginx, nginx-port and mywebserver (11-Pods, pod-manifest-cli, basic-pods)"
-  "pod-yaml|Pods from YAML: nginxwebserver, nginx-pod, command to command4 (first-pod-yaml, expose-pods, cmd-args)"
-  "namespaces|Namespace dev with myapp-pod and the compute-quota ResourceQuota (18-Namespaces)"
-  "deployments|Deployment myapp-deployment (14-ReplicaSets, 16-Deployments)"
-  "services|Services myapp-service (NodePort 30008) and back-end (20-Services, 21-Services-ClusterIP)"
-  "webapp|webapp-deployment with 6 replicas and webapp-service (deployments and services, growing the cluster)"
-  "standalone|Pods standalone-pod and test-pod (standalone pods - 2)"
-  "etcd-backup|etcd snapshot in /opt/etcd-backup.db (cluster maintanance)"
+  "pods|Pods nginx, nginx-port and mywebserver (01-core-concepts/01-pods, 02-basic-pods, 04-pod-manifest-cli)"
+  "pod-yaml|Pods from YAML: nginxwebserver, nginx-pod, command to command4 (01-core-concepts/03-first-pod-yaml, 05-commands-and-arguments, 06-expose-pods)"
+  "namespaces|Namespace dev with myapp-pod and the compute-quota ResourceQuota (01-core-concepts/07-namespaces)"
+  "deployments|Deployment myapp-deployment (01-core-concepts/08-deployments, 09-replicasets)"
+  "services|Services myapp-service (NodePort 30008) and back-end (01-core-concepts/10-services-nodeport, 11-services-clusterip)"
+  "webapp|webapp-deployment with 6 replicas and webapp-service (01-core-concepts/12-deployments-and-services, 02-installation/04-growing-the-cluster)"
+  "standalone|Pods standalone-pod and test-pod (02-installation/07-standalone-pods-2)"
+  "etcd-backup|etcd snapshot in /opt/etcd-backup.db (02-installation/09-cluster-maintenance)"
 )
 
 lab_pods() {

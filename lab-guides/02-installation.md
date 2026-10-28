@@ -1,4 +1,4 @@
-t # Module 2: Installation, upgrades and backups
+# Module 2: Installation, upgrades and backups
 
 Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
 
@@ -30,7 +30,7 @@ Their IP addresses are `172.30.56.10` (controlplane), `.11` (node01) and `.12` (
 
 ### What you will do
 
-Follow **Step 1** of [Kubernetes installation using kubeadm.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/Kubernetes%20installation%20using%20kubeadm.md)
+Follow **Step 1** of [02-install-kubeadm.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/02-install-kubeadm.md)
 on **controlplane, node01 and node02**. Your terminal is root on controlplane; reach the workers
 with `ssh node01` and `ssh node02` (and `exit` to come back).
 
@@ -650,7 +650,7 @@ kube-system   kube-scheduler-controlplane                1/1     Running    0   
 
 ### What you will do
 
-Follow [growing the cluster.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/growing%20the%20cluster.md)
+Follow [04-growing-the-cluster.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/04-growing-the-cluster.md)
 to add **node03**:
 
 1. Set node03's host name, add node03 to `/etc/hosts` on controlplane, node01 and node02, and add
@@ -770,7 +770,7 @@ kubectl get pods --all-namespaces
 
 ### What you will do
 
-Follow the example scenario in [condoning and drainning nodes.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/condoning%20and%20drainning%20nodes.md):
+Follow the example scenario in [08-cordoning-and-draining-nodes.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/08-cordoning-and-draining-nodes.md):
 
 1. Cordon **node01** and check its status (`SchedulingDisabled`).
 2. Drain it with `--ignore-daemonsets --delete-emptydir-data`.
@@ -785,10 +785,25 @@ Follow the example scenario in [condoning and drainning nodes.md](https://github
 kubectl cordon node01
 ```
 
+You should see something like:
+
+```text
+node/node01 cordoned
+```
+
 **Step 2.** Lists the nodes.
 
 ```bash
 kubectl get nodes
+```
+
+You should see something like:
+
+```text
+NAME           STATUS                     ROLES           AGE   VERSION
+controlplane   Ready                      control-plane   13m   v1.36.5
+node01         Ready,SchedulingDisabled   <none>          12m   v1.36.5
+node02         Ready                      <none>          12m   v1.36.5
 ```
 
 **Step 3.** Evicts the pods from `node01` and marks it unschedulable, ready for maintenance.
@@ -797,10 +812,25 @@ kubectl get nodes
 kubectl drain node01 --ignore-daemonsets --delete-emptydir-data
 ```
 
+You should see something like:
+
+```text
+node/node01 already cordoned
+Warning: ignoring DaemonSet-managed Pods: kube-system/calico-node-jxx9c, kube-system/kube-proxy-zqnfk
+node/node01 drained
+```
+
 **Step 4.** Restarts the machine (a moment later, so this command can finish first). Sudo reboot, without cutting off this script.
 
 ```bash
 ssh node01 'sudo systemd-run --on-active=2 systemctl reboot'
+```
+
+You should see something like:
+
+```text
+Running timer as unit: run-rde24e2240b184e27af16b8bbcb2a544b.timer
+Will run service as unit: run-rde24e2240b184e27af16b8bbcb2a544b.service
 ```
 
 **Step 5.** Waits 20 seconds.
@@ -809,10 +839,18 @@ ssh node01 'sudo systemd-run --on-active=2 systemctl reboot'
 sleep 20
 ```
 
+It prints nothing when it works.
+
 **Step 6.** Waits until the node `node01` is Ready.
 
 ```bash
 kubectl wait --for=condition=Ready node/node01 --timeout=180s
+```
+
+You should see something like:
+
+```text
+node/node01 condition met
 ```
 
 **Step 7.** Lets the scheduler place pods on `node01` again.
@@ -821,10 +859,25 @@ kubectl wait --for=condition=Ready node/node01 --timeout=180s
 kubectl uncordon node01
 ```
 
+You should see something like:
+
+```text
+node/node01 uncordoned
+```
+
 **Step 8.** Lists the nodes.
 
 ```bash
 kubectl get nodes
+```
+
+You should see something like:
+
+```text
+NAME           STATUS   ROLES           AGE   VERSION
+controlplane   Ready    control-plane   14m   v1.36.5
+node01         Ready    <none>          12m   v1.36.5
+node02         Ready    <none>          12m   v1.36.5
 ```
 
 ### If you see something else
@@ -851,7 +904,7 @@ kubectl get nodes
 
 ### What you will do
 
-Follow section 1, step 2 of [cluster maintanance.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/cluster%20maintanance.md)
+Follow section 1, step 2 of [09-cluster-maintenance.md](https://github.com/kumbulanit/CKA/blob/main/02-installation/09-cluster-maintenance.md)
 on **controlplane**, to upgrade it from v1.36 to **v1.37.1**:
 
 1. Point the Kubernetes apt repository at v1.37, update, and list the kubeadm versions.
@@ -985,10 +1038,41 @@ KUBELET
 done
 ```
 
+You should see something like:
+
+```text
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Hit:1 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Hit:3 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease
+Get:2 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.37/deb  InRelease [1227 B]
+Get:4 https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.37/deb  Packages [4384 B]
+Hit:5 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease
+Hit:6 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease
+Fetched 5611 B in 2s (3232 B/s)
+Reading package lists...
+Building dependency tree...
+Reading state information...
+3 packages can be upgraded. Run 'apt list --upgradable' to see them.
+Canceled hold on kubeadm.
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+… (172 more lines)
+```
+
 **Step 2.** Waits until the nodes `node01`, `node02` are Ready.
 
 ```bash
 kubectl wait --for=condition=Ready node/node01 node/node02 --timeout=120s
+```
+
+You should see something like:
+
+```text
+node/node01 condition met
+node/node02 condition met
 ```
 
 **Step 3.** Lists the nodes.
@@ -997,10 +1081,38 @@ kubectl wait --for=condition=Ready node/node01 node/node02 --timeout=120s
 kubectl get nodes
 ```
 
+You should see something like:
+
+```text
+NAME           STATUS   ROLES           AGE   VERSION
+controlplane   Ready    control-plane   21m   v1.37.1
+node01         Ready    <none>          20m   v1.37.1
+node02         Ready    <none>          20m   v1.37.1
+```
+
 **Step 4.** Lists the pods in every namespace.
 
 ```bash
 kubectl get pods --all-namespaces
+```
+
+You should see something like:
+
+```text
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS        AGE
+kube-system   calico-kube-controllers-6ffffbccff-s4pp8   1/1     Running   0               21s
+kube-system   calico-node-2cmbx                          1/1     Running   0               21m
+kube-system   calico-node-jxx9c                          1/1     Running   5 (7m48s ago)   20m
+kube-system   calico-node-zxwzw                          1/1     Running   3 (10m ago)     20m
+kube-system   coredns-589f44dc88-7hrrp                   1/1     Running   0               21s
+kube-system   coredns-589f44dc88-9xj9d                   1/1     Running   0               49s
+kube-system   etcd-controlplane                          1/1     Running   0               2m17s
+kube-system   kube-apiserver-controlplane                1/1     Running   0               2m18s
+kube-system   kube-controller-manager-controlplane       1/1     Running   0               2m23s
+kube-system   kube-proxy-2828w                           1/1     Running   0               21m
+kube-system   kube-proxy-fklqs                           1/1     Running   0               20m
+kube-system   kube-proxy-zqnfk                           1/1     Running   1 (7m48s ago)   20m
+kube-system   kube-scheduler-controlplane                1/1     Running   0               2m36s
 ```
 
 ### If you see something else
@@ -1037,6 +1149,30 @@ Follow section 4, step 1 of the cluster maintenance document on **controlplane**
 sudo apt install -y etcd-client
 ```
 
+You should see something like:
+
+```text
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following NEW packages will be installed:
+  etcd-client
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 4757 kB of archives.
+After this operation, 17.1 MB of additional disk space will be used.
+Get:1 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 etcd-client arm64 3.4.30-1ubuntu0.24.04.3 [4757 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+… (7 more lines)
+```
+
 **Step 2.** Saves a snapshot of etcd, the whole cluster state, to a file.
 
 ```bash
@@ -1047,10 +1183,33 @@ sudo ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
   snapshot save /opt/etcd-backup.db
 ```
 
+You should see something like:
+
+```text
+{"level":"info","ts":1793141210.3652878,"caller":"snapshot/v3_snapshot.go:119","msg":"created temporary db file","path":"/opt/etcd-backup.db.part"}
+{"level":"info","ts":"2026-10-27T22:46:50.37038Z","caller":"clientv3/maintenance.go:212","msg":"opened snapshot stream; downloading"}
+{"level":"info","ts":1793141210.3704422,"caller":"snapshot/v3_snapshot.go:127","msg":"fetching snapshot","endpoint":"https://127.0.0.1:2379"}
+{"level":"info","ts":"2026-10-27T22:46:50.567942Z","caller":"clientv3/maintenance.go:220","msg":"completed snapshot read; closing"}
+{"level":"info","ts":1793141210.590544,"caller":"snapshot/v3_snapshot.go:142","msg":"fetched snapshot","endpoint":"https://127.0.0.1:2379","size":"9.4 MB","took":0.225078158}
+{"level":"info","ts":1793141210.590847,"caller":"snapshot/v3_snapshot.go:152","msg":"saved","path":"/opt/etcd-backup.db"}
+Snapshot saved at /opt/etcd-backup.db
+```
+
 **Step 3.** Checks the snapshot: its hash, revision, keys and size.
 
 ```bash
 sudo etcdutl snapshot status /opt/etcd-backup.db --write-out=table || sudo ETCDCTL_API=3 etcdctl snapshot status /opt/etcd-backup.db --write-out=table
+```
+
+You should see something like:
+
+```text
+sudo: etcdutl: command not found
++---------+----------+------------+------------+
+|  HASH   | REVISION | TOTAL KEYS | TOTAL SIZE |
++---------+----------+------------+------------+
+| 85479a7 |     2570 |       2597 |     9.4 MB |
++---------+----------+------------+------------+
 ```
 
 ### If you see something else

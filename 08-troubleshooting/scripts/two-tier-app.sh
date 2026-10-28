@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # two-tier-app <namespace> [fault ...]
 # Creates the course's two-tier application (webapp-mysql + mysql) in <namespace>, with the faults
-# from 08-troubleshooting/03-Solution-Application-Failure.md. All app namespaces (including this one)
+# from 08-troubleshooting/03-solution-application-failure.md. All app namespaces (including this one)
 # are deleted first, so the app starts fresh and web-service can use node port 30081.
 # Faults: svc-name target-port selector db-user db-password node-port
 set -euo pipefail

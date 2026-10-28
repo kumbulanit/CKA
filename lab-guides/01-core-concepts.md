@@ -23,7 +23,7 @@ sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10
 kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-The steps below use the node names of the lessons. On minikube, `controlplane` is `minikube` (`minikube ssh`), `node01` is `minikube-m02` (`minikube ssh -n minikube-m02`) and `node02` is `minikube-m03`; run `kubectl` as your own user on the server. The outputs were recorded in Desired Labs, whose nodes have the lessons' names. In Desired Labs, starting the lab gives you that cluster, with `root@controlplane` in the terminal.
+The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, where the terminal is already root on `minikube` and the API server answers on port 6443 (8443 on minikube): addresses, ports and ages on yours will differ.
 
 ## Lab 1.1: Your first pod
 
@@ -33,7 +33,7 @@ The steps below use the node names of the lessons. On minikube, `controlplane` i
 
 ### What you will do
 
-Follow [basic-pods.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/basic-pods.md):
+Follow [02-basic-pods.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/02-basic-pods.md):
 
 1. List the nodes of the cluster.
 2. Create a pod called **mywebserver** from the `nginx` image.
@@ -52,10 +52,10 @@ kubectl get nodes
 You should see something like:
 
 ```text
-NAME           STATUS   ROLES           AGE    VERSION
-controlplane   Ready    control-plane   115s   v1.36.4
-node01         Ready    <none>          78s    v1.36.4
-node02         Ready    <none>          80s    v1.36.4
+NAME           STATUS   ROLES           AGE   VERSION
+minikube       Ready    control-plane   46s   v1.36.4
+minikube-m02   Ready    <none>          35s   v1.36.4
+minikube-m03   Ready    <none>          35s   v1.36.4
 ```
 
 **Step 2.** Starts the pod `mywebserver` from the image `nginx`.
@@ -92,7 +92,7 @@ You should see something like:
 
 ```text
 NAME          READY   STATUS    RESTARTS   AGE
-mywebserver   1/1     Running   0          22s
+mywebserver   1/1     Running   0          16s
 ```
 
 **Step 5.** Runs a command inside the pod `mywebserver`.
@@ -108,19 +108,19 @@ Unable to use a TTY - input is not a terminal or the right kind of file
 total 20
 lrwxrwxrwx   1 root root    7 Jul 17 17:05 bin -> usr/bin
 drwxr-xr-x   1 root root    0 Jul 17 17:05 boot
-drwxr-xr-x   5 root root  340 Oct 26 22:50 dev
+drwxr-xr-x   5 root root  340 Oct 27 22:50 dev
 drwxr-xr-x   1 root root   54 Oct 21 22:17 docker-entrypoint.d
 -rwxr-xr-x   1 root root 1620 Oct 21 22:16 docker-entrypoint.sh
-drwxr-xr-x   1 root root   20 Oct 26 22:50 etc
+drwxr-xr-x   1 root root   20 Oct 27 22:50 etc
 drwxr-xr-x   1 root root    0 Jul 17 17:05 home
 lrwxrwxrwx   1 root root    7 Jul 17 17:05 lib -> usr/lib
 drwxr-xr-x   1 root root    0 Oct 20 21:32 media
 drwxr-xr-x   1 root root    0 Oct 20 21:32 mnt
 drwxr-xr-x   1 root root    0 Oct 20 21:32 opt
-dr-xr-xr-x 377 root root    0 Oct 26 22:50 proc
--rw-r--r--   1 root root   37 Oct 26 22:50 product_uuid
+dr-xr-xr-x 319 root root    0 Oct 27 22:50 proc
+-rw-r--r--   1 root root   37 Oct 27 22:50 product_uuid
 drwx------   1 root root   30 Oct 20 21:32 root
-drwxr-xr-x   1 root root   32 Oct 26 22:50 run
+drwxr-xr-x   1 root root   32 Oct 27 22:50 run
 lrwxrwxrwx   1 root root    8 Jul 17 17:05 sbin -> usr/sbin
 … (5 more lines)
 ```
@@ -149,7 +149,7 @@ pod "mywebserver" deleted from default namespace
 
 ### Why it works
 
-**Why it works.** `kubectl run` creates a single pod; Kubernetes never runs a container on its own, only inside a pod. The scheduler picks a node (node01 or node02), that node's kubelet pulls the image and starts the container. `kubectl exec` opens a process inside the running container, which is how you look around in it. Deleting a pod that no controller owns removes it for good: nothing recreates it.
+**Why it works.** `kubectl run` creates a single pod; Kubernetes never runs a container on its own, only inside a pod. The scheduler picks a node (minikube-m02 or minikube-m03), that node's kubelet pulls the image and starts the container. `kubectl exec` opens a process inside the running container, which is how you look around in it. Deleting a pod that no controller owns removes it for good: nothing recreates it.
 
 **In the exam:** `kubectl run` is the fastest way to get a test pod, for example `kubectl run tmp --image=busybox --rm -it --restart=Never -- sh`.
 
@@ -159,7 +159,7 @@ pod "mywebserver" deleted from default namespace
 
 ### What you will do
 
-Follow [first-pod-yaml.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/first-pod-yaml.md):
+Follow [03-first-pod-yaml.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/03-first-pod-yaml.md):
 
 1. Write the manifest **newpod.yaml** in your home folder: a pod called **nginxwebserver** with one
    container called **democontainer** from the `nginx` image.
@@ -219,7 +219,7 @@ You should see something like:
 
 ```text
 NAME             READY   STATUS    RESTARTS   AGE
-nginxwebserver   1/1     Running   0          47s
+nginxwebserver   1/1     Running   0          15s
 ```
 
 **Step 5.** Deletes the objects in `newpod.yaml`.
@@ -255,7 +255,7 @@ pod "nginxwebserver" deleted from default namespace
 
 ### What you will do
 
-Follow [pod-manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/pod-manifest-cli.md):
+Follow [04-pod-manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/04-pod-manifest-cli.md):
 
 1. Create a pod **nginx** from the `nginx` image and list the pods.
 2. Create a pod **nginx-port** from `nginx` that exposes port **80**, and describe it.
@@ -286,8 +286,8 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME    READY   STATUS    RESTARTS   AGE
-nginx   0/1     Pending   0          0s
+NAME    READY   STATUS              RESTARTS   AGE
+nginx   0/1     ContainerCreating   0          0s
 ```
 
 **Step 3.** Starts the pod `nginx-port` from the image `nginx`.
@@ -328,8 +328,8 @@ Name:             nginx-port
 Namespace:        default
 Priority:         0
 Service Account:  default
-Node:             node02/192.168.147.2
-Start Time:       Mon, 26 Oct 2026 22:52:28 +0000
+Node:             minikube-m03/192.168.147.4
+Start Time:       Tue, 27 Oct 2026 22:50:22 +0000
 Labels:           run=nginx-port
 Annotations:      <none>
 Status:           Running
@@ -338,7 +338,7 @@ IPs:
   IP:  10.244.1.3
 Containers:
   nginx-port:
-    Container ID:   containerd://a1d2a1f62bf10a9bd0becb7507d3d336ebf2f8d283a4299cf77fa272959f2185
+    Container ID:   containerd://4ba557ec82dba4ae346e8ec8815dc6830ce3170eba0f65b0db7f493da4ede244
     Image:          nginx
     Image ID:       docker.io/library/nginx@sha256:4c41e2d0a3a55b325ed572cd0200bdb72af1433c3daa2bca6ef8eea68ce504a2
     Port:           80/TCP
@@ -417,7 +417,7 @@ pod "nginx-port" deleted from default namespace
 
 ### What you will do
 
-Follow [cmd-args.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/cmd-args.md).
+Follow [05-commands-and-arguments.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/05-commands-and-arguments.md).
 Edit **commands.yaml** each time and apply it, so that you end up with four pods from the
 `busybox` image, each with one container called **count**:
 
@@ -470,8 +470,8 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME      READY   STATUS    RESTARTS   AGE
-command   0/1     Pending   0          1s
+NAME      READY   STATUS              RESTARTS   AGE
+command   0/1     ContainerCreating   0          0s
 ```
 
 **Step 4.** Shows the details of the pod `command`, with its recent events at the bottom.
@@ -487,8 +487,8 @@ Name:             command
 Namespace:        default
 Priority:         0
 Service Account:  default
-Node:             node02/192.168.147.2
-Start Time:       Mon, 26 Oct 2026 22:53:20 +0000
+Node:             minikube-m02/192.168.147.2
+Start Time:       Tue, 27 Oct 2026 22:50:28 +0000
 Labels:           <none>
 Annotations:      <none>
 Status:           Pending
@@ -618,11 +618,11 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME       READY   STATUS    RESTARTS     AGE
-command    1/1     Running   1 (7s ago)   19s
-command2   1/1     Running   0            15s
-command3   1/1     Running   0            14s
-command4   1/1     Running   0            13s
+NAME       READY   STATUS      RESTARTS   AGE
+command    0/1     Completed   0          7s
+command2   1/1     Running     0          7s
+command3   1/1     Running     0          7s
+command4   1/1     Running     0          7s
 ```
 
 **Step 13.** Runs a command inside the pod `command4`.
@@ -637,7 +637,7 @@ You should see something like:
 Unable to use a TTY - input is not a terminal or the right kind of file
 PID   USER     TIME  COMMAND
     1 root      0:00 sleep 3600
-   10 root      0:00 ps
+   11 root      0:00 ps
 ```
 
 ### If you see something else
@@ -661,7 +661,7 @@ PID   USER     TIME  COMMAND
 
 ### What you will do
 
-Follow [expose-pods.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/expose-pods.md):
+Follow [06-expose-pods.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/06-expose-pods.md):
 
 1. Write **pod-expose-port.yaml**: a pod **nginx-pod** with a container **democontainer** from
    `nginx` that declares `containerPort: 8080`.
@@ -722,12 +722,12 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME        READY   STATUS             RESTARTS      AGE
-command     0/1     CrashLoopBackOff   1 (10s ago)   29s
-command2    1/1     Running            0             25s
-command3    1/1     Running            0             24s
-command4    1/1     Running            0             23s
-nginx-pod   1/1     Running            0             4s
+NAME        READY   STATUS      RESTARTS     AGE
+command     0/1     Completed   1 (5s ago)   10s
+command2    1/1     Running     0            10s
+command3    1/1     Running     0            10s
+command4    1/1     Running     0            10s
+nginx-pod   1/1     Running     0            2s
 ```
 
 **Step 5.** Shows the details of the pod `nginx-pod`, with its recent events at the bottom.
@@ -743,17 +743,17 @@ Name:             nginx-pod
 Namespace:        default
 Priority:         0
 Service Account:  default
-Node:             node01/192.168.147.3
-Start Time:       Mon, 26 Oct 2026 22:53:43 +0000
+Node:             minikube-m03/192.168.147.4
+Start Time:       Tue, 27 Oct 2026 22:50:36 +0000
 Labels:           <none>
 Annotations:      <none>
 Status:           Running
-IP:               10.244.2.6
+IP:               10.244.1.6
 IPs:
-  IP:  10.244.2.6
+  IP:  10.244.1.6
 Containers:
   democontainer:
-    Container ID:   containerd://3d840fe16f2e85aaa081244e4fa68e3e97e705cb97b7142c3becc4d12da41bd6
+    Container ID:   containerd://972da982283f9dc5c45de601167b032d3824b6888ae7480885e6e265544660aa
     Image:          nginx
     Image ID:       docker.io/library/nginx@sha256:4c41e2d0a3a55b325ed572cd0200bdb72af1433c3daa2bca6ef8eea68ce504a2
     Port:           8080/TCP
@@ -811,7 +811,7 @@ FIELDS:
 
 ### What you will do
 
-Follow [14-ReplicaSets.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/14-ReplicaSets.md):
+Follow [09-replicasets.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/09-replicasets.md):
 
 1. Create the ReplicationController **myapp-rc** (3 replicas of `nginx`, labels `app: myapp`,
    `type: front-end`) from **rc-definition.yaml**.
@@ -951,21 +951,21 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME                     READY   STATUS              RESTARTS      AGE
-command                  0/1     Completed           2 (16s ago)   35s
-command2                 1/1     Running             0             31s
-command3                 1/1     Running             0             30s
-command4                 1/1     Running             0             29s
-myapp-rc-4w6bl           0/1     ContainerCreating   0             2s
-myapp-rc-6dpb9           0/1     ContainerCreating   0             2s
-myapp-rc-v2zmx           0/1     ContainerCreating   0             2s
-myapp-replicaset-5gtck   0/1     ContainerCreating   0             1s
-myapp-replicaset-6nfdw   0/1     Pending             0             1s
-myapp-replicaset-8ndqb   0/1     ContainerCreating   0             1s
-myapp-replicaset-9jl9q   0/1     Pending             0             0s
-myapp-replicaset-cvgfn   0/1     Pending             0             0s
-myapp-replicaset-j4pz2   0/1     ContainerCreating   0             1s
-nginx-pod                1/1     Running             0             10s
+NAME                     READY   STATUS              RESTARTS     AGE
+command                  0/1     Completed           1 (6s ago)   11s
+command2                 1/1     Running             0            11s
+command3                 1/1     Running             0            11s
+command4                 1/1     Running             0            11s
+myapp-rc-8n2cx           0/1     ContainerCreating   0            0s
+myapp-rc-jtnjx           0/1     ContainerCreating   0            0s
+myapp-rc-p22sn           0/1     ContainerCreating   0            0s
+myapp-replicaset-2q8ff   0/1     ContainerCreating   0            0s
+myapp-replicaset-47c6t   0/1     ContainerCreating   0            0s
+myapp-replicaset-db4kq   0/1     ContainerCreating   0            0s
+myapp-replicaset-fmz4l   0/1     ContainerCreating   0            0s
+myapp-replicaset-hrx5d   0/1     ContainerCreating   0            0s
+myapp-replicaset-jj8hx   0/1     ContainerCreating   0            0s
+nginx-pod                1/1     Running             0            3s
 ```
 
 ### If you see something else
@@ -993,7 +993,7 @@ nginx-pod                1/1     Running             0             10s
 
 ### What you will do
 
-Follow [16-Deployments.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/16-Deployments.md):
+Follow [08-deployments.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/08-deployments.md):
 
 1. Create the Deployment **myapp-deployment** (3 replicas of `nginx`, labels `app: myapp`,
    `type: front-end`, selector `type: front-end`) from **deployment-definition.yaml**.
@@ -1054,7 +1054,6 @@ You should see something like:
 
 ```text
 Waiting for deployment spec update to be observed...
-Waiting for deployment spec update to be observed...
 deployment "myapp-deployment" successfully rolled out
 ```
 
@@ -1068,7 +1067,7 @@ You should see something like:
 
 ```text
 NAME               READY   UP-TO-DATE   AVAILABLE   AGE
-myapp-deployment   6/3     6            6           9s
+myapp-deployment   3/3     3            3           0s
 ```
 
 **Step 5.** Lists the ReplicaSets.
@@ -1081,7 +1080,7 @@ You should see something like:
 
 ```text
 NAME               DESIRED   CURRENT   READY   AGE
-myapp-replicaset   3         3         3       3m52s
+myapp-replicaset   3         3         3       12s
 ```
 
 **Step 6.** Lists the pods.
@@ -1093,21 +1092,21 @@ kubectl get pods
 You should see something like:
 
 ```text
-NAME                     READY   STATUS        RESTARTS       AGE
-command                  0/1     Completed     5 (2m8s ago)   4m27s
-command2                 1/1     Running       0              4m23s
-command3                 1/1     Running       0              4m22s
-command4                 1/1     Running       0              4m21s
-myapp-rc-4w6bl           1/1     Running       0              3m54s
-myapp-rc-6dpb9           1/1     Running       0              3m54s
-myapp-rc-v2zmx           1/1     Running       0              3m54s
-myapp-replicaset-5gtck   1/1     Running       0              3m53s
-myapp-replicaset-6nfdw   1/1     Terminating   0              3m53s
-myapp-replicaset-8ndqb   1/1     Running       0              3m53s
-myapp-replicaset-9jl9q   1/1     Terminating   0              3m52s
-myapp-replicaset-cvgfn   1/1     Running       0              3m52s
-myapp-replicaset-j4pz2   1/1     Terminating   0              3m53s
-nginx-pod                1/1     Running       0              4m2s
+NAME                     READY   STATUS        RESTARTS      AGE
+command                  0/1     Completed     2 (15s ago)   23s
+command2                 1/1     Running       0             23s
+command3                 1/1     Running       0             23s
+command4                 1/1     Running       0             23s
+myapp-rc-8n2cx           1/1     Running       0             12s
+myapp-rc-jtnjx           1/1     Running       0             12s
+myapp-rc-p22sn           1/1     Running       0             12s
+myapp-replicaset-2q8ff   1/1     Terminating   0             12s
+myapp-replicaset-47c6t   1/1     Running       0             12s
+myapp-replicaset-db4kq   1/1     Terminating   0             12s
+myapp-replicaset-fmz4l   1/1     Running       0             12s
+myapp-replicaset-hrx5d   1/1     Terminating   0             12s
+myapp-replicaset-jj8hx   1/1     Running       0             12s
+nginx-pod                1/1     Running       0             15s
 ```
 
 **Step 7.** Lists the main objects.
@@ -1119,52 +1118,26 @@ kubectl get all
 You should see something like:
 
 ```text
-NAME                         READY   STATUS        RESTARTS       AGE
-pod/command                  0/1     Completed     5 (2m8s ago)   4m27s
-pod/command2                 1/1     Running       0              4m23s
-pod/command3                 1/1     Running       0              4m22s
-pod/command4                 1/1     Running       0              4m21s
-pod/myapp-rc-4w6bl           1/1     Running       0              3m54s
-pod/myapp-rc-6dpb9           1/1     Running       0              3m54s
-pod/myapp-rc-v2zmx           1/1     Running       0              3m54s
-pod/myapp-replicaset-5gtck   1/1     Running       0              3m53s
-pod/myapp-replicaset-6nfdw   1/1     Terminating   0              3m53s
-pod/myapp-replicaset-8ndqb   1/1     Running       0              3m53s
-pod/myapp-replicaset-9jl9q   1/1     Terminating   0              3m52s
-pod/myapp-replicaset-cvgfn   1/1     Running       0              3m52s
-pod/myapp-replicaset-j4pz2   1/1     Terminating   0              3m53s
-pod/nginx-pod                1/1     Running       0              4m2s
+NAME                         READY   STATUS      RESTARTS      AGE
+pod/command                  0/1     Completed   2 (15s ago)   23s
+pod/command2                 1/1     Running     0             23s
+pod/command3                 1/1     Running     0             23s
+pod/command4                 1/1     Running     0             23s
+pod/myapp-rc-8n2cx           1/1     Running     0             12s
+pod/myapp-rc-jtnjx           1/1     Running     0             12s
+pod/myapp-rc-p22sn           1/1     Running     0             12s
+pod/myapp-replicaset-2q8ff   0/1     Completed   0             12s
+pod/myapp-replicaset-47c6t   1/1     Running     0             12s
+pod/myapp-replicaset-db4kq   0/1     Completed   0             12s
+pod/myapp-replicaset-fmz4l   1/1     Running     0             12s
+pod/myapp-replicaset-hrx5d   0/1     Completed   0             12s
+pod/myapp-replicaset-jj8hx   1/1     Running     0             12s
+pod/nginx-pod                1/1     Running     0             15s
 
 NAME                             DESIRED   CURRENT   READY   AGE
-replicationcontroller/myapp-rc   3         3         3       3m55s
+replicationcontroller/myapp-rc   3         3         3       12s
 … (9 more lines)
 ```
-
-### What it looks like in the lab
-
-![The task in the lab: the question and its diagram on the left, the terminal on the right](../images/screenshots/lab-task.png)
-
-*The task in the lab: the question and its diagram on the left, the terminal on the right*
-
-![kubectl set image starts a rollout; the Deployments panel shows it rolling out](../images/screenshots/lab-rollout.png)
-
-*kubectl set image starts a rollout; the Deployments panel shows it rolling out*
-
-![The Deployments panel: each Deployment, its image and ready copies, and what just changed](../images/screenshots/lab-deployments-panel.png)
-
-*The Deployments panel: each Deployment, its image and ready copies, and what just changed*
-
-![The rollout finished: three copies of nginx:1.17.3 ready](../images/screenshots/lab-rollout-done.png)
-
-*The rollout finished: three copies of nginx:1.17.3 ready*
-
-![The deployed app answering on a NodePort of node01](../images/screenshots/lab-app-curl.png)
-
-*The deployed app answering on a NodePort of node01*
-
-![The solution, step by step: each command, what it does and what it printed](../images/screenshots/lab-walkthrough.png)
-
-*The solution, step by step: each command, what it does and what it printed*
 
 ### If you see something else
 
@@ -1190,7 +1163,7 @@ replicationcontroller/myapp-rc   3         3         3       3m55s
 
 ### What you will do
 
-Follow the NodePort part of [20-Services.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/20-Services.md):
+Follow the NodePort part of [10-services-nodeport.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/10-services-nodeport.md):
 
 1. Create the service **myapp-service** of type **NodePort** from **service-definition.yaml**:
    port 80, targetPort 80, nodePort **30008**, selecting the pods with `app: myapp` and `type: front-end`.
@@ -1242,9 +1215,9 @@ kubectl get services
 You should see something like:
 
 ```text
-NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP        9m41s
-myapp-service   NodePort    10.96.193.101   <none>        80:30008/TCP   1s
+NAME            TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP   10.96.0.1     <none>        443/TCP        113s
+myapp-service   NodePort    10.96.45.45   <none>        80:30008/TCP   0s
 ```
 
 **Step 4.** Lists the nodes, with IP addresses and versions.
@@ -1256,32 +1229,28 @@ kubectl get nodes -o wide
 You should see something like:
 
 ```text
-NAME           STATUS   ROLES           AGE     VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION                               CONTAINER-RUNTIME
-controlplane   Ready    control-plane   9m39s   v1.36.4   192.168.147.4   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
-node01         Ready    <none>          9m2s    v1.36.4   192.168.147.3   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
-node02         Ready    <none>          9m4s    v1.36.4   192.168.147.2   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+NAME           STATUS   ROLES           AGE    VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION                               CONTAINER-RUNTIME
+minikube       Ready    control-plane   114s   v1.36.4   192.168.147.3   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+minikube-m02   Ready    <none>          103s   v1.36.4   192.168.147.2   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+minikube-m03   Ready    <none>          103s   v1.36.4   192.168.147.4   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
 ```
 
 **Step 5.** Sends an HTTP request to `http://…:30008` and prints the answer.
 
 ```bash
-curl -s http://$(kubectl get node node01 -o jsonpath='{.status.addresses[0].address}'):30008 | grep title
+curl -s http://$(kubectl get node minikube-m02 -o jsonpath='{.status.addresses[0].address}'):30008 | grep title
 ```
 
-You should see something like:
-
-```text
-<title>Welcome to nginx!</title>
-```
+It prints nothing when it works.
 
 ### If you see something else
 
 - The check says: _There is no NodePort service called myapp-service._
 - The check says: _myapp-service should use nodePort 30008._
 - The check says: _Check the selector (app myapp, type front-end) and the ports (port 80, targetPort 80)._
-- The check says: _http://node01:30008 does not answer yet. Are the myapp pods from tasks 1.6 and 1.7 running?_
+- The check says: _http://minikube-m02:30008 does not answer yet. Are the myapp pods from tasks 1.6 and 1.7 running?_
 - The field is `type: NodePort` (not `types:`).
-- nodePort must be between 30000 and 32767. From the control plane node, `curl http://node01:30008` works too.
+- nodePort must be between 30000 and 32767. From the control plane node, `curl http://minikube-m02:30008` works too.
 - The service answers on the node port, 30008, of any node.
 
 ### Why it works
@@ -1296,7 +1265,7 @@ You should see something like:
 
 ### What you will do
 
-Follow [21-Services-ClusterIP.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/21-Services-ClusterIP.md):
+Follow [11-services-clusterip.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/11-services-clusterip.md):
 
 Create the service **back-end** of type **ClusterIP**: port 80, targetPort 80, selecting the pods
 with `app: myapp` and `type: back-end`. List the services.
@@ -1345,10 +1314,10 @@ kubectl get services
 You should see something like:
 
 ```text
-NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-back-end        ClusterIP   10.96.35.182    <none>        80/TCP         0s
-kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP        9m47s
-myapp-service   NodePort    10.96.193.101   <none>        80:30008/TCP   7s
+NAME            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+back-end        ClusterIP   10.96.91.171   <none>        80/TCP         0s
+kubernetes      ClusterIP   10.96.0.1      <none>        443/TCP        117s
+myapp-service   NodePort    10.96.45.45    <none>        80:30008/TCP   4s
 ```
 
 ### If you see something else
@@ -1370,7 +1339,7 @@ myapp-service   NodePort    10.96.193.101   <none>        80:30008/TCP   7s
 
 ### What you will do
 
-Follow [18-Namespaces.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/18-Namespaces.md):
+Follow [07-namespaces.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/07-namespaces.md):
 
 1. List the pods in the `kube-system` namespace.
 2. Create the namespace **dev**.
@@ -1390,19 +1359,19 @@ kubectl get pods --namespace=kube-system
 You should see something like:
 
 ```text
-NAME                                   READY   STATUS    RESTARTS   AGE
-coredns-589f44dc88-5bw5s               1/1     Running   0          19s
-coredns-589f44dc88-njwz7               1/1     Running   0          19s
-etcd-controlplane                      1/1     Running   0          26s
-kindnet-p9xp9                          1/1     Running   0          3s
-kindnet-ppx74                          1/1     Running   0          2s
-kindnet-wn7qq                          1/1     Running   0          5s
-kube-apiserver-controlplane            1/1     Running   0          26s
-kube-controller-manager-controlplane   1/1     Running   0          26s
-kube-proxy-4p65c                       1/1     Running   0          18s
-kube-proxy-62x5f                       1/1     Running   0          18s
-kube-proxy-q4h55                       1/1     Running   0          19s
-kube-scheduler-controlplane            1/1     Running   0          26s
+NAME                               READY   STATUS    RESTARTS   AGE
+coredns-589f44dc88-b7hwb           1/1     Running   0          109s
+coredns-589f44dc88-vbq9s           1/1     Running   0          109s
+etcd-minikube                      1/1     Running   0          116s
+kindnet-r7xvf                      1/1     Running   0          92s
+kindnet-tb7m7                      1/1     Running   0          93s
+kindnet-zck5k                      1/1     Running   0          91s
+kube-apiserver-minikube            1/1     Running   0          116s
+kube-controller-manager-minikube   1/1     Running   0          116s
+kube-proxy-5npph                   1/1     Running   0          107s
+kube-proxy-7hk5g                   1/1     Running   0          107s
+kube-proxy-t8jnq                   1/1     Running   0          110s
+kube-scheduler-minikube            1/1     Running   0          116s
 ```
 
 **Step 2.** Writes the file `namespace-dev.yaml`.
@@ -1472,7 +1441,7 @@ kubectl config set-context $(kubectl config current-context) --namespace=dev
 You should see something like:
 
 ```text
-Context "kubernetes-admin@kubernetes" modified.
+Context "kubernetes-admin@minikube" modified.
 ```
 
 **Step 7.** Lists the pods in every namespace.
@@ -1484,21 +1453,25 @@ kubectl get pods --all-namespaces
 You should see something like:
 
 ```text
-NAMESPACE            NAME                                      READY   STATUS              RESTARTS   AGE
-dev                  myapp-pod                                 0/1     ContainerCreating   0          0s
-kube-system          coredns-589f44dc88-5bw5s                  1/1     Running             0          19s
-kube-system          coredns-589f44dc88-njwz7                  1/1     Running             0          19s
-kube-system          etcd-controlplane                         1/1     Running             0          26s
-kube-system          kindnet-p9xp9                             1/1     Running             0          3s
-kube-system          kindnet-ppx74                             1/1     Running             0          2s
-kube-system          kindnet-wn7qq                             1/1     Running             0          5s
-kube-system          kube-apiserver-controlplane               1/1     Running             0          26s
-kube-system          kube-controller-manager-controlplane      1/1     Running             0          26s
-kube-system          kube-proxy-4p65c                          1/1     Running             0          18s
-kube-system          kube-proxy-62x5f                          1/1     Running             0          18s
-kube-system          kube-proxy-q4h55                          1/1     Running             0          19s
-kube-system          kube-scheduler-controlplane               1/1     Running             0          26s
-local-path-storage   local-path-provisioner-56c4685b7c-pch9t   1/1     Running             0          19s
+NAMESPACE            NAME                                      READY   STATUS              RESTARTS      AGE
+default              command                                   0/1     Completed           2 (20s ago)   28s
+default              command2                                  1/1     Running             0             28s
+default              command3                                  1/1     Running             0             28s
+default              command4                                  1/1     Running             0             28s
+default              myapp-rc-8n2cx                            1/1     Running             0             17s
+default              myapp-rc-jtnjx                            1/1     Running             0             17s
+default              myapp-rc-p22sn                            1/1     Running             0             17s
+default              myapp-replicaset-47c6t                    1/1     Running             0             17s
+default              myapp-replicaset-fmz4l                    1/1     Running             0             17s
+default              myapp-replicaset-jj8hx                    1/1     Running             0             17s
+default              nginx-pod                                 1/1     Running             0             20s
+dev                  myapp-pod                                 0/1     ContainerCreating   0             0s
+kube-system          coredns-589f44dc88-b7hwb                  1/1     Running             0             109s
+kube-system          coredns-589f44dc88-vbq9s                  1/1     Running             0             109s
+kube-system          etcd-minikube                             1/1     Running             0             116s
+kube-system          kindnet-r7xvf                             1/1     Running             0             92s
+kube-system          kindnet-tb7m7                             1/1     Running             0             93s
+… (8 more lines)
 ```
 
 **Step 8.** Writes the file `compute-quota.yaml`.
