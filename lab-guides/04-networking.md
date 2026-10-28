@@ -37,13 +37,13 @@ steps 1 to 6:
 
 1. Create the pods **backend-pod-1** and **backend-pod-2** from `nginx`, and **frontend-pod** from
    `ubuntu` running `sleep 3600`.
-2. Inside frontend-pod, install curl (`apt-get update && apt-get -y install curl`) and curl
-   backend-pod-1's IP address.
+2. Inside frontend-pod, not on the server (`kubectl exec -it frontend-pod -- bash`), install curl
+   (`apt-get update && apt-get -y install curl`) and curl backend-pod-1's IP address; then `exit`.
 3. Write **service.yaml**: a Service **kplabs-service** with port **8080** → targetPort **80** and no
    selector. Apply it and describe it: it has no endpoints.
 4. Write **endpoint.yaml**: an Endpoints object **kplabs-service** with backend-pod-1's IP and port 80.
    Apply it.
-5. From frontend-pod, curl the service's IP on port 8080.
+5. Inside frontend-pod again, not on the server, curl the service's IP on port 8080; then `exit`.
 
 Press **Check** now; step 7 (deleting everything) comes after the check passes.
 
@@ -2450,10 +2450,12 @@ and [15-service-accounts-pointers.md](https://github.com/kumbulanit/CKA/blob/mai
 
 1. List the service accounts in all namespaces.
 2. Create a pod **app-pod** from `nginx` and describe it to see its service account.
-3. Inside app-pod, go to `/var/run/secrets/kubernetes.io/serviceaccount/`, read the token, and call
-   `https://kubernetes.default.svc/api/v1` with curl, `--cacert ca.crt` and the token.
+3. Inside app-pod, not on the server (`kubectl exec -it app-pod -- bash`), go to
+   `/var/run/secrets/kubernetes.io/serviceaccount/`, read the token, and call
+   `https://kubernetes.default.svc/api/v1` with curl, `--cacert ca.crt` and the token; then `exit`.
 4. Create the namespace **kplabs-test**, check that it got a `default` service account, and create a
-   pod **nginx-pod** from `nginx` in it. Look at its mounted token too. Leave both pods running.
+   pod **nginx-pod** from `nginx` in it. Look at its mounted token too, inside nginx-pod, not on the
+   server (`kubectl exec -it nginx-pod -n kplabs-test -- bash`, then `exit`). Leave both pods running.
 
 ### Step by step
 

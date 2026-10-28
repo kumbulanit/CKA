@@ -38,7 +38,8 @@ Follow [02-basic-pods.md](https://github.com/kumbulanit/CKA/blob/main/02-core-co
 1. List the nodes of the cluster.
 2. Create a pod called **mywebserver** from the `nginx` image.
 3. List the pods until it is `Running`.
-4. Connect inside the pod with `bash` (leave with Ctrl+D), then list its root folder with `ls -l /`.
+4. Connect inside the pod, not on the server (`kubectl exec -it mywebserver -- bash`), list its root
+   folder with `ls -l /`, then `exit` (or Ctrl+D) to come back to the server.
 5. Delete the pod.
 
 ### Step by step

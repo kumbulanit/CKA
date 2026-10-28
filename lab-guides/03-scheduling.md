@@ -2060,10 +2060,14 @@ First delete kplabs-pod from the last task: `kubectl delete pod kplabs-pod`. The
 
 1. Write **kplabs-pod.yaml**: a pod **kplabs-pod** (container `kplabs-container` from `nginx`) with
    `nodeName: minikube-m02`. Apply it, see where it runs, and delete it.
-2. Find the kubelet's static pod folder (`grep staticPodPath /var/lib/kubelet/config.yaml`).
-3. On minikube-m02, write the static pod **static-web** (container `web` from `nginx`) to
-   `/etc/kubernetes/manifests/static-web.yaml`, and see it appear as `static-web-minikube-m02`.
-4. Remove it by deleting the file on minikube-m02.
+2. On the node minikube-m02, not on the server, find the kubelet's static pod folder:
+   `minikube ssh -n minikube-m02 -- "sudo grep staticPodPath /var/lib/kubelet/config.yaml"` (the file
+   is only on the nodes).
+3. On the node minikube-m02, not on the server (`minikube ssh -n minikube-m02`), write the static pod
+   **static-web** (container `web` from `nginx`) to `/etc/kubernetes/manifests/static-web.yaml`, then
+   `exit`. Back on the server, see it appear as `static-web-minikube-m02`.
+4. Remove it by deleting the file on the node:
+   `minikube ssh -n minikube-m02 -- sudo rm /etc/kubernetes/manifests/static-web.yaml`.
 
 ### Step by step
 

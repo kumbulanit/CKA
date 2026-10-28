@@ -29,9 +29,9 @@ Follow [06-volumes.md](https://github.com/kumbulanit/CKA/blob/main/06-storage/06
 1. Write and apply **random-number-generator.yaml**: a pod **random-number-generator** (`alpine`)
    that writes a random number to `/opt/number.out`, with `/opt` on a `hostPath` volume at `/data`
    (`type: DirectoryOrCreate`).
-2. Find the node it ran on (`kubectl get pod -o wide`) and read `/data/number.out` there
-   (`minikube ssh -n <node> -- cat /data/number.out`).
-3. Delete the pod, and check that the file is still on the node.
+2. Find the node it ran on (`kubectl get pod -o wide`) and read `/data/number.out` on that node,
+   not on the server: `minikube ssh -n <NODE> -- "cat /data/number.out"`.
+3. Delete the pod, and check that the file is still on the node, the same way.
 
 ### Step by step
 
@@ -91,8 +91,8 @@ kubectl get pod random-number-generator -o wide
 You should see something like:
 
 ```text
-NAME                      READY   STATUS      RESTARTS   AGE   IP           NODE           NOMINATED NODE   READINESS GATES
-random-number-generator   0/1     Completed   0          17s   10.244.1.2   minikube-m03   <none>           <none>
+NAME                      READY   STATUS    RESTARTS     AGE   IP           NODE           NOMINATED NODE   READINESS GATES
+random-number-generator   1/1     Running   1 (2s ago)   25s   10.244.3.2   minikube-m03   <none>           <none>
 ```
 
 **Step 5.** Saves `$NODE`: prints one field of the pod `random-number-generator`.
@@ -106,13 +106,14 @@ It prints nothing when it works.
 **Step 6.** On the node `$NODE`, not on the server: shows the file `/data/number.out`.
 
 ```bash
-minikube ssh -n $NODE -- cat /data/number.out
+minikube ssh -n $NODE -- "cat /data/number.out"
 ```
 
 You should see something like:
 
 ```text
-64
+16
+61
 ```
 
 **Step 7.** Deletes the pod `random-number-generator`.
@@ -130,14 +131,14 @@ pod "random-number-generator" deleted from default namespace
 **Step 8.** On the node `$NODE`, not on the server: shows the file `/data/number.out`.
 
 ```bash
-minikube ssh -n $NODE -- cat /data/number.out
+minikube ssh -n $NODE -- "cat /data/number.out"
 ```
 
 You should see something like:
 
 ```text
-64
-2
+16
+61
 ```
 
 ### If you see something else

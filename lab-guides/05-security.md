@@ -33,7 +33,8 @@ Follow [02-authentication-with-tokens.md](https://github.com/kumbulanit/CKA/blob
 1. Create the service account **external**.
 2. Save a pod **external-pod** (`nginx`) to **pod-sa.yaml** with `--dry-run=client -o yaml`, add
    `serviceAccountName: external` under `spec`, and apply it. Look at the pod's YAML.
-3. Read the token inside the pod (`/var/run/secrets/kubernetes.io/serviceaccount/token`).
+3. Read the token inside the pod, not on the server (`kubectl exec -it external-pod -- bash`, then
+   `cat /var/run/secrets/kubernetes.io/serviceaccount/token` and `exit`).
 4. Call the API server (`kubectl cluster-info` shows its address; save it with
    `APISERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')`) with
    `curl -k`, first without a token, then `/api/v1` with `--header "Authorization: Bearer <TOKEN>"`.
@@ -1357,9 +1358,11 @@ Follow [09-mounting-secrets.md](https://github.com/kumbulanit/CKA/blob/main/05-s
 (it uses firstsecret from the last task):
 
 1. Write and apply **secretpod.yaml**: a pod **secretmount** (`nginx`) that mounts firstsecret
-   read-only at `/etc/foo`. Read `/etc/foo/dbpassword` inside it.
+   read-only at `/etc/foo`. Read `/etc/foo/dbpassword` inside the pod, not on the server
+   (`kubectl exec -it secretmount -- bash`, then `exit`).
 2. Write and apply **secret-env.yaml**: a pod **secret-env** (`nginx`) with the environment variable
-   `SECRET_USERNAME` taken from firstsecret's key `dbpassword`. Print it inside the pod.
+   `SECRET_USERNAME` taken from firstsecret's key `dbpassword`. Print it inside the pod, not on the
+   server (`kubectl exec -it secret-env -- bash`, `echo $SECRET_USERNAME`, then `exit`).
 
 ### Step by step
 
