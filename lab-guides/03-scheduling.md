@@ -1,6 +1,6 @@
 # Module 3: Workloads and scheduling
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 3.1: Labels and selectors](#lab-31-labels-and-selectors)
 - [Lab 3.2: A ReplicaSet](#lab-32-a-replicaset)

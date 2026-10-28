@@ -1,6 +1,6 @@
 # Module 5: Security
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 5.1: Authenticating with tokens](#lab-51-authenticating-with-tokens)
 - [Lab 5.2: Authorisation with a Role](#lab-52-authorisation-with-a-role)
@@ -886,7 +886,7 @@ Follow [07-certificates-for-users.md](https://github.com/kumbulanit/CKA/blob/mai
 from step 1 (kubectl is already set up here). First delete the RoleBinding from the last task:
 `kubectl delete -f clusterrole-to-rolebinding.yaml`. Then:
 
-1. In **/root/certificates**, create the key **zeal.key** and a CSR **zeal.csr** with
+1. In **~/certificates**, create the key **zeal.key** and a CSR **zeal.csr** with
    `-subj "/CN=zeal/O=kplabs"`.
 2. Write **csr-requests.yaml**: a CertificateSigningRequest **zeal-csr** with the base64 CSR, signer
    `kubernetes.io/kube-apiserver-client` and usage `client auth`. Apply and approve it.
@@ -904,27 +904,17 @@ from step 1 (kubectl is already set up here). First delete the RoleBinding from 
 kubectl delete -f clusterrole-to-rolebinding.yaml
 ```
 
-You should see something like:
-
-```text
-rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
-```
-
-**Step 2.** Creates the folder `/root/certificates`.
+**Step 2.** Creates the folder `~/certificates`.
 
 ```bash
-mkdir /root/certificates
+mkdir -p ~/certificates
 ```
 
-It prints nothing when it works.
-
-**Step 3.** Goes into `/root/certificates`.
+**Step 3.** Goes into `~/certificates`.
 
 ```bash
-cd /root/certificates
+cd ~/certificates
 ```
-
-It prints nothing when it works.
 
 **Step 4.** Creates a private key `zeal.key`.
 
@@ -932,26 +922,16 @@ It prints nothing when it works.
 openssl genrsa -out zeal.key 2048
 ```
 
-It prints nothing when it works.
-
 **Step 5.** Creates a certificate signing request `zeal.csr` for `zeal`.
 
 ```bash
 openssl req -new -key zeal.key -out zeal.csr -subj "/CN=zeal/O=kplabs"
 ```
 
-It prints nothing when it works.
-
 **Step 6.** Shows the file `zeal.csr`.
 
 ```bash
 cat zeal.csr | base64 | tr -d '\n'
-```
-
-You should see something like:
-
-```text
-LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1pUQ0NBVTBDQVFBd0lERU5NQXNHQTFVRUF3d0VlbVZoYkRFUE1BMEdBMVVFQ2d3R2EzQnNZV0p6TUlJQgpJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdUo4TWlHOElrekJFZ1p3dDJIc3VrM3h6CkNWeVdtM1lINVFUWmhIVWVLRWdNVFhPT2hsd1M2S09xWWVSb3c0enArRm1ncFpJQ2dybFNvYnhDYWc3MUxwRG0KMExjZjc0cTQ0YW0zRXBmOFMvSWZYYTFFWFYweHdyR2VkL2J3WnJpU0tYYTFJUHIyeWVvSTQ0N2FjcC9MZzA1NgpBOFdBcEJaRmF2czBlVEpoRlBBem9mRXExU3JSZjJFUWgzejRadk11WHNSTTRhSTUvN2lneTFHamJEaDk3MWFDCmNHUjhGMU5nemdhc0hvUFVLMHBidjRuRFFWQ0ttS0FwU3VVSm4wWjNhS0x4anhVZE9xa1AxeWFEVGFJMjF4Z3MKNlJMTXNvRHUreHZ5N09VSmxlTmtWZHhFRFhKcGp4ZVRPV3lnNjEzdGdYNEYzWS83SU1udkhKMGI1cUYyU1FJRApBUUFCb0FBd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFJWXdhOFg5SEN0NG8rYzNMb0lKWVZPVUZkZm1vTVJOClZCdFRhZVFLRFI5M1lMbzJOblF0ZWNYWkM2WW1IVk0xejFSbGNBcE5UNFpuSXFtcVBSN3pNWEdTSjU0TDNhRG0KR2x1Vng2aFZDZEFlSVNRYXFZbS82M0Y0Y1V3dFVsZU5pSGdzdlFGcWhnV29JL1RqZ0prNERhU214Q0RCWUZacgozSUwwbjZ1YUVRakpwT3VaV2ViZSttYVNVU2c5OTA4cWJSUHVlOE8vd3c5VjNNNVlzOVNWMU1udkRPdmNEeTR1CmZMaVBZMUx4K2hrWmVKTmwwTzZ5K3M1THpoeERvNkcrRWNCTTMwYzlxdWV3eXNtN2sxWEJNUU1yNFZoY1htMjAKU3R4RjNTcDFuV3p5TXMwRmtHSjJzZlZqeFlxZ0tVOUNEejBWUTlsVkczMGt2Tnh3VWtSMGU3ND0KLS0tLS1FTkQgQ0VSVElGSUNBVEUgUkVRVUVTVC0tLS0tCg==@@PB-STEP 6@@
 ```
 
 **Step 7.** Writes the file `csr-requests.yaml`.
@@ -980,26 +960,10 @@ EOF
 kubectl apply -f csr-requests.yaml
 ```
 
-You should see something like:
-
-```text
-certificatesigningrequest.certificates.k8s.io/zeal-csr created
-```
-
 **Step 9.** Lists the certificate signing requests.
 
 ```bash
 kubectl get csr
-```
-
-You should see something like:
-
-```text
-NAME        AGE   SIGNERNAME                                    REQUESTOR                 REQUESTEDDURATION   CONDITION
-csr-b7z2h   62s   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:abcdef   <none>              Approved,Issued
-csr-j6xc5   72s   kubernetes.io/kube-apiserver-client-kubelet   system:node:minikube      <none>              Approved,Issued
-csr-mnzcv   61s   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:abcdef   <none>              Approved,Issued
-zeal-csr    0s    kubernetes.io/kube-apiserver-client           kubernetes-admin          <none>              Pending
 ```
 
 **Step 10.** Approves the certificate signing request `zeal-csr`.
@@ -1008,19 +972,11 @@ zeal-csr    0s    kubernetes.io/kube-apiserver-client           kubernetes-admin
 kubectl certificate approve zeal-csr
 ```
 
-You should see something like:
-
-```text
-certificatesigningrequest.certificates.k8s.io/zeal-csr approved
-```
-
 **Step 11.** Repeats until the condition is true (waits for the cluster to catch up). Wait until it is issued.
 
 ```bash
 until [ -n "$(kubectl get csr zeal-csr -o jsonpath='{.status.certificate}')" ]; do sleep 1; done
 ```
-
-It prints nothing when it works.
 
 **Step 12.** Prints one field of the certificate signing request `zeal-csr`.
 
@@ -1028,18 +984,10 @@ It prints nothing when it works.
 kubectl get csr zeal-csr -o jsonpath='{.status.certificate}' | base64 -d > zeal.crt
 ```
 
-It prints nothing when it works.
-
 **Step 13.** Adds a user `zeal`.
 
 ```bash
 kubectl config set-credentials zeal --client-certificate=zeal.crt --client-key=zeal.key
-```
-
-You should see something like:
-
-```text
-User "zeal" set.
 ```
 
 **Step 14.** Lists the clusters.
@@ -1048,35 +996,16 @@ User "zeal" set.
 kubectl config get-clusters
 ```
 
-You should see something like:
-
-```text
-NAME
-minikube
-```
-
 **Step 15.** Adds a context `zeal-context`.
 
 ```bash
 kubectl config set-context zeal-context --cluster minikube --user=zeal
 ```
 
-You should see something like:
-
-```text
-Context "zeal-context" created.
-```
-
 **Step 16.** Lists the pods.
 
 ```bash
 kubectl --context=zeal-context get pods
-```
-
-You should see something like:
-
-```text
-Error from server (Forbidden): pods is forbidden: User "zeal" cannot list resource "pods" in API group "" in the namespace "default"
 ```
 
 **Step 17.** Writes the file `role.yaml`.
@@ -1095,18 +1024,10 @@ rules:
 EOF
 ```
 
-It prints nothing when it works.
-
 **Step 18.** Creates the objects in `role.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f role.yaml
-```
-
-You should see something like:
-
-```text
-role.rbac.authorization.k8s.io/pod-reader created
 ```
 
 **Step 19.** Writes the file `rolebinding.yaml`.
@@ -1129,18 +1050,10 @@ roleRef:
 EOF
 ```
 
-It prints nothing when it works.
-
 **Step 20.** Creates the objects in `rolebinding.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f rolebinding.yaml
-```
-
-You should see something like:
-
-```text
-rolebinding.rbac.authorization.k8s.io/read-pods created
 ```
 
 **Step 21.** Lists the pods.
@@ -1149,23 +1062,10 @@ rolebinding.rbac.authorization.k8s.io/read-pods created
 kubectl --context=zeal-context get pods
 ```
 
-You should see something like:
-
-```text
-NAME           READY   STATUS    RESTARTS   AGE
-external-pod   1/1     Running   0          23s
-```
-
 **Step 22.** Deletes the objects in `role.yaml`.
 
 ```bash
 kubectl delete -f role.yaml
-```
-
-You should see something like:
-
-```text
-role.rbac.authorization.k8s.io "pod-reader" deleted from default namespace
 ```
 
 **Step 23.** Deletes the objects in `rolebinding.yaml`.
@@ -1174,15 +1074,9 @@ role.rbac.authorization.k8s.io "pod-reader" deleted from default namespace
 kubectl delete -f rolebinding.yaml
 ```
 
-You should see something like:
-
-```text
-rolebinding.rbac.authorization.k8s.io "read-pods" deleted from default namespace
-```
-
 ### If you see something else
 
-- The check says: _/root/certificates/zeal.crt is missing, or is not a certificate for CN=zeal signed by the cluster CA._
+- The check says: _~/certificates/zeal.crt is missing, or is not a certificate for CN=zeal signed by the cluster CA._
 - The check says: _Your kubeconfig has no context zeal-context for the cluster minikube and the user zeal._
 - The check says: _kubectl --context=zeal-context does not log in as zeal. Check the certificate and key in set-credentials._
 - The check says: _The Role pod-reader or the RoleBinding read-pods is still there. The last step deletes them._

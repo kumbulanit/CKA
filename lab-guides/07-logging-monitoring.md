@@ -1,6 +1,6 @@
 # Module 7: Logging and monitoring
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 7.1: Install the Metrics Server](#lab-71-install-the-metrics-server)
 - [Lab 7.2: Practice test: monitor cluster components](#lab-72-practice-test-monitor-cluster-components)

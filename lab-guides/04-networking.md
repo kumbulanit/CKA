@@ -1,6 +1,6 @@
 # Module 4: Services and networking
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 4.1: A Service with manual endpoints](#lab-41-a-service-with-manual-endpoints)
 - [Lab 4.2: Services find pods by selector](#lab-42-services-find-pods-by-selector)

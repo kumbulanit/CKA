@@ -1,6 +1,6 @@
-# Module 1: Core concepts
+# Module 2: Core concepts
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 1.1: Your first pod](#lab-11-your-first-pod)
 - [Lab 1.2: A pod from a YAML file](#lab-12-a-pod-from-a-yaml-file)
@@ -33,7 +33,7 @@ The steps use those node names, and `minikube ssh -n <node>` for commands on a n
 
 ### What you will do
 
-Follow [02-basic-pods.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/02-basic-pods.md):
+Follow [02-basic-pods.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/02-basic-pods.md):
 
 1. List the nodes of the cluster.
 2. Create a pod called **mywebserver** from the `nginx` image.
@@ -159,7 +159,7 @@ pod "mywebserver" deleted from default namespace
 
 ### What you will do
 
-Follow [03-first-pod-yaml.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/03-first-pod-yaml.md):
+Follow [03-first-pod-yaml.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/03-first-pod-yaml.md):
 
 1. Write the manifest **newpod.yaml** in your home folder: a pod called **nginxwebserver** with one
    container called **democontainer** from the `nginx` image.
@@ -255,7 +255,7 @@ pod "nginxwebserver" deleted from default namespace
 
 ### What you will do
 
-Follow [04-pod-manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/04-pod-manifest-cli.md):
+Follow [04-pod-manifest-cli.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/04-pod-manifest-cli.md):
 
 1. Create a pod **nginx** from the `nginx` image and list the pods.
 2. Create a pod **nginx-port** from `nginx` that exposes port **80**, and describe it.
@@ -417,7 +417,7 @@ pod "nginx-port" deleted from default namespace
 
 ### What you will do
 
-Follow [05-commands-and-arguments.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/05-commands-and-arguments.md).
+Follow [05-commands-and-arguments.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/05-commands-and-arguments.md).
 Edit **commands.yaml** each time and apply it, so that you end up with four pods from the
 `busybox` image, each with one container called **count**:
 
@@ -661,7 +661,7 @@ PID   USER     TIME  COMMAND
 
 ### What you will do
 
-Follow [06-expose-pods.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/06-expose-pods.md):
+Follow [06-expose-pods.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/06-expose-pods.md):
 
 1. Write **pod-expose-port.yaml**: a pod **nginx-pod** with a container **democontainer** from
    `nginx` that declares `containerPort: 8080`.
@@ -811,7 +811,7 @@ FIELDS:
 
 ### What you will do
 
-Follow [09-replicasets.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/09-replicasets.md):
+Follow [10-replicasets.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/10-replicasets.md):
 
 1. Create the ReplicationController **myapp-rc** (3 replicas of `nginx`, labels `app: myapp`,
    `type: front-end`) from **rc-definition.yaml**.
@@ -993,7 +993,7 @@ nginx-pod                1/1     Running             0            3s
 
 ### What you will do
 
-Follow [08-deployments.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/08-deployments.md):
+Follow [09-deployments.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/09-deployments.md):
 
 1. Create the Deployment **myapp-deployment** (3 replicas of `nginx`, labels `app: myapp`,
    `type: front-end`, selector `type: front-end`) from **deployment-definition.yaml**.
@@ -1163,7 +1163,7 @@ replicationcontroller/myapp-rc   3         3         3       12s
 
 ### What you will do
 
-Follow the NodePort part of [10-services-nodeport.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/10-services-nodeport.md):
+Follow the NodePort part of [11-services-nodeport.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/11-services-nodeport.md):
 
 1. Create the service **myapp-service** of type **NodePort** from **service-definition.yaml**:
    port 80, targetPort 80, nodePort **30008**, selecting the pods with `app: myapp` and `type: front-end`.
@@ -1265,7 +1265,7 @@ It prints nothing when it works.
 
 ### What you will do
 
-Follow [11-services-clusterip.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/11-services-clusterip.md):
+Follow [12-services-clusterip.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/12-services-clusterip.md):
 
 Create the service **back-end** of type **ClusterIP**: port 80, targetPort 80, selecting the pods
 with `app: myapp` and `type: back-end`. List the services.
@@ -1339,7 +1339,7 @@ myapp-service   NodePort    10.96.45.45    <none>        80:30008/TCP   4s
 
 ### What you will do
 
-Follow [07-namespaces.md](https://github.com/kumbulanit/CKA/blob/main/01-core-concepts/07-namespaces.md):
+Follow [08-namespaces.md](https://github.com/kumbulanit/CKA/blob/main/02-core-concepts/08-namespaces.md):
 
 1. List the pods in the `kube-system` namespace.
 2. Create the namespace **dev**.

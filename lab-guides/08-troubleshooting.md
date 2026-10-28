@@ -1,6 +1,6 @@
 # Module 8: Troubleshooting
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 8.1: App failure: alpha](#lab-81-app-failure-alpha)
 - [Lab 8.2: App failure: beta](#lab-82-app-failure-beta)

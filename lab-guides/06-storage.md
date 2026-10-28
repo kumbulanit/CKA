@@ -1,6 +1,6 @@
 # Module 6: Storage
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 6.1: A hostPath volume](#lab-61-a-hostpath-volume)
 - [Lab 6.2: PersistentVolumes and claims](#lab-62-persistentvolumes-and-claims)
