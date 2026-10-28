@@ -12,7 +12,17 @@ git clone https://github.com/kumbulanit/CKA.git && cd CKA
 sudo ./setup.sh
 ```
 
-[setup.sh](./setup.sh) installs all the tools the course uses: Docker, minikube, kubectl v1.36 and helm, plus git, curl, jq, vim, nano and bash completion (with `k` as a short name for `kubectl`). Then it creates and starts a minikube cluster on Docker: Kubernetes **v1.36.5** with Calico, one control plane node (`minikube`) and two worker nodes (`minikube-m02`, `minikube-m03`). If a minikube cluster with fewer nodes already exists, it adds the missing workers. Run it with `sudo` from your own user, not as root. Running it again is safe; it also starts the cluster again after the server restarts.
+[setup.sh](./setup.sh) installs all the tools the course uses: Docker, minikube, kubectl v1.36 and helm, plus git, curl, jq, vim, nano and bash completion (with `k` as a short name for `kubectl`). Then it creates and starts a minikube cluster on Docker: Kubernetes **v1.36.5** with Calico, one control plane node (`minikube`) and two worker nodes (`minikube-m02`, `minikube-m03`). Run it with `sudo` from your own user, not as root.
+
+**Run it again at any time**, for example after the server restarts or when the cluster looks wrong. Each run installs any tool that is missing, then checks the cluster and fixes it, so it always ends with one control plane and two workers, all running and `Ready`:
+
+- no cluster yet: it creates one;
+- the cluster or one of its nodes is stopped (after a restart, `minikube stop`, `minikube node stop`): it starts it;
+- fewer than two workers: it adds the missing ones;
+- a node left cordoned (the drain lesson): it uncordons it;
+- `kubectl` pointed at another cluster or user (`scripts/one-server.sh`, the security lessons): it points `kubectl` at the minikube cluster as admin again.
+
+It changes nothing else in the cluster (your pods and other objects stay). If minikube cannot start the cluster at all, it says so and how to start from a new one (`minikube delete`, then `sudo ./setup.sh`).
 
 Clone the repository as your own user (without `sudo`), in your home folder: the lessons are done as that user, inside the lesson folders (`cd ~/CKA/02-core-concepts`), and some steps create files there. If the folder was cloned with `sudo`, `setup.sh` gives it back to your user.
 

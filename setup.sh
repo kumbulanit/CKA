@@ -10,8 +10,10 @@
 # minikube cluster on Docker: Kubernetes v1.36.5 with Calico, 3 nodes: one control plane (minikube)
 # and two workers (minikube-m02 and minikube-m03). It takes about 10 minutes the first time.
 #
-# Running it again is safe: it installs only what is missing, and starts the cluster if it is
-# stopped (after the server restarts, for example).
+# Run it again at any time (after the server restarts, for example): it installs what is missing,
+# then makes sure the cluster is there and running with one control plane and two workers. It
+# creates it if there is none, starts it or any stopped node, adds missing workers, uncordons
+# nodes, and points kubectl at it again.
 # The server: Ubuntu 22.04 or 24.04, 4 CPUs, 8 GB RAM, 30 GB free disk.
 set -euo pipefail
 
@@ -55,7 +57,9 @@ if ! command -v docker >/dev/null; then
   apt-get update -q
   apt-get install -y -q docker-ce docker-ce-cli containerd.io
 fi
-systemctl enable --now docker
+# Started now and at every boot (Docker from snap starts itself, so its unit name does not matter).
+systemctl enable --now docker >/dev/null 2>&1 || true
+docker info >/dev/null 2>&1 || die "Docker is installed but does not run: see systemctl status docker"
 usermod -aG docker "$user"
 docker --version
 
@@ -95,32 +99,80 @@ complete -o default -F __start_kubectl k
 EOF
 fi
 
-ready=$(as_user kubectl --context minikube get nodes --no-headers 2>/dev/null | grep -c ' Ready ' || true)
-if [ "${ready:-0}" -ge "$NODES" ]; then
-  step "The cluster is already running"
-elif as_user minikube profile list -o json 2>/dev/null | grep -q '"Name":"minikube"'; then
-  step "Starting the cluster"
-  as_user minikube start
-else
+# The cluster: one control plane (minikube) and two workers (minikube-m02, minikube-m03), running.
+# Every run checks each part and fixes what is missing, so it always ends with that cluster.
+mk() { as_user minikube "$@"; }
+kc() { as_user kubectl --context minikube "$@"; }
+# The nodes minikube knows, one per line: name, worker (true or false), host and kubelet state.
+# minikube status can also print messages as JSON; only the node entries (with a Host) are kept.
+nodes() {
+  { mk status -o json 2>/dev/null || true; } | jq -r '(if type == "array" then .[] else . end)
+    | select(type == "object" and has("Host"))
+    | "\(.Name) \(.Worker // (.Name != "minikube")) \(.Host) \(.Kubelet)"' 2>/dev/null || true
+}
+again="Run sudo ./setup.sh again; if it fails again, start from a new cluster: minikube delete, then sudo ./setup.sh"
+
+if ! mk profile list -o json 2>/dev/null | jq -e '[.valid[]?, .invalid[]?] | any(.Name == "minikube")' >/dev/null 2>&1; then
   step "Creating and starting the cluster: $NODES nodes, Kubernetes $K8S_VERSION, $CNI (about 5 to 10 minutes)"
-  as_user minikube start --driver=docker --nodes="$NODES" --kubernetes-version="$K8S_VERSION" --cni="$CNI"
+  mk start --driver=docker --nodes="$NODES" --kubernetes-version="$K8S_VERSION" --cni="$CNI" \
+    || die "minikube could not create the cluster (see the messages above). $again"
+elif mk status >/dev/null 2>&1; then
+  step "The cluster is already running"
+else
+  # Stopped (after the server restarts, or minikube stop), or ~/.kube/config no longer points at it.
+  step "Starting the cluster"
+  mk start || mk start || die "minikube could not start the cluster (see the messages above). $again"
 fi
 
-# One control plane and two workers: a cluster made earlier with fewer nodes gets the missing workers.
-have=$(as_user minikube node list 2>/dev/null | grep -c . || true)
-while [ "${have:-0}" -lt "$NODES" ]; do
-  step "Adding worker node $((have + 1)) of $NODES"
-  as_user minikube node add --worker
-  have=$((have + 1))
+# A node stopped on its own (minikube node stop, in the drain lesson) is started again.
+for n in $(nodes | awk '$3 != "Running" || $4 != "Running" { print $1 }'); do
+  step "Starting node $n"
+  mk node start "$n" || die "minikube could not start node $n. $again"
 done
 
-step "Waiting for all nodes to be Ready"
-as_user kubectl wait --for=condition=Ready node --all --timeout=600s >/dev/null
-# minikube gives the workers no role, so kubectl get nodes would show <none>: label them as workers.
-for n in $(as_user kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o name); do
-  as_user kubectl label "$n" node-role.kubernetes.io/worker= --overwrite >/dev/null
+# Two workers: a cluster made earlier with fewer nodes gets the missing ones.
+[ -n "$(nodes)" ] || die "minikube status shows no nodes. $again"
+workers=$(nodes | awk '$2 == "true"' | wc -l)
+while [ "$workers" -lt $((NODES - 1)) ]; do
+  step "Adding a worker node ($((workers + 1)) of $((NODES - 1)))"
+  mk node add --worker || die "minikube could not add a worker node. $again"
+  workers=$((workers + 1))
 done
-as_user kubectl get nodes -o wide
+
+# kubectl uses the cluster: its address in ~/.kube/config is updated, and minikube is the current
+# context again (scripts/one-server.sh and the security lessons point kubectl elsewhere).
+mk update-context >/dev/null
+as_user kubectl config use-context minikube >/dev/null
+
+step "Waiting for the nodes to be Ready"
+kc wait --for=condition=Ready node/minikube --timeout=600s >/dev/null \
+  || die "the control plane node is not Ready after 10 minutes (see kubectl get nodes, and minikube logs). $again"
+# A worker that minikube runs but Kubernetes does not list as Ready (it never joined, or its
+# kubelet stopped) is restarted, which joins it to the cluster again.
+for n in $(nodes | awk '$2 == "true" { print $1 }'); do
+  kc wait --for=condition=Ready "node/$n" --timeout=180s >/dev/null 2>&1 && continue
+  step "Worker $n is not Ready: restarting it"
+  mk node stop "$n" >/dev/null 2>&1 || true
+  mk node start "$n" || die "minikube could not restart worker $n. $again"
+  for _ in $(seq 1 60); do kc get node "$n" >/dev/null 2>&1 && break; sleep 5; done
+  kc wait --for=condition=Ready "node/$n" --timeout=300s >/dev/null \
+    || die "worker $n is not Ready after a restart (see kubectl describe node $n, and minikube logs -n $n). $again"
+done
+# A node left cordoned (the drain lesson) takes no new pods: uncordon it.
+for n in $(kc get nodes -o jsonpath='{range .items[?(@.spec.unschedulable==true)]}{.metadata.name}{"\n"}{end}'); do
+  step "Uncordoning $n"
+  kc uncordon "$n" >/dev/null
+done
+# minikube gives the workers no role, so kubectl get nodes would show <none>: label them as workers.
+for n in $(kc get nodes -l '!node-role.kubernetes.io/control-plane' -o name); do
+  kc label "$n" node-role.kubernetes.io/worker= --overwrite >/dev/null
+done
+cps=$(kc get nodes -l node-role.kubernetes.io/control-plane --no-headers | grep -cw Ready || true)
+workers=$(kc get nodes -l node-role.kubernetes.io/worker --no-headers | grep -cw Ready || true)
+kc get nodes -o wide
+[ "$cps" -ge 1 ] && [ "$workers" -ge $((NODES - 1)) ] \
+  || die "the cluster has $cps control plane and $workers worker nodes Ready, instead of 1 and $((NODES - 1)). $again"
+step "OK: $cps control plane and $workers worker nodes, all Ready; kubectl uses the minikube cluster"
 
 if docker container inspect controlplane >/dev/null 2>&1; then
   echo

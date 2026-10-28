@@ -47,7 +47,7 @@ kubectl config set-context my-context --cluster=minikube --user=client
 kubectl config use-context my-context
 ```
 
-The user can log in but can do nothing until RBAC gives them permissions (section 3). Switch back with `kubectl config use-context kubernetes-admin@kubernetes`.
+The user can log in but can do nothing until RBAC gives them permissions (section 3). Switch back with `kubectl config use-context minikube` (`kubernetes-admin@kubernetes` on a kubeadm cluster; `sudo ./setup.sh` also switches back).
 
 ---
 
