@@ -47,16 +47,27 @@ curl http://website01.example.internal:30080
 
 #### Step 5: Change the Default Nginx Page for Each Service
 
+`/usr/share/nginx/html` is the web folder inside each nginx pod, not on the server. On the server, open a shell in `service-pod-1`:
 ```sh
 kubectl exec -it service-pod-1 -- bash
+```
+These commands run inside the pod `service-pod-1`, not on the server: change the page, then leave the pod with `exit`:
+```sh
 cd /usr/share/nginx/html
 echo "This is Website 1" > index.html
+exit
 ```
+The same for `service-pod-2`, from the server:
 ```sh
 kubectl exec -it service-pod-2 -- bash
+```
+These commands run inside the pod `service-pod-2`, not on the server:
+```sh
 cd /usr/share/nginx/html
 echo "This is Website 2" > index.html
+exit
 ```
+Or, without opening a shell, from the server: `kubectl exec service-pod-1 -- sh -c 'echo "This is Website 1" > /usr/share/nginx/html/index.html'`.
 
 #### Step 6: Verification
 

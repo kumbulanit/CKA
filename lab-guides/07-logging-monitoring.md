@@ -1,6 +1,6 @@
 # Module 7: Logging and monitoring
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. The outputs show Kubernetes v1.36.4 (v1.37.0 after the upgrade lab), the newest version the practice cluster's images have; the cluster `setup.sh` makes runs v1.36.5, so the VERSION columns on yours say v1.36.5. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 7.1: Install the Metrics Server](#lab-71-install-the-metrics-server)
 - [Lab 7.2: Practice test: monitor cluster components](#lab-72-practice-test-monitor-cluster-components)
@@ -19,7 +19,7 @@ sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10
 kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, where the terminal is already root on `minikube` and the API server answers on port 6443 (8443 on minikube): addresses, ports and ages on yours will differ.
+The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, whose cluster is set out like minikube's (the API server on port 8443, certificates in `/var/lib/minikube/certs` and `~/.minikube`); its terminal is root on `minikube`, so prompts differ, and addresses and ages on yours will differ too.
 
 ## Lab 7.1: Install the Metrics Server
 
@@ -28,47 +28,26 @@ The steps use those node names, and `minikube ssh -n <node>` for commands on a n
 Follow [02-monitor-cluster-components.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/02-monitor-cluster-components.md)
 and steps 1 and 2 of [03-metrics-server-and-autoscaling.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/03-metrics-server-and-autoscaling.md):
 
-1. Apply the Metrics Server's latest release manifest.
-2. Patch its deployment with `--kubelet-insecure-tls`, so it accepts the kubelets' self-signed
-   certificates, and check that the deployment is ready.
-3. After a minute, run `kubectl top nodes` and `kubectl top pods --all-namespaces`.
+1. Enable minikube's metrics-server addon (`minikube addons enable metrics-server`), and check
+   that its deployment in kube-system is ready.
+2. After a minute, run `kubectl top nodes` and `kubectl top pods --all-namespaces`.
 
 ### Step by step
 
-**Step 1.** Creates the objects in `https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`, or updates them if they exist.
+**Step 1.** Runs `minikube`.
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+minikube addons enable metrics-server
 ```
 
 You should see something like:
 
 ```text
-serviceaccount/metrics-server created
-clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
-clusterrole.rbac.authorization.k8s.io/system:metrics-server created
-rolebinding.rbac.authorization.k8s.io/metrics-server-auth-reader created
-clusterrolebinding.rbac.authorization.k8s.io/metrics-server:system:auth-delegator created
-clusterrolebinding.rbac.authorization.k8s.io/system:metrics-server created
-service/metrics-server created
-deployment.apps/metrics-server created
-apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+    ▪ Using image registry.k8s.io/metrics-server/metrics-server
+🌟  The 'metrics-server' addon is enabled
 ```
 
-**Step 2.** Changes part of the Deployment `metrics-server`, `\` in place (a patch instead of a whole manifest).
-
-```bash
-kubectl -n kube-system patch deployment metrics-server --type=json \
-  -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
-```
-
-You should see something like:
-
-```text
-deployment.apps/metrics-server patched
-```
-
-**Step 3.** Waits until the rollout of the Deployment `metrics-server` has finished.
+**Step 2.** Waits until the rollout of the Deployment `metrics-server` has finished.
 
 ```bash
 kubectl -n kube-system rollout status deployment metrics-server --timeout=180s
@@ -77,13 +56,14 @@ kubectl -n kube-system rollout status deployment metrics-server --timeout=180s
 You should see something like:
 
 ```text
-Waiting for deployment "metrics-server" rollout to finish: 1 old replicas are pending termination...
-Waiting for deployment "metrics-server" rollout to finish: 1 old replicas are pending termination...
-Waiting for deployment "metrics-server" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment spec update to be observed...
+Waiting for deployment spec update to be observed...
+Waiting for deployment "metrics-server" rollout to finish: 0 out of 1 new replicas have been updated...
+Waiting for deployment "metrics-server" rollout to finish: 0 of 1 updated replicas are available...
 deployment "metrics-server" successfully rolled out
 ```
 
-**Step 4.** Lists the Deployment `metrics-server` in the namespace `kube-system`.
+**Step 3.** Lists the Deployment `metrics-server` in the namespace `kube-system`.
 
 ```bash
 kubectl get deployment metrics-server -n kube-system
@@ -93,10 +73,10 @@ You should see something like:
 
 ```text
 NAME             READY   UP-TO-DATE   AVAILABLE   AGE
-metrics-server   1/1     1            1           34s
+metrics-server   1/1     1            1           45s
 ```
 
-**Step 5.** Repeats until the condition is true (waits for the cluster to catch up).
+**Step 4.** Repeats until the condition is true (waits for the cluster to catch up).
 
 ```bash
 until kubectl top nodes 2>/dev/null; do sleep 5; done
@@ -106,12 +86,12 @@ You should see something like:
 
 ```text
 NAME           CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
-minikube       156m         1%       573Mi           9%          
-minikube-m02   129m         1%       135Mi           2%          
-minikube-m03   141m         1%       133Mi           2%
+minikube       202m         2%       584Mi           9%          
+minikube-m02   119m         1%       147Mi           2%          
+minikube-m03   32m          0%       119Mi           1%
 ```
 
-**Step 6.** Shows the CPU and memory used by each pod in every namespace (from the Metrics Server).
+**Step 5.** Shows the CPU and memory used by each pod in every namespace (from the Metrics Server).
 
 ```bash
 kubectl top pods --all-namespaces
@@ -121,27 +101,27 @@ You should see something like:
 
 ```text
 NAMESPACE            NAME                                      CPU(cores)   MEMORY(bytes)   
-kube-system          coredns-589f44dc88-rb26c                  7m           10Mi            
-kube-system          coredns-589f44dc88-t8dch                  12m          11Mi            
-kube-system          etcd-minikube                             25m          39Mi            
-kube-system          kindnet-h52vd                             1m           9Mi             
-kube-system          kindnet-pzpn6                             1m           8Mi             
-kube-system          kindnet-zhlx4                             1m           9Mi             
-kube-system          kube-apiserver-minikube                   59m          206Mi           
-kube-system          kube-controller-manager-minikube          14m          63Mi            
-kube-system          kube-proxy-bwdx4                          6m           15Mi            
-kube-system          kube-proxy-gdk8d                          2m           14Mi            
-kube-system          kube-proxy-tfwzp                          3m           14Mi            
-kube-system          kube-scheduler-minikube                   10m          20Mi            
-kube-system          metrics-server-5b58578978-pqbqh           36m          14Mi            
-local-path-storage   local-path-provisioner-56c4685b7c-wjr7c   1m           8Mi
+kube-system          coredns-589f44dc88-nlt48                  6m           14Mi            
+kube-system          coredns-589f44dc88-vkp8g                  4m           14Mi            
+kube-system          etcd-minikube                             27m          32Mi            
+kube-system          kindnet-lvvjk                             2m           11Mi            
+kube-system          kindnet-shvjw                             1m           9Mi             
+kube-system          kindnet-w758j                             2m           14Mi            
+kube-system          kube-apiserver-minikube                   64m          216Mi           
+kube-system          kube-controller-manager-minikube          21m          48Mi            
+kube-system          kube-proxy-ntg2f                          2m           24Mi            
+kube-system          kube-proxy-sjpq6                          4m           20Mi            
+kube-system          kube-proxy-wxwgv                          4m           24Mi            
+kube-system          kube-scheduler-minikube                   16m          25Mi            
+kube-system          metrics-server-5b58578978-7h6sf           6m           14Mi            
+local-path-storage   local-path-provisioner-56c4685b7c-g26p8   1m           12Mi
 ```
 
 ### If you see something else
 
 - The check says: _There is no metrics-server deployment with --kubelet-insecure-tls in kube-system._
 - The check says: _`kubectl top nodes` does not work yet. Is the metrics-server pod 1/1? It needs about a minute to collect data._
-- Without `--kubelet-insecure-tls` the pod stays `0/1` and its logs show `x509` errors: kubeadm's kubelet certificates are self-signed.
+- minikube's addon runs the Metrics Server with `--kubelet-insecure-tls`, because the kubelets' certificates are self-signed. On a kubeadm cluster you apply its release manifest and add that flag yourself (the lesson shows how).
 - `kubectl top` reads from the metrics API (`kubectl get apiservice v1beta1.metrics.k8s.io`), which the Metrics Server serves.
 
 ### Why it works
@@ -164,7 +144,7 @@ The pods **elephant**, **lion** and **rabbit** are running workloads.
    If you did task 7.1 it already runs; the create then reports `AlreadyExists`, which is fine.
 2. With `kubectl top node`, find the nodes using the most CPU and the most memory.
 3. With `kubectl top pod`, write the name of the pod using the most **memory** to
-   `/opt/answers/most-memory-pod`, and the pod using the most **CPU** to `/opt/answers/most-cpu-pod`.
+   `~/answers/most-memory-pod`, and the pod using the most **CPU** to `~/answers/most-cpu-pod`.
 
 ### Step by step
 
@@ -178,9 +158,9 @@ You should see something like:
 
 ```text
 NAME       READY   STATUS    RESTARTS   AGE
-elephant   1/1     Running   0          7s
-lion       1/1     Running   0          7s
-rabbit     1/1     Running   0          7s
+elephant   1/1     Running   0          17s
+lion       1/1     Running   0          17s
+rabbit     1/1     Running   0          16s
 ```
 
 **Step 2.** Creates the folder `kubernetes-metrics-server`.
@@ -204,7 +184,7 @@ You should see something like:
                                  Dload  Upload   Total   Spent    Left  Speed
   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-100  4330  100  4330    0     0   5439      0 --:--:-- --:--:-- --:--:--  5439
+100  4330  100  4330    0     0   4267      0  0:00:01  0:00:01 --:--:--  4267
 ```
 
 **Step 4.** Goes into `kubernetes-metrics-server`.
@@ -265,7 +245,7 @@ You should see something like:
 
 ```text
 NAME   CPU(cores)   MEMORY(bytes)   
-lion   200m         0Mi
+lion   196m         0Mi
 ```
 
 **Step 9.** Shows the CPU and memory used by each node (from the Metrics Server).
@@ -278,9 +258,9 @@ You should see something like:
 
 ```text
 NAME           CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
-minikube       192m         2%       575Mi           9%          
-minikube-m02   108m         1%       303Mi           5%          
-minikube-m03   169m         2%       161Mi           2%
+minikube       1351m        16%      572Mi           9%          
+minikube-m02   430m         5%       292Mi           4%          
+minikube-m03   477m         5%       158Mi           2%
 ```
 
 **Step 10.** Shows the CPU and memory used by each pod (from the Metrics Server).
@@ -293,15 +273,15 @@ You should see something like:
 
 ```text
 NAME       CPU(cores)   MEMORY(bytes)   
-elephant   6m           150Mi           
-lion       200m         0Mi             
-rabbit     2m           0Mi
+elephant   38m          150Mi           
+lion       196m         0Mi             
+rabbit     0m           0Mi
 ```
 
-**Step 11.** Shows the CPU and memory used by each pod (from the Metrics Server).
+**Step 11.** Creates the folder `~/answers`.
 
 ```bash
-kubectl top pod --no-headers --sort-by=memory | grep -E '^(elephant|lion|rabbit) ' | head -1 | awk '{print $1}' > /opt/answers/most-memory-pod
+mkdir -p ~/answers
 ```
 
 It prints nothing when it works.
@@ -309,15 +289,23 @@ It prints nothing when it works.
 **Step 12.** Shows the CPU and memory used by each pod (from the Metrics Server).
 
 ```bash
-kubectl top pod --no-headers --sort-by=cpu | grep -E '^(elephant|lion|rabbit) ' | head -1 | awk '{print $1}' > /opt/answers/most-cpu-pod
+kubectl top pod --no-headers --sort-by=memory | grep -E '^(elephant|lion|rabbit) ' | head -1 | awk '{print $1}' > ~/answers/most-memory-pod
 ```
 
 It prints nothing when it works.
 
-**Step 13.** Shows the file `/opt/answers/most-memory-pod`.
+**Step 13.** Shows the CPU and memory used by each pod (from the Metrics Server).
 
 ```bash
-cat /opt/answers/most-memory-pod /opt/answers/most-cpu-pod
+kubectl top pod --no-headers --sort-by=cpu | grep -E '^(elephant|lion|rabbit) ' | head -1 | awk '{print $1}' > ~/answers/most-cpu-pod
+```
+
+It prints nothing when it works.
+
+**Step 14.** Shows the file `~/answers/most-memory-pod`.
+
+```bash
+cat ~/answers/most-memory-pod ~/answers/most-cpu-pod
 ```
 
 You should see something like:
@@ -330,10 +318,10 @@ lion
 ### If you see something else
 
 - The check says: _/root/kubernetes-metrics-server/components.yaml has not been downloaded._
-- The check says: _/opt/answers/most-memory-pod does not name the pod that uses the most memory._
-- The check says: _/opt/answers/most-cpu-pod does not name the pod that uses the most CPU._
+- The check says: _~/answers/most-memory-pod does not name the pod that uses the most memory._
+- The check says: _~/answers/most-cpu-pod does not name the pod that uses the most CPU._
 - `kubectl top pod --sort-by=memory` and `--sort-by=cpu` put the biggest first.
-- `echo <pod-name> > /opt/answers/most-memory-pod` writes an answer.
+- `echo <pod-name> > ~/answers/most-memory-pod` writes an answer.
 
 ### Why it works
 
@@ -414,19 +402,18 @@ timeout 5 kubectl logs -f event-simulator-pod
 You should see something like:
 
 ```text
-[2026-10-28 05:52:28,459] INFO in event-simulator: USER3 is viewing page3
-[2026-10-28 05:52:29,471] INFO in event-simulator: USER1 is viewing page3
-[2026-10-28 05:52:30,476] INFO in event-simulator: USER4 is viewing page2
-[2026-10-28 05:52:31,481] INFO in event-simulator: USER4 logged out
-[2026-10-28 05:52:32,487] INFO in event-simulator: USER2 is viewing page1
-[2026-10-28 05:52:33,496] WARNING in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
-[2026-10-28 05:52:33,499] INFO in event-simulator: USER4 logged out
-[2026-10-28 05:52:34,505] INFO in event-simulator: USER4 is viewing page3
-[2026-10-28 05:52:35,511] INFO in event-simulator: USER3 is viewing page2
-[2026-10-28 05:52:36,518] WARNING in event-simulator: USER7 Order failed as the item is OUT OF STOCK.
-[2026-10-28 05:52:36,519] INFO in event-simulator: USER3 logged in
-[2026-10-28 05:52:37,521] INFO in event-simulator: USER3 is viewing page2
-context canceled
+[2026-10-28 13:27:28,965] INFO in event-simulator: USER4 logged in
+[2026-10-28 13:27:29,971] INFO in event-simulator: USER4 logged out
+[2026-10-28 13:27:30,973] INFO in event-simulator: USER1 is viewing page1
+[2026-10-28 13:27:31,976] INFO in event-simulator: USER3 logged out
+[2026-10-28 13:27:32,980] INFO in event-simulator: USER1 logged out
+[2026-10-28 13:27:33,984] WARNING in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+[2026-10-28 13:27:33,985] INFO in event-simulator: USER3 is viewing page1
+[2026-10-28 13:27:34,989] INFO in event-simulator: USER2 is viewing page2
+[2026-10-28 13:27:35,992] INFO in event-simulator: USER2 logged out
+[2026-10-28 13:27:36,997] WARNING in event-simulator: USER7 Order failed as the item is OUT OF STOCK.
+[2026-10-28 13:27:36,999] INFO in event-simulator: USER2 logged in
+[2026-10-28 13:27:38,004] INFO in event-simulator: USER2 is viewing page2
 ```
 
 **Step 6.** Prints the logs of the pod `event-simulator-pod`.
@@ -450,18 +437,18 @@ kubectl logs event-simulator-pod --all-containers
 You should see something like:
 
 ```text
-[2026-10-28 05:52:28,459] INFO in event-simulator: USER3 is viewing page3
-[2026-10-28 05:52:29,471] INFO in event-simulator: USER1 is viewing page3
-[2026-10-28 05:52:30,476] INFO in event-simulator: USER4 is viewing page2
-[2026-10-28 05:52:31,481] INFO in event-simulator: USER4 logged out
-[2026-10-28 05:52:32,487] INFO in event-simulator: USER2 is viewing page1
-[2026-10-28 05:52:33,496] WARNING in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
-[2026-10-28 05:52:33,499] INFO in event-simulator: USER4 logged out
-[2026-10-28 05:52:34,505] INFO in event-simulator: USER4 is viewing page3
-[2026-10-28 05:52:35,511] INFO in event-simulator: USER3 is viewing page2
-[2026-10-28 05:52:36,518] WARNING in event-simulator: USER7 Order failed as the item is OUT OF STOCK.
-[2026-10-28 05:52:36,519] INFO in event-simulator: USER3 logged in
-[2026-10-28 05:52:37,521] INFO in event-simulator: USER3 is viewing page2
+[2026-10-28 13:27:28,965] INFO in event-simulator: USER4 logged in
+[2026-10-28 13:27:29,971] INFO in event-simulator: USER4 logged out
+[2026-10-28 13:27:30,973] INFO in event-simulator: USER1 is viewing page1
+[2026-10-28 13:27:31,976] INFO in event-simulator: USER3 logged out
+[2026-10-28 13:27:32,980] INFO in event-simulator: USER1 logged out
+[2026-10-28 13:27:33,984] WARNING in event-simulator: USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+[2026-10-28 13:27:33,985] INFO in event-simulator: USER3 is viewing page1
+[2026-10-28 13:27:34,989] INFO in event-simulator: USER2 is viewing page2
+[2026-10-28 13:27:35,992] INFO in event-simulator: USER2 logged out
+[2026-10-28 13:27:36,997] WARNING in event-simulator: USER7 Order failed as the item is OUT OF STOCK.
+[2026-10-28 13:27:36,999] INFO in event-simulator: USER2 logged in
+[2026-10-28 13:27:38,004] INFO in event-simulator: USER2 is viewing page2
 ```
 
 **Step 8.** Prints the logs of the pod `event-simulator-pod`.
@@ -473,11 +460,11 @@ kubectl logs event-simulator-pod -c event-simulator --tail=5
 You should see something like:
 
 ```text
-[2026-10-28 05:52:34,505] INFO in event-simulator: USER4 is viewing page3
-[2026-10-28 05:52:35,511] INFO in event-simulator: USER3 is viewing page2
-[2026-10-28 05:52:36,518] WARNING in event-simulator: USER7 Order failed as the item is OUT OF STOCK.
-[2026-10-28 05:52:36,519] INFO in event-simulator: USER3 logged in
-[2026-10-28 05:52:37,521] INFO in event-simulator: USER3 is viewing page2
+[2026-10-28 13:27:34,989] INFO in event-simulator: USER2 is viewing page2
+[2026-10-28 13:27:35,992] INFO in event-simulator: USER2 logged out
+[2026-10-28 13:27:36,997] WARNING in event-simulator: USER7 Order failed as the item is OUT OF STOCK.
+[2026-10-28 13:27:36,999] INFO in event-simulator: USER2 logged in
+[2026-10-28 13:27:38,004] INFO in event-simulator: USER2 is viewing page2
 ```
 
 ### If you see something else
@@ -502,9 +489,9 @@ You should see something like:
 Work through [06-practice-test-managing-application-logs.md](https://github.com/kumbulanit/CKA/blob/main/07-logging-monitoring/06-practice-test-managing-application-logs.md).
 The pods **webapp-1** and **webapp-2** are running.
 
-1. Inspect webapp-1's logs. Which user is locked out? Write it to `/opt/answers/webapp-1-user`.
+1. Inspect webapp-1's logs. Which user is locked out? Write it to `~/answers/webapp-1-user`.
 2. webapp-2 has two containers. Inspect the application container's logs: which user's order
-   failed? Write it to `/opt/answers/webapp-2-user`.
+   failed? Write it to `~/answers/webapp-2-user`.
 
 ### Step by step
 
@@ -518,10 +505,10 @@ You should see something like:
 
 ```text
 NAME                  READY   STATUS    RESTARTS   AGE
-elephant              1/1     Running   0          48s
-event-simulator-pod   1/1     Running   0          29s
-lion                  1/1     Running   0          48s
-rabbit                1/1     Running   0          48s
+elephant              1/1     Running   0          70s
+event-simulator-pod   1/1     Running   0          33s
+lion                  1/1     Running   0          70s
+rabbit                1/1     Running   0          69s
 webapp-1              1/1     Running   0          9s
 webapp-2              2/2     Running   0          9s
 ```
@@ -535,23 +522,31 @@ kubectl logs webapp-1
 You should see something like:
 
 ```text
-Wed Oct 28 05:52:39 UTC 2026 INFO USER2 logged in
-Wed Oct 28 05:52:41 UTC 2026 INFO USER3 logged in
-Wed Oct 28 05:52:43 UTC 2026 INFO USER4 logged in
-Wed Oct 28 05:52:45 UTC 2026 INFO USER1 logged in
-Wed Oct 28 05:52:47 UTC 2026 INFO USER2 logged in
-Wed Oct 28 05:52:47 UTC 2026 WARNING USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
+Wed Oct 28 16:26:30 UTC 2026 INFO USER2 logged in
+Wed Oct 28 16:26:32 UTC 2026 INFO USER3 logged in
+Wed Oct 28 16:26:34 UTC 2026 INFO USER4 logged in
+Wed Oct 28 16:26:36 UTC 2026 INFO USER1 logged in
+Wed Oct 28 16:26:38 UTC 2026 INFO USER2 logged in
+Wed Oct 28 16:26:38 UTC 2026 WARNING USER5 Failed to Login as the account is locked due to MANY FAILED ATTEMPTS.
 ```
 
-**Step 3.** Prints the logs of the pod `webapp-1`.
+**Step 3.** Creates the folder `~/answers`.
 
 ```bash
-kubectl logs webapp-1 | grep -o 'USER[0-9]* Failed' | head -1 | cut -d' ' -f1 > /opt/answers/webapp-1-user
+mkdir -p ~/answers
 ```
 
 It prints nothing when it works.
 
-**Step 4.** Lists the pods.
+**Step 4.** Prints the logs of the pod `webapp-1`.
+
+```bash
+kubectl logs webapp-1 | grep -o 'USER[0-9]* Failed' | head -1 | cut -d' ' -f1 > ~/answers/webapp-1-user
+```
+
+It prints nothing when it works.
+
+**Step 5.** Lists the pods.
 
 ```bash
 kubectl get pods
@@ -561,15 +556,15 @@ You should see something like:
 
 ```text
 NAME                  READY   STATUS    RESTARTS   AGE
-elephant              1/1     Running   0          48s
-event-simulator-pod   1/1     Running   0          29s
-lion                  1/1     Running   0          48s
-rabbit                1/1     Running   0          48s
+elephant              1/1     Running   0          70s
+event-simulator-pod   1/1     Running   0          33s
+lion                  1/1     Running   0          70s
+rabbit                1/1     Running   0          69s
 webapp-1              1/1     Running   0          9s
 webapp-2              2/2     Running   0          9s
 ```
 
-**Step 5.** Prints the logs of the pod `webapp-2`.
+**Step 6.** Prints the logs of the pod `webapp-2`.
 
 ```bash
 kubectl logs webapp-2 -c simple-webapp
@@ -578,26 +573,26 @@ kubectl logs webapp-2 -c simple-webapp
 You should see something like:
 
 ```text
-Wed Oct 28 05:52:39 UTC 2026 INFO USER2 is viewing page2
-Wed Oct 28 05:52:41 UTC 2026 INFO USER3 is viewing page2
-Wed Oct 28 05:52:43 UTC 2026 INFO USER4 is viewing page2
-Wed Oct 28 05:52:45 UTC 2026 INFO USER1 is viewing page2
-Wed Oct 28 05:52:47 UTC 2026 INFO USER2 is viewing page2
-Wed Oct 28 05:52:47 UTC 2026 WARNING USER30 Order failed as the item is OUT OF STOCK.
+Wed Oct 28 16:26:30 UTC 2026 INFO USER2 is viewing page2
+Wed Oct 28 16:26:32 UTC 2026 INFO USER3 is viewing page2
+Wed Oct 28 16:26:34 UTC 2026 INFO USER4 is viewing page2
+Wed Oct 28 16:26:36 UTC 2026 INFO USER1 is viewing page2
+Wed Oct 28 16:26:38 UTC 2026 INFO USER2 is viewing page2
+Wed Oct 28 16:26:38 UTC 2026 WARNING USER30 Order failed as the item is OUT OF STOCK.
 ```
 
-**Step 6.** Prints the logs of the pod `webapp-2`.
+**Step 7.** Prints the logs of the pod `webapp-2`.
 
 ```bash
-kubectl logs webapp-2 -c simple-webapp | grep -o 'USER[0-9]* Order failed' | head -1 | cut -d' ' -f1 > /opt/answers/webapp-2-user
+kubectl logs webapp-2 -c simple-webapp | grep -o 'USER[0-9]* Order failed' | head -1 | cut -d' ' -f1 > ~/answers/webapp-2-user
 ```
 
 It prints nothing when it works.
 
-**Step 7.** Shows the file `/opt/answers/webapp-1-user`.
+**Step 8.** Shows the file `~/answers/webapp-1-user`.
 
 ```bash
-cat /opt/answers/webapp-1-user /opt/answers/webapp-2-user
+cat ~/answers/webapp-1-user ~/answers/webapp-2-user
 ```
 
 You should see something like:
@@ -609,8 +604,8 @@ USER30
 
 ### If you see something else
 
-- The check says: _/opt/answers/webapp-1-user does not name the user who is locked out._
-- The check says: _/opt/answers/webapp-2-user does not name the user whose order failed._
+- The check says: _~/answers/webapp-1-user does not name the user who is locked out._
+- The check says: _~/answers/webapp-2-user does not name the user whose order failed._
 - `kubectl logs webapp-1 | grep -i warning` finds the problem lines quickly.
 - For a pod with several containers, `kubectl logs` needs `-c <container>`; `kubectl get pod webapp-2 -o jsonpath='{.spec.containers[*].name}'` lists them.
 
@@ -750,7 +745,7 @@ You should see something like:
 
 ```text
 NAME    REFERENCE          TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
-nginx   Deployment/nginx   cpu: 84%/50%   1         10        1          3m3s
+nginx   Deployment/nginx   cpu: 96%/50%   1         10        1          65s
 ```
 
 **Step 10.** Lists the pods that match the label selector `app=nginx`.
@@ -762,9 +757,9 @@ kubectl get pods -l app=nginx
 You should see something like:
 
 ```text
-NAME                     READY   STATUS              RESTARTS   AGE
-nginx-74757cc96f-5tk92   0/1     ContainerCreating   0          3s
-nginx-74757cc96f-lfv78   1/1     Running             0          3m4s
+NAME                     READY   STATUS    RESTARTS   AGE
+nginx-74757cc96f-dx79h   1/1     Running   0          66s
+nginx-74757cc96f-qzb9g   1/1     Running   0          5s
 ```
 
 **Step 11.** Deletes the pod `load-generator`.
@@ -805,7 +800,7 @@ Follow steps 1, 3 and 5 of [07-prometheus-and-grafana.md](https://github.com/kum
    `prometheus-community/prometheus` as **prometheus**, with the two `--set` options from the
    document that turn off persistent storage. Check its pods.
 2. Expose the deployment `prometheus-server` as the NodePort service **prometheus-service** on
-   port 9090, and check `curl http://minikube-m02:<NODEPORT>/-/ready`.
+   port 9090, and check `curl http://$(minikube ip -n minikube-m02):<NODEPORT>/-/ready`.
 3. Install Grafana with Helm as the release **grafana**.
 
 ### Step by step
@@ -816,10 +811,24 @@ Follow steps 1, 3 and 5 of [07-prometheus-and-grafana.md](https://github.com/kum
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 ```
 
+You should see something like:
+
+```text
+"prometheus-community" has been added to your repositories
+```
+
 **Step 2.** Downloads the latest chart lists.
 
 ```bash
 helm repo update
+```
+
+You should see something like:
+
+```text
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "prometheus-community" chart repository
+Update Complete. ⎈Happy Helming!⎈
 ```
 
 **Step 3.** Installs the chart as the release `prometheus`.
@@ -829,10 +838,41 @@ helm install prometheus prometheus-community/prometheus \
   --set server.persistentVolume.enabled=false --set alertmanager.persistence.enabled=false
 ```
 
+You should see something like:
+
+```text
+NAME: prometheus
+LAST DEPLOYED: Wed Oct 28 13:29:24 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+The Prometheus server can be accessed via port 80 on the following DNS name from within your cluster:
+prometheus-server.default.svc.cluster.local
+
+
+Get the Prometheus server URL by running these commands in the same shell:
+  export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=prometheus" -o jsonpath="{.items[0].metadata.name}")
+  kubectl --namespace default port-forward $POD_NAME 9090
+#################################################################################
+######   WARNING: Persistence is disabled!!! You will lose your data when   #####
+######            the Server pod is terminated.                             #####
+… (24 more lines)
+```
+
 **Step 4.** Waits until the rollout of the Deployment `prometheus-server` has finished.
 
 ```bash
 kubectl rollout status deployment prometheus-server --timeout=300s
+```
+
+You should see something like:
+
+```text
+Waiting for deployment "prometheus-server" rollout to finish: 0 of 1 updated replicas are available...
+deployment "prometheus-server" successfully rolled out
 ```
 
 **Step 5.** Lists the pods that match the label selector `app.kubernetes.io/instance=prometheus`.
@@ -841,22 +881,49 @@ kubectl rollout status deployment prometheus-server --timeout=300s
 kubectl get pods -l app.kubernetes.io/instance=prometheus
 ```
 
+You should see something like:
+
+```text
+NAME                                                 READY   STATUS    RESTARTS   AGE
+prometheus-alertmanager-0                            2/2     Running   0          2m
+prometheus-kube-state-metrics-86f6b846bf-fg8bg       1/1     Running   0          2m1s
+prometheus-prometheus-node-exporter-55vvs            1/1     Running   0          2m1s
+prometheus-prometheus-node-exporter-fjndl            1/1     Running   0          2m1s
+prometheus-prometheus-node-exporter-kcfvr            1/1     Running   0          2m1s
+prometheus-prometheus-pushgateway-7547dfd6b9-vjwp9   1/1     Running   0          2m1s
+prometheus-server-58d9ff4d9b-pfb77                   2/2     Running   0          2m1s
+```
+
 **Step 6.** Creates a Service in front of the Deployment `prometheus-server` on port 9090 (type NodePort).
 
 ```bash
 kubectl expose deployment prometheus-server --type=NodePort --name=prometheus-service --port=9090
 ```
 
-**Step 7.** Sends an HTTP request to `http://minikube-m02:…/-/ready` and prints the answer.
+You should see something like:
+
+```text
+service/prometheus-service exposed
+```
+
+**Step 7.** Sends an HTTP request to `http://…:…/-/ready` and prints the answer.
 
 ```bash
-curl -s http://minikube-m02:$(kubectl get svc prometheus-service -o jsonpath='{.spec.ports[0].nodePort}')/-/ready
+curl -s http://$(minikube ip -n minikube-m02):$(kubectl get svc prometheus-service -o jsonpath='{.spec.ports[0].nodePort}')/-/ready
 ```
+
+It prints nothing when it works.
 
 **Step 8.** Adds a chart repository.
 
 ```bash
 helm repo add grafana https://grafana.github.io/helm-charts
+```
+
+You should see something like:
+
+```text
+"grafana" has been added to your repositories
 ```
 
 **Step 9.** Downloads the latest chart lists.
@@ -865,16 +932,56 @@ helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 ```
 
+You should see something like:
+
+```text
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "prometheus-community" chart repository
+...Successfully got an update from the "grafana" chart repository
+Update Complete. ⎈Happy Helming!⎈
+```
+
 **Step 10.** Installs the chart as the release `grafana`.
 
 ```bash
 helm install grafana grafana/grafana
 ```
 
+You should see something like:
+
+```text
+level=WARN msg="this chart is deprecated"
+NAME: grafana
+LAST DEPLOYED: Wed Oct 28 13:31:30 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+NOTES:
+1. Get your 'admin' user password by running:
+
+   kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+
+2. The Grafana server can be accessed via port 80 on the following DNS name from within your cluster:
+
+   grafana.default.svc.cluster.local
+
+   Get the Grafana URL to visit by running these commands in the same shell:
+… (8 more lines)
+```
+
 **Step 11.** Waits until the rollout of the Deployment `grafana` has finished.
 
 ```bash
 kubectl rollout status deployment grafana --timeout=300s
+```
+
+You should see something like:
+
+```text
+Waiting for deployment "grafana" rollout to finish: 0 of 1 updated replicas are available...
+deployment "grafana" successfully rolled out
 ```
 
 ### If you see something else

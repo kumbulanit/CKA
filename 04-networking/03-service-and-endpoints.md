@@ -12,11 +12,16 @@ kubectl run backend-pod-2 --image=nginx
 kubectl run frontend-pod --image=ubuntu --command -- sleep 3600
 ```
 #### Step 3: Test the Connection between Frontend and Backend PODs
+On the server, find the backend pods' IP addresses, then open a shell in `frontend-pod`:
 ```sh
 kubectl get pods -o wide
 kubectl exec -it frontend-pod -- bash
+```
+These commands run inside the pod `frontend-pod`, not on the server: install curl, call a backend pod, then leave the pod with `exit`:
+```sh
 apt-get update && apt-get -y install curl
 curl <BACKEND-POD-1-IP>
+exit
 ```
 #### Step 4: Create a new Service
 
@@ -77,9 +82,14 @@ endpoints:
 ```
 
 #### Step 6: Test the Connection
+On the server, open a shell in `frontend-pod` again:
 ```sh
 kubectl exec -it frontend-pod -- bash
+```
+These commands run inside the pod `frontend-pod`, not on the server: call the Service, then leave the pod with `exit`:
+```sh
 curl <SERVICE-IP>:8080
+exit
 ```
 
 #### Step 7: Delete the Created Resources

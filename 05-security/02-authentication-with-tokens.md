@@ -51,13 +51,18 @@ kubectl get pod external-pod -o yaml
 ```
 #### Step 4: Fetch the Token of a POD
 
+On the server, open a shell in `external-pod`:
 ```sh
 kubectl exec -it external-pod -- bash
+```
+These commands run inside the pod `external-pod`, not on the server: print the token (a file mounted in the pod, not on the server), copy it, then leave the pod with `exit`:
+```sh
 cat /var/run/secrets/kubernetes.io/serviceaccount/token
+exit
 ```
 
 #### Step 5: Make a Request to Kubernetes using Token
-`kubectl cluster-info` shows `<K8S-SERVER-URL>` (on minikube, `https://192.168.49.2:8443`; on a kubeadm cluster, `https://controlplane:6443`).
+Back on the server. `kubectl cluster-info` shows `<K8S-SERVER-URL>` (on minikube, `https://192.168.49.2:8443`; on a kubeadm cluster, `https://controlplane:6443`).
 ```sh
 curl -k <K8S-SERVER-URL>
 curl -k <K8S-SERVER-URL>/api/v1 --header "Authorization: Bearer <TOKEN-HERE>"

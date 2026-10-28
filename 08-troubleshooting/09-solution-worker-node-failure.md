@@ -25,6 +25,8 @@
          minikube ssh -n minikube-m02
          ```
 
+         The steps from here to *Return to the server* run on the node `minikube-m02`, not on the server.
+
       1. Check kubelet status
 
          ```bash
@@ -81,6 +83,8 @@
          ```bash
          minikube ssh -n minikube-m02
          ```
+
+         The steps from here to *Return to the server* run on the node `minikube-m02`, not on the server.
 
       1. Check kubelet status
 
@@ -197,6 +201,8 @@
          ```bash
          minikube ssh -n minikube-m02
          ```
+
+         The steps from here to *Return to the server* run on the node `minikube-m02`, not on the server.
 
       1. Check kubelet status
 

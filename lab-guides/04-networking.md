@@ -1,6 +1,6 @@
 # Module 4: Services and networking
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. The outputs show Kubernetes v1.36.4 (v1.37.0 after the upgrade lab), the newest version the practice cluster's images have; the cluster `setup.sh` makes runs v1.36.5, so the VERSION columns on yours say v1.36.5. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 4.1: A Service with manual endpoints](#lab-41-a-service-with-manual-endpoints)
 - [Lab 4.2: Services find pods by selector](#lab-42-services-find-pods-by-selector)
@@ -26,7 +26,7 @@ sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10
 kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, where the terminal is already root on `minikube` and the API server answers on port 6443 (8443 on minikube): addresses, ports and ages on yours will differ.
+The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, whose cluster is set out like minikube's (the API server on port 8443, certificates in `/var/lib/minikube/certs` and `~/.minikube`); its terminal is root on `minikube`, so prompts differ, and addresses and ages on yours will differ too.
 
 ## Lab 4.1: A Service with manual endpoints
 
@@ -109,9 +109,9 @@ You should see something like:
 
 ```text
 NAME            READY   STATUS    RESTARTS   AGE   IP           NODE           NOMINATED NODE   READINESS GATES
-backend-pod-1   1/1     Running   0          39s   10.244.1.2   minikube-m02   <none>           <none>
-backend-pod-2   1/1     Running   0          39s   10.244.2.2   minikube-m03   <none>           <none>
-frontend-pod    1/1     Running   0          39s   10.244.1.3   minikube-m02   <none>           <none>
+backend-pod-1   1/1     Running   0          49s   10.244.2.2   minikube-m02   <none>           <none>
+backend-pod-2   1/1     Running   0          48s   10.244.1.2   minikube-m03   <none>           <none>
+frontend-pod    1/1     Running   0          48s   10.244.2.3   minikube-m02   <none>           <none>
 ```
 
 **Step 6.** Saves `$BACKEND_POD_1_IP`: prints one field of the pod `backend-pod-1`.
@@ -122,7 +122,7 @@ BACKEND_POD_1_IP=$(kubectl get pod backend-pod-1 -o jsonpath='{.status.podIP}')
 
 It prints nothing when it works.
 
-**Step 7.** Runs a command inside the pod `frontend-pod`.
+**Step 7.** Inside the pod `frontend-pod`, not on the server: refreshes the list of packages, then the commands after it.
 
 ```bash
 kubectl exec frontend-pod -- bash -c "apt-get update && apt-get -y install curl && curl $BACKEND_POD_1_IP"
@@ -139,16 +139,16 @@ Get:5 http://ports.ubuntu.com/ubuntu-ports resolute/multiverse arm64 Packages [2
 Get:6 http://ports.ubuntu.com/ubuntu-ports resolute/main arm64 Packages [1860 kB]
 Get:7 http://ports.ubuntu.com/ubuntu-ports resolute/universe arm64 Packages [19.9 MB]
 Get:8 http://ports.ubuntu.com/ubuntu-ports resolute/restricted arm64 Packages [231 kB]
-Get:9 http://ports.ubuntu.com/ubuntu-ports resolute-updates/main arm64 Packages [957 kB]
-Get:10 http://ports.ubuntu.com/ubuntu-ports resolute-updates/restricted arm64 Packages [848 kB]
-Get:11 http://ports.ubuntu.com/ubuntu-ports resolute-updates/multiverse arm64 Packages [26.3 kB]
-Get:12 http://ports.ubuntu.com/ubuntu-ports resolute-updates/universe arm64 Packages [417 kB]
+Get:9 http://ports.ubuntu.com/ubuntu-ports resolute-updates/restricted arm64 Packages [915 kB]
+Get:10 http://ports.ubuntu.com/ubuntu-ports resolute-updates/universe arm64 Packages [417 kB]
+Get:11 http://ports.ubuntu.com/ubuntu-ports resolute-updates/main arm64 Packages [1021 kB]
+Get:12 http://ports.ubuntu.com/ubuntu-ports resolute-updates/multiverse arm64 Packages [26.3 kB]
 Get:13 http://ports.ubuntu.com/ubuntu-ports resolute-backports/universe arm64 Packages [3309 B]
-Get:14 http://ports.ubuntu.com/ubuntu-ports resolute-security/main arm64 Packages [771 kB]
-Get:15 http://ports.ubuntu.com/ubuntu-ports resolute-security/universe arm64 Packages [254 kB]
+Get:14 http://ports.ubuntu.com/ubuntu-ports resolute-security/universe arm64 Packages [254 kB]
+Get:15 http://ports.ubuntu.com/ubuntu-ports resolute-security/restricted arm64 Packages [813 kB]
 Get:16 http://ports.ubuntu.com/ubuntu-ports resolute-security/multiverse arm64 Packages [24.5 kB]
-Get:17 http://ports.ubuntu.com/ubuntu-ports resolute-security/restricted arm64 Packages [813 kB]
-Fetched 27.0 MB in 14s (1875 kB/s)
+Get:17 http://ports.ubuntu.com/ubuntu-ports resolute-security/main arm64 Packages [771 kB]
+Fetched 27.1 MB in 9s (3088 kB/s)
 … (235 more lines)
 ```
 
@@ -191,8 +191,8 @@ You should see something like:
 
 ```text
 NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-kplabs-service   ClusterIP   10.96.187.132   <none>        8080/TCP   0s
-kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP    98s
+kplabs-service   ClusterIP   10.96.190.187   <none>        8080/TCP   0s
+kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP    2m36s
 ```
 
 **Step 11.** Shows the details of the Service `kplabs-service`, with its recent events at the bottom.
@@ -212,8 +212,8 @@ Selector:                 <none>
 Type:                     ClusterIP
 IP Family Policy:         SingleStack
 IP Families:              IPv4
-IP:                       10.96.187.132
-IPs:                      10.96.187.132
+IP:                       10.96.190.187
+IPs:                      10.96.190.187
 Port:                     <unset>  8080/TCP
 TargetPort:               80/TCP
 Endpoints:                <none>
@@ -261,7 +261,7 @@ SERVICE_IP=$(kubectl get svc kplabs-service -o jsonpath='{.spec.clusterIP}')
 
 It prints nothing when it works.
 
-**Step 15.** Runs a command inside the pod `frontend-pod`.
+**Step 15.** Inside the pod `frontend-pod`, not on the server: sends an HTTP request to `SERVICE_IP:8080` and prints the answer.
 
 ```bash
 kubectl exec frontend-pod -- curl -s $SERVICE_IP:8080
@@ -415,11 +415,11 @@ Selector:                 app=nginx
 Type:                     ClusterIP
 IP Family Policy:         SingleStack
 IP Families:              IPv4
-IP:                       10.96.29.12
-IPs:                      10.96.29.12
+IP:                       10.96.132.12
+IPs:                      10.96.132.12
 Port:                     <unset>  80/TCP
 TargetPort:               80/TCP
-Endpoints:                10.244.1.4:80,10.244.2.3:80,10.244.2.4:80
+Endpoints:                10.244.1.4:80,10.244.1.3:80,10.244.2.4:80
 Session Affinity:         None
 Internal Traffic Policy:  Cluster
 Events:                   <none>
@@ -453,7 +453,6 @@ Waiting for deployment "nginx-deployment" rollout to finish: 5 of 10 updated rep
 Waiting for deployment "nginx-deployment" rollout to finish: 6 of 10 updated replicas are available...
 Waiting for deployment "nginx-deployment" rollout to finish: 7 of 10 updated replicas are available...
 Waiting for deployment "nginx-deployment" rollout to finish: 8 of 10 updated replicas are available...
-Waiting for deployment "nginx-deployment" rollout to finish: 9 of 10 updated replicas are available...
 deployment "nginx-deployment" successfully rolled out
 ```
 
@@ -474,11 +473,11 @@ Selector:                 app=nginx
 Type:                     ClusterIP
 IP Family Policy:         SingleStack
 IP Families:              IPv4
-IP:                       10.96.29.12
-IPs:                      10.96.29.12
+IP:                       10.96.132.12
+IPs:                      10.96.132.12
 Port:                     <unset>  80/TCP
 TargetPort:               80/TCP
-Endpoints:                10.244.1.4:80,10.244.2.3:80,10.244.2.4:80 + 7 more...
+Endpoints:                10.244.1.4:80,10.244.1.3:80,10.244.2.4:80 + 6 more...
 Session Affinity:         None
 Internal Traffic Policy:  Cluster
 Events:                   <none>
@@ -537,11 +536,11 @@ Selector:                 app=nginx
 Type:                     ClusterIP
 IP Family Policy:         SingleStack
 IP Families:              IPv4
-IP:                       10.96.29.12
-IPs:                      10.96.29.12
+IP:                       10.96.132.12
+IPs:                      10.96.132.12
 Port:                     <unset>  80/TCP
 TargetPort:               80/TCP
-Endpoints:                10.244.1.4:80,10.244.2.3:80,10.244.2.4:80 + 8 more...
+Endpoints:                10.244.1.4:80,10.244.1.3:80,10.244.2.4:80 + 8 more...
 Session Affinity:         None
 Internal Traffic Policy:  Cluster
 Events:                   <none>
@@ -560,9 +559,9 @@ Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointS
 Name:         kplabs-service-selector
 Namespace:    default
 Labels:       endpoints.kubernetes.io/managed-by=endpoint-controller
-Annotations:  endpoints.kubernetes.io/last-change-trigger-time: 2026-10-27T23:12:36Z
+Annotations:  endpoints.kubernetes.io/last-change-trigger-time: 2026-10-28T13:10:25Z
 Subsets:
-  Addresses:          10.244.1.4,10.244.1.5,10.244.1.6,10.244.1.7,10.244.1.8,10.244.2.3,10.244.2.4,10.244.2.5,10.244.2.6,10.244.2.7,10.244.2.8
+  Addresses:          10.244.1.3,10.244.1.4,10.244.1.5,10.244.1.6,10.244.1.7,10.244.1.8,10.244.2.4,10.244.2.5,10.244.2.6,10.244.2.7,10.244.2.8
   NotReadyAddresses:  <none>
   Ports:
     Name     Port  Protocol
@@ -635,7 +634,7 @@ Follow [05-nodeport.md](https://github.com/kumbulanit/CKA/blob/main/04-networkin
 2. Write and apply **nodeport.yaml**: a Service **kplabs-nodeport** of type NodePort that selects
    `type: publicpod`, port 80 → 80.
 3. Find the node port with `kubectl get service`, and the worker IPs with `kubectl get nodes -o wide`.
-   Instead of a browser, use `curl http://minikube-m02:<NODEPORT>`.
+   Instead of a browser, use `curl http://$(minikube ip -n minikube-m02):<NODEPORT>`.
 4. Delete the pod and the service.
 
 ### Step by step
@@ -662,9 +661,9 @@ You should see something like:
 
 ```text
 NAME            READY   STATUS              RESTARTS   AGE    LABELS
-backend-pod-1   1/1     Running             0          102s   run=backend-pod-1
-backend-pod-2   1/1     Running             0          102s   run=backend-pod-2
-frontend-pod    1/1     Running             0          102s   run=frontend-pod
+backend-pod-1   1/1     Running             0          107s   run=backend-pod-1
+backend-pod-2   1/1     Running             0          106s   run=backend-pod-2
+frontend-pod    1/1     Running             0          106s   run=frontend-pod
 nodeport-pod    0/1     ContainerCreating   0          0s     type=publicpod
 ```
 
@@ -710,9 +709,9 @@ You should see something like:
 
 ```text
 NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-kplabs-nodeport   NodePort    10.96.21.142    <none>        80:30985/TCP   0s
-kplabs-service    ClusterIP   10.96.187.132   <none>        8080/TCP       39s
-kubernetes        ClusterIP   10.96.0.1       <none>        443/TCP        2m17s
+kplabs-nodeport   NodePort    10.96.24.243    <none>        80:32673/TCP   1s
+kplabs-service    ClusterIP   10.96.190.187   <none>        8080/TCP       39s
+kubernetes        ClusterIP   10.96.0.1       <none>        443/TCP        3m15s
 ```
 
 **Step 6.** Lists the nodes, with IP addresses and versions.
@@ -725,9 +724,9 @@ You should see something like:
 
 ```text
 NAME           STATUS   ROLES           AGE     VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION                               CONTAINER-RUNTIME
-minikube       Ready    control-plane   2m19s   v1.36.4   192.168.147.4   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
-minikube-m02   Ready    <none>          2m8s    v1.36.4   192.168.147.3   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
-minikube-m03   Ready    <none>          2m8s    v1.36.4   192.168.147.2   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+minikube       Ready    control-plane   3m16s   v1.36.4   192.168.147.2   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+minikube-m02   Ready    worker          3m5s    v1.36.4   192.168.147.4   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+minikube-m03   Ready    worker          3m5s    v1.36.4   192.168.147.3   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
 ```
 
 **Step 7.** Waits until the pod `nodeport-pod` is Ready.
@@ -742,10 +741,10 @@ You should see something like:
 pod/nodeport-pod condition met
 ```
 
-**Step 8.** Sends an HTTP request to `http://minikube-m02:…` and prints the answer.
+**Step 8.** Sends an HTTP request to `http://…:…` and prints the answer.
 
 ```bash
-curl -s http://minikube-m02:$(kubectl get svc kplabs-nodeport -o jsonpath='{.spec.ports[0].nodePort}') | head -4
+curl -s http://$(minikube ip -n minikube-m02):$(kubectl get svc kplabs-nodeport -o jsonpath='{.spec.ports[0].nodePort}') | head -4
 ```
 
 You should see something like:
@@ -787,7 +786,7 @@ service "kplabs-nodeport" deleted from default namespace
 - The check says: _nodeport-pod has not run yet._
 - The check says: _nodeport-pod or kplabs-nodeport is still there. The last step deletes them._
 - `kubectl get service kplabs-nodeport` shows `80:3XXXX/TCP`; the second number is the node port, open on every node.
-- `curl http://minikube-m02:<NODEPORT>` and `curl http://minikube-m03:<NODEPORT>` both reach the pod.
+- `curl http://$(minikube ip -n minikube-m02):<NODEPORT>` and `curl http://$(minikube ip -n minikube-m03):<NODEPORT>` both reach the pod.
 
 ### Why it works
 
@@ -834,9 +833,9 @@ You should see something like:
 
 ```text
 NAME            READY   STATUS              RESTARTS   AGE    LABELS
-backend-pod-1   1/1     Running             0          108s   run=backend-pod-1
-backend-pod-2   1/1     Running             0          108s   run=backend-pod-2
-frontend-pod    1/1     Running             0          108s   run=frontend-pod
+backend-pod-1   1/1     Running             0          113s   run=backend-pod-1
+backend-pod-2   1/1     Running             0          112s   run=backend-pod-2
+frontend-pod    1/1     Running             0          112s   run=frontend-pod
 lb-pod          0/1     ContainerCreating   0          0s     type=loadbalanced
 ```
 
@@ -889,11 +888,11 @@ Selector:                 type=loadbalanced
 Type:                     LoadBalancer
 IP Family Policy:         SingleStack
 IP Families:              IPv4
-IP:                       10.96.38.128
-IPs:                      10.96.38.128
+IP:                       10.96.4.52
+IPs:                      10.96.4.52
 Port:                     <unset>  80/TCP
 TargetPort:               80/TCP
-NodePort:                 <unset>  30621/TCP
+NodePort:                 <unset>  32275/TCP
 Endpoints:                
 Session Affinity:         None
 External Traffic Policy:  Cluster
@@ -910,8 +909,8 @@ kubectl get service kplabs-loadbalancer
 You should see something like:
 
 ```text
-NAME                  TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
-kplabs-loadbalancer   LoadBalancer   10.96.38.128   <pending>     80:30621/TCP   0s
+NAME                  TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)        AGE
+kplabs-loadbalancer   LoadBalancer   10.96.4.52   <pending>     80:32275/TCP   0s
 ```
 
 **Step 7.** Waits until the pod `lb-pod` is Ready.
@@ -926,10 +925,10 @@ You should see something like:
 pod/lb-pod condition met
 ```
 
-**Step 8.** Sends an HTTP request to `http://minikube-m02:…` and prints the answer.
+**Step 8.** Sends an HTTP request to `http://…:…` and prints the answer.
 
 ```bash
-curl -s http://minikube-m02:$(kubectl get svc kplabs-loadbalancer -o jsonpath='{.spec.ports[0].nodePort}') | head -4
+curl -s http://$(minikube ip -n minikube-m02):$(kubectl get svc kplabs-loadbalancer -o jsonpath='{.spec.ports[0].nodePort}') | head -4
 ```
 
 You should see something like:
@@ -1110,8 +1109,8 @@ Selector:                 run=nginx
 Type:                     ClusterIP
 IP Family Policy:         SingleStack
 IP Families:              IPv4
-IP:                       10.96.227.212
-IPs:                      10.96.227.212
+IP:                       10.96.93.229
+IPs:                      10.96.93.229
 Port:                     <unset>  80/TCP
 TargetPort:               80/TCP
 Endpoints:                
@@ -1169,10 +1168,10 @@ You should see something like:
 
 ```text
 NAME                     TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-kplabs-service           ClusterIP   10.96.187.132   <none>        8080/TCP       51s
-kubernetes               ClusterIP   10.96.0.1       <none>        443/TCP        2m29s
-nginx-nodeport-service   NodePort    10.96.124.141   <none>        80:31509/TCP   0s
-nginx-service            ClusterIP   10.96.227.212   <none>        80/TCP         0s
+kplabs-service           ClusterIP   10.96.190.187   <none>        8080/TCP       51s
+kubernetes               ClusterIP   10.96.0.1       <none>        443/TCP        3m27s
+nginx-nodeport-service   NodePort    10.96.115.37    <none>        80:31496/TCP   0s
+nginx-service            ClusterIP   10.96.93.229    <none>        80/TCP         0s
 ```
 
 **Step 11.** Creates a Service in front of the Deployment `kplabs-deployment` on port 80.
@@ -1198,7 +1197,6 @@ You should see something like:
 ```text
 Waiting for deployment "kplabs-deployment" rollout to finish: 0 of 3 updated replicas are available...
 Waiting for deployment "kplabs-deployment" rollout to finish: 1 of 3 updated replicas are available...
-Waiting for deployment "kplabs-deployment" rollout to finish: 2 of 3 updated replicas are available...
 deployment "kplabs-deployment" successfully rolled out
 ```
 
@@ -1219,11 +1217,11 @@ Selector:                 tier=frontend
 Type:                     ClusterIP
 IP Family Policy:         SingleStack
 IP Families:              IPv4
-IP:                       10.96.200.246
-IPs:                      10.96.200.246
+IP:                       10.96.15.177
+IPs:                      10.96.15.177
 Port:                     <unset>  80/TCP
 TargetPort:               80/TCP
-Endpoints:                10.244.1.9:80,10.244.1.10:80,10.244.2.12:80
+Endpoints:                10.244.2.9:80,10.244.1.12:80,10.244.2.10:80
 Session Affinity:         None
 Internal Traffic Policy:  Cluster
 Events:                   <none>
@@ -1355,9 +1353,9 @@ You should see something like:
 
 ```text
 NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-first-svc        NodePort    10.96.155.141   <none>        80:31755/TCP   1s
-kplabs-service   ClusterIP   10.96.187.132   <none>        8080/TCP       57s
-kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP        2m35s
+first-svc        NodePort    10.96.168.160   <none>        80:31959/TCP   0s
+kplabs-service   ClusterIP   10.96.190.187   <none>        8080/TCP       58s
+kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP        3m34s
 ```
 
 **Step 4.** Shows the Service `first-svc` as YAML, as the API server stores it.
@@ -1372,17 +1370,17 @@ You should see something like:
 apiVersion: v1
 kind: Service
 metadata:
-  creationTimestamp: "2026-10-27T23:12:57Z"
+  creationTimestamp: "2026-10-28T13:10:49Z"
   labels:
     run: nginx
   name: first-svc
   namespace: default
-  resourceVersion: "1377"
-  uid: 86fc9ae3-b552-432f-a756-ef40483f19fd
+  resourceVersion: "1382"
+  uid: 71d99c13-fcc8-409b-a469-b3568c4bdf3d
 spec:
-  clusterIP: 10.96.155.141
+  clusterIP: 10.96.168.160
   clusterIPs:
-  - 10.96.155.141
+  - 10.96.168.160
   externalTrafficPolicy: Cluster
   internalTrafficPolicy: Cluster
   ipFamilies:
@@ -1400,9 +1398,9 @@ You should see something like:
 
 ```text
 NAME           STATUS   ROLES           AGE     VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION                               CONTAINER-RUNTIME
-minikube       Ready    control-plane   2m37s   v1.36.4   192.168.147.4   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
-minikube-m02   Ready    <none>          2m26s   v1.36.4   192.168.147.3   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
-minikube-m03   Ready    <none>          2m26s   v1.36.4   192.168.147.2   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+minikube       Ready    control-plane   3m35s   v1.36.4   192.168.147.2   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+minikube-m02   Ready    worker          3m24s   v1.36.4   192.168.147.4   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
+minikube-m03   Ready    worker          3m24s   v1.36.4   192.168.147.3   <none>        Debian GNU/Linux 13 (trixie)   7.2.9-orbstack-00391-g2b298d05fbd4 (arm64)   containerd://2.3.4
 ```
 
 **Step 6.** Waits until the pod `nginx` is Ready.
@@ -1417,10 +1415,10 @@ You should see something like:
 pod/nginx condition met
 ```
 
-**Step 7.** Sends an HTTP request to `http://minikube-m02:…` and prints the answer.
+**Step 7.** Sends an HTTP request to `http://…:…` and prints the answer.
 
 ```bash
-curl -s http://minikube-m02:$(kubectl get svc first-svc -o jsonpath='{.spec.ports[0].nodePort}') | head -4
+curl -s http://$(minikube ip -n minikube-m02):$(kubectl get svc first-svc -o jsonpath='{.spec.ports[0].nodePort}') | head -4
 ```
 
 You should see something like:
@@ -1482,10 +1480,10 @@ You should see something like:
 
 ```text
 NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-first-svc        NodePort    10.96.155.141   <none>        80:31755/TCP   3s
-kplabs-service   ClusterIP   10.96.187.132   <none>        8080/TCP       59s
-kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP        2m37s
-named-svc        NodePort    10.96.209.105   <none>        80:31027/TCP   0s
+first-svc        NodePort    10.96.168.160   <none>        80:31959/TCP   3s
+kplabs-service   ClusterIP   10.96.190.187   <none>        8080/TCP       61s
+kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP        3m37s
+named-svc        NodePort    10.96.199.166   <none>        80:30238/TCP   0s
 ```
 
 **Step 13.** Waits until the pod `nginx2` is Ready.
@@ -1500,10 +1498,10 @@ You should see something like:
 pod/nginx2 condition met
 ```
 
-**Step 14.** Sends an HTTP request to `http://minikube-m02:…` and prints the answer.
+**Step 14.** Sends an HTTP request to `http://…:…` and prints the answer.
 
 ```bash
-curl -s http://minikube-m02:$(kubectl get svc named-svc -o jsonpath='{.spec.ports[0].nodePort}') | head -4
+curl -s http://$(minikube ip -n minikube-m02):$(kubectl get svc named-svc -o jsonpath='{.spec.ports[0].nodePort}') | head -4
 ```
 
 You should see something like:
@@ -1554,11 +1552,11 @@ You should see something like:
 
 ```text
 NAME                 STATUS   AGE
-default              Active   2m42s
-kube-node-lease      Active   2m42s
-kube-public          Active   2m42s
-kube-system          Active   2m42s
-local-path-storage   Active   2m38s
+default              Active   3m41s
+kube-node-lease      Active   3m41s
+kube-public          Active   3m41s
+kube-system          Active   3m41s
+local-path-storage   Active   3m37s
 ```
 
 **Step 2.** Lists the pods in the namespace `kube-system`.
@@ -1570,19 +1568,19 @@ kubectl get pods -n kube-system
 You should see something like:
 
 ```text
-NAME                               READY   STATUS    RESTARTS   AGE
-coredns-589f44dc88-v29q7           1/1     Running   0          2m32s
-coredns-589f44dc88-x6nbd           1/1     Running   0          2m32s
-etcd-minikube                      1/1     Running   0          2m41s
-kindnet-v4qvn                      1/1     Running   0          2m19s
-kindnet-vvprk                      1/1     Running   0          2m17s
-kindnet-w4mxf                      1/1     Running   0          2m18s
-kube-apiserver-minikube            1/1     Running   0          2m41s
-kube-controller-manager-minikube   1/1     Running   0          2m41s
-kube-proxy-nwcfq                   1/1     Running   0          2m32s
-kube-proxy-pkg5q                   1/1     Running   0          2m31s
-kube-proxy-tr6fd                   1/1     Running   0          2m31s
-kube-scheduler-minikube            1/1     Running   0          2m41s
+NAME                               READY   STATUS    RESTARTS        AGE
+coredns-589f44dc88-6rn5s           1/1     Running   0               3m31s
+coredns-589f44dc88-ww6r4           1/1     Running   0               3m31s
+etcd-minikube                      1/1     Running   0               2m23s
+kindnet-l7wgb                      1/1     Running   0               3m15s
+kindnet-s4fzm                      1/1     Running   0               3m14s
+kindnet-xkwz2                      1/1     Running   0               3m15s
+kube-apiserver-minikube            1/1     Running   0               2m23s
+kube-controller-manager-minikube   1/1     Running   0               2m23s
+kube-proxy-2wz2n                   1/1     Running   0               3m32s
+kube-proxy-9rnh7                   1/1     Running   0               3m30s
+kube-proxy-zzjzv                   1/1     Running   0               3m30s
+kube-scheduler-minikube            1/1     Running   1 (2m58s ago)   3m39s
 ```
 
 **Step 3.** Creates the namespace `teama`.
@@ -1607,11 +1605,11 @@ You should see something like:
 
 ```text
 NAME                 STATUS   AGE
-default              Active   2m42s
-kube-node-lease      Active   2m42s
-kube-public          Active   2m42s
-kube-system          Active   2m42s
-local-path-storage   Active   2m38s
+default              Active   3m42s
+kube-node-lease      Active   3m42s
+kube-public          Active   3m42s
+kube-system          Active   3m42s
+local-path-storage   Active   3m38s
 teama                Active   0s
 ```
 
@@ -1725,11 +1723,11 @@ You should see something like:
 
 ```text
 Hit:1 http://deb.debian.org/debian trixie InRelease
-Hit:2 http://deb.debian.org/debian trixie-updates InRelease
-Hit:3 http://deb.debian.org/debian-security trixie-security InRelease
-Get:4 https://packages.buildkite.com/helm-linux/helm-debian/any any InRelease [29.3 kB]
+Get:3 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+Get:4 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+Get:2 https://packages.buildkite.com/helm-linux/helm-debian/any any InRelease [29.3 kB]
 Get:5 https://packages.buildkite.com/helm-linux/helm-debian/any any/main arm64 Packages [3630 B]
-Fetched 33.0 kB in 4s (8536 B/s)
+Fetched 124 kB in 3s (39.1 kB/s)
 Reading package lists...
 ```
 
@@ -1839,7 +1837,7 @@ You should see something like:
 
 ```text
 NAME: my-jenkins
-LAST DEPLOYED: Tue Oct 27 23:13:29 2026
+LAST DEPLOYED: Wed Oct 28 13:11:22 2026
 NAMESPACE: default
 STATUS: deployed
 REVISION: 1
@@ -1869,7 +1867,7 @@ You should see something like:
 
 ```text
 NAME          NAMESPACE    REVISION    UPDATED                                    STATUS      CHART             APP VERSION
-my-jenkins    default      1           2026-10-27 23:13:29.563296417 +0000 UTC    deployed    jenkins-5.10.0    2.580.1
+my-jenkins    default      1           2026-10-28 13:11:22.588671153 +0000 UTC    deployed    jenkins-5.10.0    2.580.1
 ```
 
 **Step 5.** Removes the release `my-jenkins` and everything it created.
@@ -1906,8 +1904,8 @@ You should see something like:
 
 ```text
 Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "grafana" chart repository
 ...Successfully got an update from the "jenkins" chart repository
+...Successfully got an update from the "grafana" chart repository
 Update Complete. ⎈Happy Helming!⎈
 ```
 
@@ -1922,7 +1920,7 @@ You should see something like:
 ```text
 level=WARN msg="this chart is deprecated"
 NAME: my-release
-LAST DEPLOYED: Tue Oct 27 23:13:34 2026
+LAST DEPLOYED: Wed Oct 28 13:11:28 2026
 NAMESPACE: default
 STATUS: deployed
 REVISION: 1
@@ -1951,7 +1949,7 @@ You should see something like:
 
 ```text
 NAME          NAMESPACE    REVISION    UPDATED                                    STATUS      CHART              APP VERSION
-my-release    default      1           2026-10-27 23:13:34.320284126 +0000 UTC    deployed    grafana-10.5.15    12.3.1
+my-release    default      1           2026-10-28 13:11:28.608999325 +0000 UTC    deployed    grafana-10.5.15    12.3.1
 ```
 
 **Step 10.** Shows the state of the release `my-release`.
@@ -1964,23 +1962,23 @@ You should see something like:
 
 ```text
 NAME: my-release
-LAST DEPLOYED: Tue Oct 27 23:13:34 2026
+LAST DEPLOYED: Wed Oct 28 13:11:28 2026
 NAMESPACE: default
 STATUS: deployed
 REVISION: 1
 DESCRIPTION: Install complete
 RESOURCES:
-==> v1/ClusterRole
-NAME                             CREATED AT
-my-release-grafana-clusterrole   2026-10-27T23:13:34Z
+==> v1/Role
+NAME                 CREATED AT
+my-release-grafana   2026-10-28T13:11:28Z
 
-==> v1/Deployment
-NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
-my-release-grafana   0/1     1            0           0s
+==> v1/Service
+NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+my-release-grafana   ClusterIP   10.96.44.179   <none>        80/TCP    1s
 
 ==> v1/Pod(related)
-NAME                                READY   STATUS              RESTARTS   AGE
-my-release-grafana-8d89b5f8-zfp9q   0/1     ContainerCreating   0          0s
+NAME                                  READY   STATUS              RESTARTS   AGE
+my-release-grafana-5f67588fff-q5xbb   0/1     ContainerCreating   0          0s
 … (49 more lines)
 ```
 
@@ -2062,7 +2060,7 @@ steps 1 to 6:
    `website02.example.internal` to service2.
 3. Install the ingress-nginx controller with Helm, exposed on node port **30080**.
 4. Change each pod's index.html to `This is Website 1` and `This is Website 2`.
-5. Check with `curl -H "Host: website01.example.internal" http://minikube-m02:30080` (and website02).
+5. Check with `curl -H "Host: website01.example.internal" http://$(minikube ip -n minikube-m02):30080` (and website02).
 
 Press **Check** now; step 7 (uninstall and delete) comes after the check passes.
 
@@ -2126,12 +2124,12 @@ You should see something like:
 
 ```text
 NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-first-svc        NodePort    10.96.155.141   <none>        80:31755/TCP   39s
-kplabs-service   ClusterIP   10.96.187.132   <none>        8080/TCP       95s
-kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP        3m13s
-named-svc        NodePort    10.96.209.105   <none>        80:31027/TCP   36s
-service1         ClusterIP   10.96.252.93    <none>        80/TCP         0s
-service2         ClusterIP   10.96.209.166   <none>        80/TCP         0s
+first-svc        NodePort    10.96.168.160   <none>        80:31959/TCP   44s
+kplabs-service   ClusterIP   10.96.190.187   <none>        8080/TCP       102s
+kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP        4m18s
+named-svc        NodePort    10.96.199.166   <none>        80:30238/TCP   41s
+service1         ClusterIP   10.96.138.176   <none>        80/TCP         0s
+service2         ClusterIP   10.96.113.98    <none>        80/TCP         0s
 ```
 
 **Step 6.** Starts the pod `frontend-pod` from the image `ubuntu`.
@@ -2160,7 +2158,7 @@ pod/service-pod-2 condition met
 pod/frontend-pod condition met
 ```
 
-**Step 8.** Runs a command inside the pod `frontend-pod`.
+**Step 8.** Inside the pod `frontend-pod`, not on the server: runs `"apt-get`, then the commands after it.
 
 ```bash
 kubectl exec frontend-pod -- bash -c "apt-get update && apt-get -y install curl nano && curl -s $(kubectl get svc service1 -o jsonpath='{.spec.clusterIP}') | head -4 && curl -s $(kubectl get svc service2 -o jsonpath='{.spec.clusterIP}') | head -4"
@@ -2270,9 +2268,9 @@ Rules:
   Host                        Path  Backends
   ----                        ----  --------
   website01.example.internal  
-                              /   service1:80 (10.244.1.14:80)
+                              /   service1:80 (10.244.2.12:80)
   website02.example.internal  
-                              /   service2:80 (10.244.1.15:80)
+                              /   service2:80 (10.244.2.13:80)
 Annotations:                  <none>
 Events:                       <none>
 ```
@@ -2289,7 +2287,7 @@ You should see something like:
 ```text
 Release "ingress-nginx" does not exist. Installing it now.
 NAME: ingress-nginx
-LAST DEPLOYED: Tue Oct 27 23:13:50 2026
+LAST DEPLOYED: Wed Oct 28 13:11:50 2026
 NAMESPACE: ingress-nginx
 STATUS: deployed
 REVISION: 1
@@ -2317,8 +2315,8 @@ helm list --all-namespaces
 You should see something like:
 
 ```text
-NAME             NAMESPACE        REVISION    UPDATED                                   STATUS      CHART                   APP VERSION
-ingress-nginx    ingress-nginx    1           2026-10-27 23:13:50.19652985 +0000 UTC    deployed    ingress-nginx-4.15.1    1.15.1
+NAME             NAMESPACE        REVISION    UPDATED                                    STATUS      CHART                   APP VERSION
+ingress-nginx    ingress-nginx    1           2026-10-28 13:11:50.975042322 +0000 UTC    deployed    ingress-nginx-4.15.1    1.15.1
 ```
 
 **Step 15.** Lists the ingressclass.
@@ -2331,7 +2329,7 @@ You should see something like:
 
 ```text
 NAME    CONTROLLER             PARAMETERS   AGE
-nginx   k8s.io/ingress-nginx   <none>       4s
+nginx   k8s.io/ingress-nginx   <none>       5s
 ```
 
 **Step 16.** Lists the Services in the namespace `ingress-nginx`.
@@ -2344,8 +2342,8 @@ You should see something like:
 
 ```text
 NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
-ingress-nginx-controller             NodePort    10.96.151.244   <none>        80:30080/TCP,443:31679/TCP   4s
-ingress-nginx-controller-admission   ClusterIP   10.96.180.22    <none>        443/TCP                      4s
+ingress-nginx-controller             NodePort    10.96.190.40    <none>        80:30080/TCP,443:31877/TCP   5s
+ingress-nginx-controller-admission   ClusterIP   10.96.128.127   <none>        443/TCP                      5s
 ```
 
 **Step 17.** Waits until the rollout of the Deployment `ingress-nginx-controller` has finished.
@@ -2373,7 +2371,7 @@ You should see something like:
 ingress.networking.k8s.io/name-virtual-host-ingress unchanged
 ```
 
-**Step 19.** Runs a command inside the pod `service-pod-1`.
+**Step 19.** Inside the pod `service-pod-1`, not on the server: runs `'cd`, then the commands after it.
 
 ```bash
 kubectl exec service-pod-1 -- bash -c 'cd /usr/share/nginx/html && echo "This is Website 1" > index.html'
@@ -2381,7 +2379,7 @@ kubectl exec service-pod-1 -- bash -c 'cd /usr/share/nginx/html && echo "This is
 
 It prints nothing when it works.
 
-**Step 20.** Runs a command inside the pod `service-pod-2`.
+**Step 20.** Inside the pod `service-pod-2`, not on the server: runs `'cd`, then the commands after it.
 
 ```bash
 kubectl exec service-pod-2 -- bash -c 'cd /usr/share/nginx/html && echo "This is Website 2" > index.html'
@@ -2397,10 +2395,10 @@ sleep 10
 
 It prints nothing when it works.
 
-**Step 22.** Sends an HTTP request to `http://minikube-m02:30080` and prints the answer.
+**Step 22.** Sends an HTTP request to `http://…:30080` and prints the answer.
 
 ```bash
-curl -H "Host: website01.example.internal" http://minikube-m02:30080
+curl -H "Host: website01.example.internal" http://$(minikube ip -n minikube-m02):30080
 ```
 
 You should see something like:
@@ -2408,14 +2406,14 @@ You should see something like:
 ```text
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100    18  100    18    0     0   2265      0 --:--:-- --:--:-- --:--:--  2571
+100    18  100    18    0     0    560      0 --:--:-- --:--:-- --:--:--   562
 This is Website 1
 ```
 
-**Step 23.** Sends an HTTP request to `http://minikube-m02:30080` and prints the answer.
+**Step 23.** Sends an HTTP request to `http://…:30080` and prints the answer.
 
 ```bash
-curl -H "Host: website02.example.internal" http://minikube-m02:30080
+curl -H "Host: website02.example.internal" http://$(minikube ip -n minikube-m02):30080
 ```
 
 You should see something like:
@@ -2423,7 +2421,7 @@ You should see something like:
 ```text
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100    18  100    18    0     0   1633      0 --:--:-- --:--:-- --:--:--  1800
+100    18  100    18    0     0   2527      0 --:--:-- --:--:-- --:--:--  2571
 This is Website 2
 ```
 
@@ -2431,7 +2429,7 @@ This is Website 2
 
 - The check says: _There is no Ingress name-virtual-host-ingress with ingressClassName nginx._
 - The check says: _The ingress-nginx controller is not installed in the namespace ingress-nginx with node port 30080._
-- The check says: _curl -H "Host: website01.example.internal" http://minikube-m02:30080 does not show "This is Website 1" (or website02 "This is Website 2") yet._
+- The check says: _curl -H "Host: website01.example.internal" http://$(minikube ip -n minikube-m02):30080 does not show "This is Website 1" (or website02 "This is Website 2") yet._
 - An Ingress does nothing until a controller runs: `kubectl get ingressclass` shows `nginx` once ingress-nginx is installed.
 - `kubectl exec service-pod-1 -- bash -c 'echo "This is Website 1" > /usr/share/nginx/html/index.html'` changes the page without an interactive shell.
 
@@ -2469,23 +2467,23 @@ You should see something like:
 
 ```text
 NAMESPACE            NAME                                          AGE
-default              default                                       10m
-ingress-nginx        default                                       7m31s
-ingress-nginx        ingress-nginx                                 6m54s
-kube-node-lease      default                                       10m
-kube-public          default                                       10m
-kube-system          attachdetach-controller                       10m
-kube-system          bootstrap-signer                              10m
-kube-system          certificate-controller                        10m
-kube-system          clusterrole-aggregation-controller            10m
-kube-system          coredns                                       10m
-kube-system          cronjob-controller                            10m
-kube-system          daemon-set-controller                         10m
-kube-system          default                                       10m
-kube-system          deployment-controller                         10m
-kube-system          device-taint-eviction-controller              10m
-kube-system          disruption-controller                         10m
-kube-system          endpoint-controller                           10m
+default              default                                       7m30s
+ingress-nginx        default                                       3m2s
+ingress-nginx        ingress-nginx                                 2m13s
+kube-node-lease      default                                       7m30s
+kube-public          default                                       7m30s
+kube-system          attachdetach-controller                       7m33s
+kube-system          bootstrap-signer                              7m35s
+kube-system          certificate-controller                        7m34s
+kube-system          clusterrole-aggregation-controller            7m34s
+kube-system          coredns                                       7m37s
+kube-system          cronjob-controller                            7m35s
+kube-system          daemon-set-controller                         7m32s
+kube-system          default                                       7m30s
+kube-system          deployment-controller                         7m36s
+kube-system          device-taint-eviction-controller              7m34s
+kube-system          disruption-controller                         7m32s
+kube-system          endpoint-controller                           7m33s
 … (32 more lines)
 ```
 
@@ -2524,13 +2522,13 @@ You should see something like:
 ```text
 NAME            READY   STATUS    RESTARTS   AGE
 app-pod         1/1     Running   0          3s
-backend-pod-1   1/1     Running   0          10m
-backend-pod-2   1/1     Running   0          10m
-frontend-pod    1/1     Running   0          10m
-nginx           1/1     Running   0          8m27s
-nginx2          1/1     Running   0          8m24s
-service-pod-1   1/1     Running   0          7m48s
-service-pod-2   1/1     Running   0          7m48s
+backend-pod-1   1/1     Running   0          6m14s
+backend-pod-2   1/1     Running   0          6m13s
+frontend-pod    1/1     Running   0          6m13s
+nginx           1/1     Running   0          4m7s
+nginx2          1/1     Running   0          4m4s
+service-pod-1   1/1     Running   0          3m23s
+service-pod-2   1/1     Running   0          3m23s
 ```
 
 **Step 5.** Shows the details of the pod `app-pod`, with its recent events at the bottom.
@@ -2546,24 +2544,24 @@ Name:             app-pod
 Namespace:        default
 Priority:         0
 Service Account:  default
-Node:             minikube-m03/192.168.147.2
-Start Time:       Tue, 27 Oct 2026 23:21:21 +0000
+Node:             minikube-m03/192.168.147.3
+Start Time:       Wed, 28 Oct 2026 13:14:53 +0000
 Labels:           run=app-pod
 Annotations:      <none>
 Status:           Running
-IP:               10.244.2.19
+IP:               10.244.1.21
 IPs:
-  IP:  10.244.2.19
+  IP:  10.244.1.21
 Containers:
   app-pod:
-    Container ID:   containerd://abd8a9b9bec52f81635a443c24727ae9c0e8a9859eab5e573027141a4ee17ac9
+    Container ID:   containerd://a790a58f7537df9aeb71dcbae28f97c1cfe6a317957f3d7b66668ed394ceca42
     Image:          nginx
-    Image ID:       docker.io/library/nginx@sha256:4c41e2d0a3a55b325ed572cd0200bdb72af1433c3daa2bca6ef8eea68ce504a2
+    Image ID:       docker.io/library/nginx@sha256:600f7cd45e27aa13e9304c834ab7c1b0ff39df85ee1dcc5087955455d77bc83b
     Port:           <none>
 … (34 more lines)
 ```
 
-**Step 6.** Runs a command inside the pod `app-pod`.
+**Step 6.** Inside the pod `app-pod`, not on the server: runs `'cd`, then the commands after it.
 
 ```bash
 kubectl exec app-pod -- bash -c 'cd /var/run/secrets/kubernetes.io/serviceaccount/ && ls && token=$(cat token) && echo $token && curl -s --cacert ca.crt -H "Authorization: Bearer $token" https://kubernetes.default.svc/api/v1 | head -20'
@@ -2575,7 +2573,7 @@ You should see something like:
 ca.crt
 namespace
 token
-eyJhbGciOiJSUzI1NiIsImtpZCI6InBPMkVYZDdZRWllXzlidlVQcUUxWXZuZ25CTkxjQjRIVUF2RzRWNmhleGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxODI0Njc5MjgxLCJpYXQiOjE3OTMxNDMyODEsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiODczNGQzMTYtNzYxYi00ZTY2LTgzZDEtZjQ1ZTBhZTQzOGE1Iiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwibm9kZSI6eyJuYW1lIjoibWluaWt1YmUtbTAzIiwidWlkIjoiY2Y1YzFlMjYtODFjNS00MGNlLTg3ODItODM1ZDg0YWU4ZjIwIn0sInBvZCI6eyJuYW1lIjoiYXBwLXBvZCIsInVpZCI6IjE2MDM3N2Q4LWVhZGQtNDJkNy04MWM4LWJlMDU3MzBiYzk1YyJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoiZGVmYXVsdCIsInVpZCI6IjM0OTAzM2IxLTljMDUtNDRmMi1hYWQzLWFmZDczNzgzM2QyMyJ9LCJ3YXJuYWZ0ZXIiOjE3OTMxNDY4ODh9LCJuYmYiOjE3OTMxNDMyODEsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmRlZmF1bHQifQ.ytTeaMI3qU7vdHLp1ME91J9TyEznOfa10vVe9eSfbhUWtrx019cY94IqefkxfsaTdClWbCkYTnqSbfFjfgANm6xoStmYFVx-vLBDuCqTlyDAOe4VMNkLIjyYPauacmgsm2KGmKoNR3PsqAMthzgYc2x7H2NbTdFXniYUDFz8hRAMht2PvvZYcSw02HygYq9In44T5N2WLCuazW0a8RQca9gTS0T1h62Zy2S3CKeAinDgVSpXPUCYB6jCPRykoU2PZXcauPcRP__NgMV6yYTULXiL0eetxscruyO_hzNQ5ryOId52jQ8kAh-n6dVygmG8ds503ZxTV-aK-3WnvGfBDg
+eyJhbGciOiJSUzI1NiIsImtpZCI6IjBSQUxHY2NYQnRnRnk1djFUS09tVU8zY2Y5M3d5QVpvVERKaGN0X1dXYVkifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxODI0NzI5Mjk0LCJpYXQiOjE3OTMxOTMyOTQsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiZGVmNDAxOWUtODcxMC00ZjAwLWI3YjktYTQ1OTg5MWU0ZTg3Iiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwibm9kZSI6eyJuYW1lIjoibWluaWt1YmUtbTAzIiwidWlkIjoiZGZlMWFiMzQtZmE5YS00YTAyLThjZWQtYzU3MDM3MzBhZGY0In0sInBvZCI6eyJuYW1lIjoiYXBwLXBvZCIsInVpZCI6IjY1OWJjZjJlLWVhNDUtNDhiOC1iY2Q5LTdkYTRlNWQwODVkZSJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoiZGVmYXVsdCIsInVpZCI6Ijc3ZjBlYThkLTU0NzMtNDI5Yi1iYzU1LWZkMDRiMWMyZWI4YSJ9LCJ3YXJuYWZ0ZXIiOjE3OTMxOTY5MDF9LCJuYmYiOjE3OTMxOTMyOTQsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmRlZmF1bHQifQ.oIjTU3ycJuq5-c9xeeVVOupFS85dabhGskckS2fejXsVgJ1Pq17MrKWbXU8NVLX2R4vp1mVNPDg1CQm0WncovvZ0dL_iZkwEeBSePaZ6-8VKBSEyUTtHEzHysJZaA_UU5WeV2RXhF86kpHAiokpmcNohRGvbhf6CHAYrMkRGugWiac5y5YGzUjB4EVzxgSI7YX70AIqkgLGnrn0JOFX9hOCuy9X_kxvbdi0hblzyCs-zSIqThodJEZJQP56Ho3bnrwYRWd09pIBw2mL1m2XSKuUyDTJ1DQTVT1lTLU7pHzP4W5pdfEUUXZVcfC1W0jL4BqD5C6HjqKA6s02FS4EFXw
 {
   "kind": "APIResourceList",
   "groupVersion": "v1",
@@ -2603,7 +2601,7 @@ You should see something like:
 
 ```text
 NAME      AGE
-default   10m
+default   7m33s
 ```
 
 **Step 8.** Lists the service accounts in the namespace `kube-system`.
@@ -2616,23 +2614,23 @@ You should see something like:
 
 ```text
 NAME                                          AGE
-attachdetach-controller                       10m
-bootstrap-signer                              10m
-certificate-controller                        10m
-clusterrole-aggregation-controller            10m
-coredns                                       11m
-cronjob-controller                            10m
-daemon-set-controller                         10m
-default                                       10m
-deployment-controller                         10m
-device-taint-eviction-controller              10m
-disruption-controller                         10m
-endpoint-controller                           10m
-endpointslice-controller                      10m
-endpointslicemirroring-controller             10m
-ephemeral-volume-controller                   10m
-expand-controller                             10m
-generic-garbage-collector                     10m
+attachdetach-controller                       7m36s
+bootstrap-signer                              7m38s
+certificate-controller                        7m37s
+clusterrole-aggregation-controller            7m37s
+coredns                                       7m40s
+cronjob-controller                            7m38s
+daemon-set-controller                         7m35s
+default                                       7m33s
+deployment-controller                         7m39s
+device-taint-eviction-controller              7m37s
+disruption-controller                         7m35s
+endpoint-controller                           7m36s
+endpointslice-controller                      7m36s
+endpointslicemirroring-controller             7m36s
+ephemeral-volume-controller                   7m39s
+expand-controller                             7m39s
+generic-garbage-collector                     7m35s
 … (24 more lines)
 ```
 
@@ -2658,7 +2656,7 @@ You should see something like:
 
 ```text
 NAME      AGE
-default   0s
+default   1s
 ```
 
 **Step 11.** Starts the pod `nginx-pod` from the image `nginx` in the namespace `kplabs-test`.
@@ -2711,24 +2709,24 @@ Name:             nginx-pod
 Namespace:        kplabs-test
 Priority:         0
 Service Account:  default
-Node:             minikube-m03/192.168.147.2
-Start Time:       Tue, 27 Oct 2026 23:21:24 +0000
+Node:             minikube-m03/192.168.147.3
+Start Time:       Wed, 28 Oct 2026 13:14:57 +0000
 Labels:           run=nginx-pod
 Annotations:      <none>
 Status:           Running
-IP:               10.244.2.20
+IP:               10.244.1.22
 IPs:
-  IP:  10.244.2.20
+  IP:  10.244.1.22
 Containers:
   nginx-pod:
-    Container ID:   containerd://61a94fcb33ed62001ad4def5f1ce2c57ecca5460f0279bbb18c8bc6f76110197
+    Container ID:   containerd://63ba845f2d66fb8dc25fb2d3c7fa417f2f13ed0235cfdda88c3189546afe74af
     Image:          nginx
-    Image ID:       docker.io/library/nginx@sha256:4c41e2d0a3a55b325ed572cd0200bdb72af1433c3daa2bca6ef8eea68ce504a2
+    Image ID:       docker.io/library/nginx@sha256:600f7cd45e27aa13e9304c834ab7c1b0ff39df85ee1dcc5087955455d77bc83b
     Port:           <none>
 … (34 more lines)
 ```
 
-**Step 15.** Runs a command inside the pod `nginx-pod`.
+**Step 15.** Inside the pod `nginx-pod`, not on the server: goes into `/var/run/secrets/kubernetes.io/serviceaccount/`, then the commands after it.
 
 ```bash
 kubectl exec nginx-pod -n kplabs-test -- bash -c 'cd /var/run/secrets/kubernetes.io/serviceaccount/ && ls && cat token'
@@ -2740,7 +2738,7 @@ You should see something like:
 ca.crt
 namespace
 token
-eyJhbGciOiJSUzI1NiIsImtpZCI6InBPMkVYZDdZRWllXzlidlVQcUUxWXZuZ25CTkxjQjRIVUF2RzRWNmhleGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxODI0Njc5Mjg0LCJpYXQiOjE3OTMxNDMyODQsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiNmYzNjNlMTctYzZmNy00MTE3LTlhYWItZGFhZDgwMWJhZTAzIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrcGxhYnMtdGVzdCIsIm5vZGUiOnsibmFtZSI6Im1pbmlrdWJlLW0wMyIsInVpZCI6ImNmNWMxZTI2LTgxYzUtNDBjZS04NzgyLTgzNWQ4NGFlOGYyMCJ9LCJwb2QiOnsibmFtZSI6Im5naW54LXBvZCIsInVpZCI6ImRhNWU2ZmRiLWJmZGItNDJhYi05MDUwLTk5NjE1NTRmZmI3NCJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoiZGVmYXVsdCIsInVpZCI6IjQyYmExM2MzLWY0YzItNGZjMi05ODA2LTRiYWU3NDA2ZmQwOSJ9LCJ3YXJuYWZ0ZXIiOjE3OTMxNDY4OTF9LCJuYmYiOjE3OTMxNDMyODQsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprcGxhYnMtdGVzdDpkZWZhdWx0In0.BOFKFxoCbeshFhwl9DOC3_guFBAROsWWYKALiL8NH1kCFY43Rc_Zh9qBclax6gbCixT1Za9B0VzkYlWcOD8ZIh-Fm70t4GdoVhf9jbqcQt1omB-7ykPR9EO5FRXNaq9vrbSP0eK68R40QnjbwzZVHJG1b_5rEVa2YG-zbGoHyNoZeYQWNLiWnkd3nrWc5xnsQzB4kIWrqffuiRJxMaIzfTqeRUXCkrBkFNV3jwevUk00T8ggEd_yN-LAMt-VUR6pLiUn71CF58nx_Bne2sluPQorJC-KW_wuRVyrYtGE1kFDpErGxUn-5P39ZKLj5wayjqnY3tR8gDZo1Ix3mnzZ_w@@PB-STEP end@@
+eyJhbGciOiJSUzI1NiIsImtpZCI6IjBSQUxHY2NYQnRnRnk1djFUS09tVU8zY2Y5M3d5QVpvVERKaGN0X1dXYVkifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxODI0NzI5Mjk3LCJpYXQiOjE3OTMxOTMyOTcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiZjcxM2E2ZTUtMjZmMi00ZmU3LTg3MWYtMGEyZDUzMTQ3OGQzIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrcGxhYnMtdGVzdCIsIm5vZGUiOnsibmFtZSI6Im1pbmlrdWJlLW0wMyIsInVpZCI6ImRmZTFhYjM0LWZhOWEtNGEwMi04Y2VkLWM1NzAzNzMwYWRmNCJ9LCJwb2QiOnsibmFtZSI6Im5naW54LXBvZCIsInVpZCI6ImNlZDg0N2I2LTIzY2ItNDQ5NC04OTVlLTFmNzk4NTEzZWVhMSJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoiZGVmYXVsdCIsInVpZCI6IjgyMjcwNzRkLWE4N2MtNGNhZi1iMzIxLTg2ZmFiODY3ZTA4ZiJ9LCJ3YXJuYWZ0ZXIiOjE3OTMxOTY5MDR9LCJuYmYiOjE3OTMxOTMyOTcsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprcGxhYnMtdGVzdDpkZWZhdWx0In0.K54SP1DIqY_riopEKtV-rw4RG8g2zRvLISAWgLmlSnsot3hqM_SBtan3Dj4pq_N52IuCaDL0mbX9G7QAIb7o0Z1VrKK7lpquR6OjZxqS7vgLgqnSmK9Ler2_jwYEbKC6iS7KhuPgMRBFf5CPcdgrTgqsiupO5Y6UtnS-wEkjXL7kvWpHAr0HMrIMRHmU303g2PIcM_Y0NK0Sttj0P5Oc5KvypORVZiyucVDCSH4v2_ZZPp0tPBnffH7xSgAt_b3He_45mnCUfN5_nRBinQ801iOhWHmTALt687T_AALV_HvhJCTRzI45zFauvKkQQWIWiPdqEhlVcwsOtIvpDcgDjQ@@PB-STEP end@@
 ```
 
 ### If you see something else

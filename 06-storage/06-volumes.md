@@ -36,6 +36,13 @@ This is also the file [`06-volumes.yaml`](./06-volumes.yaml) in this folder: `ku
 
 - We create a volume for that. In this case I specify a path `/data` on the host. Files are stored in the directory data on my node. We use the volumeMounts field in each container to mount the data-volume to the directory `/opt` within the container. The random number will now be written to `/opt` mount inside the container, which happens to be on the data-volume which is in fact `/data` directory on the host. When the pod gets deleted, the file with the random number still lives on the host.
 
+- Where the files are: `/opt/number.out` is inside the pod's container, and `/data` is on the node the pod ran on. On the course cluster that node is one of the minikube nodes (`minikube`, `minikube-m02` or `minikube-m03`), not the server, so `ls /data` on the server shows nothing. Find the node, then look there (put its name in place of `<NODE>`):
+
+  ```sh
+  kubectl get pod random-number-generator -o wide
+  minikube ssh -n <NODE> -- "cat /data/number.out"
+  ```
+
 
 
 

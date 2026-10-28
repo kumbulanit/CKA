@@ -17,12 +17,17 @@ kubectl get services
 ```
 
 #### Step 3: Verify Service to POD connectivity
+On the server, start a pod to test from, and open a shell in it:
 ```sh
 kubectl run frontend-pod --image=ubuntu --command -- sleep 36000
 kubectl exec -it frontend-pod -- bash
-apt-get update && apt-get -y install curl nano
+```
+These commands run inside the pod `frontend-pod`, not on the server: install curl, call both Services, then leave the pod with `exit` (the next step is on the server again):
+```sh
+apt-get update && apt-get -y install curl
 curl <SERVICE-1-IP>
 curl <SERVICE-2-IP>
+exit
 ```
 
 #### Step 4: Create Ingress Resource

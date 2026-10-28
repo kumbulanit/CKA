@@ -1,6 +1,6 @@
 # Module 1: Installation
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. The outputs show Kubernetes v1.36.4 (v1.37.0 after the upgrade lab), the newest version the practice cluster's images have; the cluster `setup.sh` makes runs v1.36.5, so the VERSION columns on yours say v1.36.5. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 2.1: Prepare the machines](#lab-21-prepare-the-machines)
 - [Lab 2.2: Install containerd](#lab-22-install-containerd)
@@ -662,11 +662,15 @@ to add **node03**:
 NODE03_IP=$(getent hosts node03 | awk '{print $1}')
 ```
 
+It prints nothing when it works.
+
 **Step 2.** On `node03`: sets the machine's name to `node03`.
 
 ```bash
 ssh node03 "sudo hostnamectl set-hostname node03"
 ```
+
+It prints nothing when it works.
 
 **Step 3.** Repeats the command for each of `controlplane`, `node01`, `node02`.
 
@@ -674,10 +678,26 @@ ssh node03 "sudo hostnamectl set-hostname node03"
 for n in controlplane node01 node02; do ssh $n "echo '$NODE03_IP node03' | sudo tee -a /etc/hosts"; done
 ```
 
+You should see something like:
+
+```text
+172.30.174.13 node03
+172.30.174.13 node03
+172.30.174.13 node03
+```
+
 **Step 4.** Adds these lines to `/etc/hosts` on `node03`.
 
 ```bash
 grep -E ' (controlplane|node01|node02)$' /etc/hosts | ssh node03 'sudo tee -a /etc/hosts'
+```
+
+You should see something like:
+
+```text
+172.30.174.10 controlplane
+172.30.174.11 node01
+172.30.174.12 node02
 ```
 
 **Step 5.** Runs the commands below on `node03`. Steps 1-3 of the installation guide on node03.
@@ -716,16 +736,66 @@ sudo systemctl enable --now kubelet
 STEPS
 ```
 
+You should see something like:
+
+```text
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Hit:1 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Get:2 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease [126 kB]
+Hit:3 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease
+Hit:4 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease
+Get:5 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 Packages [2223 kB]
+Get:6 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 Packages [1795 kB]
+Get:7 http://ports.ubuntu.com/ubuntu-ports noble-updates/restricted arm64 Packages [3260 kB]
+Fetched 7404 kB in 12s (626 kB/s)
+Reading package lists...
+Building dependency tree...
+Reading state information...
+All packages are up to date.
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+… (164 more lines)
+```
+
 **Step 6.** Saves `$JOIN`: prints a new join command for workers.
 
 ```bash
 JOIN=$(kubeadm token create --print-join-command)
 ```
 
+It prints nothing when it works.
+
 **Step 7.** On `node03`: joins this machine to the cluster with the join command saved above.
 
 ```bash
 ssh node03 "sudo $JOIN"
+```
+
+You should see something like:
+
+```text
+[preflight] Running pre-flight checks
+    [WARNING SystemVerification]: missing optional cgroups: hugetlb
+[preflight] Reading configuration from the "kubeadm-config" ConfigMap in namespace "kube-system"...
+[preflight] Use 'kubeadm init phase upload-config kubeadm --config your-config-file' to re-upload it.
+W1028 13:57:16.067996    1066 utils.go:69] The recommended value for "bindAddress" in "KubeProxyConfiguration" is: ::; the provided value is: 0.0.0.0
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/instance-config.yaml"
+[patches] Applied patch of type "application/strategic-merge-patch+json" to target "kubeletconfiguration"
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Starting the kubelet
+[kubelet-check] Waiting for a healthy kubelet at http://127.0.0.1:10248/healthz. This can take up to 4m0s
+[kubelet-check] The kubelet is healthy after 509.046423ms
+[kubelet-start] Waiting for the kubelet to perform the TLS Bootstrap
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.
+* The Kubelet was informed of the new secure connection details.
+
+Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
 ```
 
 **Step 8.** Waits until the node `node03` is Ready.
@@ -734,16 +804,53 @@ ssh node03 "sudo $JOIN"
 kubectl wait --for=condition=Ready node/node03 --timeout=180s
 ```
 
+You should see something like:
+
+```text
+node/node03 condition met
+```
+
 **Step 9.** Lists the nodes.
 
 ```bash
 kubectl get nodes
 ```
 
+You should see something like:
+
+```text
+NAME           STATUS   ROLES           AGE     VERSION
+controlplane   Ready    control-plane   5m19s   v1.36.6
+node01         Ready    <none>          4m11s   v1.36.6
+node02         Ready    <none>          4m8s    v1.36.6
+node03         Ready    <none>          66s     v1.36.6
+```
+
 **Step 10.** Lists the pods in every namespace.
 
 ```bash
 kubectl get pods --all-namespaces
+```
+
+You should see something like:
+
+```text
+NAMESPACE     NAME                                       READY   STATUS     RESTARTS   AGE
+kube-system   calico-kube-controllers-6ffffbccff-bv2tz   1/1     Running    0          5m14s
+kube-system   calico-node-2mlkd                          0/1     Init:2/4   0          66s
+kube-system   calico-node-86mtt                          1/1     Running    0          4m8s
+kube-system   calico-node-h9jtp                          1/1     Running    0          5m15s
+kube-system   calico-node-wg6wv                          1/1     Running    0          4m11s
+kube-system   coredns-589f44dc88-k24h9                   1/1     Running    0          5m14s
+kube-system   coredns-589f44dc88-q5c4z                   1/1     Running    0          5m14s
+kube-system   etcd-controlplane                          1/1     Running    0          5m18s
+kube-system   kube-apiserver-controlplane                1/1     Running    0          5m18s
+kube-system   kube-controller-manager-controlplane       1/1     Running    0          5m18s
+kube-system   kube-proxy-blbjh                           1/1     Running    0          4m8s
+kube-system   kube-proxy-gsrqc                           1/1     Running    0          5m15s
+kube-system   kube-proxy-lxcwt                           1/1     Running    0          4m10s
+kube-system   kube-proxy-qcvh5                           1/1     Running    0          66s
+kube-system   kube-scheduler-controlplane                1/1     Running    0          5m18s
 ```
 
 ### If you see something else

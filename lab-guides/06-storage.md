@@ -1,6 +1,6 @@
 # Module 6: Storage
 
-Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. Lab numbers are those of the labs in Desired Labs.
+Each lab below is a practical from this repository, step by step: the command, what it does, and what it printed on the practice cluster. Names with random endings (pod names such as `nginx-7d9c…`), IP addresses and ages will differ on yours. The outputs show Kubernetes v1.36.4 (v1.37.0 after the upgrade lab), the newest version the practice cluster's images have; the cluster `setup.sh` makes runs v1.36.5, so the VERSION columns on yours say v1.36.5. Lab numbers are those of the labs in Desired Labs.
 
 - [Lab 6.1: A hostPath volume](#lab-61-a-hostpath-volume)
 - [Lab 6.2: PersistentVolumes and claims](#lab-62-persistentvolumes-and-claims)
@@ -18,7 +18,7 @@ sudo ./setup.sh          # minikube with three nodes, Kubernetes v1.36 (about 10
 kubectl get nodes         # minikube, minikube-m02, minikube-m03
 ```
 
-The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, where the terminal is already root on `minikube` and the API server answers on port 6443 (8443 on minikube): addresses, ports and ages on yours will differ.
+The steps use those node names, and `minikube ssh -n <node>` for commands on a node. Run `kubectl` as your own user on the server; commands on the control plane's files (`/etc/kubernetes/manifests`, the kubelet) go through `minikube ssh` with `sudo`. The outputs were recorded in Desired Labs, whose cluster is set out like minikube's (the API server on port 8443, certificates in `/var/lib/minikube/certs` and `~/.minikube`); its terminal is root on `minikube`, so prompts differ, and addresses and ages on yours will differ too.
 
 ## Lab 6.1: A hostPath volume
 
@@ -92,7 +92,7 @@ You should see something like:
 
 ```text
 NAME                      READY   STATUS      RESTARTS   AGE   IP           NODE           NOMINATED NODE   READINESS GATES
-random-number-generator   0/1     Completed   0          8s    10.244.2.2   minikube-m03   <none>           <none>
+random-number-generator   0/1     Completed   0          17s   10.244.1.2   minikube-m03   <none>           <none>
 ```
 
 **Step 5.** Saves `$NODE`: prints one field of the pod `random-number-generator`.
@@ -103,7 +103,7 @@ NODE=$(kubectl get pod random-number-generator -o jsonpath='{.spec.nodeName}')
 
 It prints nothing when it works.
 
-**Step 6.** On `$NODE`: shows the file `/data/number.out`.
+**Step 6.** On the node `$NODE`, not on the server: shows the file `/data/number.out`.
 
 ```bash
 minikube ssh -n $NODE -- cat /data/number.out
@@ -112,7 +112,7 @@ minikube ssh -n $NODE -- cat /data/number.out
 You should see something like:
 
 ```text
-67
+64
 ```
 
 **Step 7.** Deletes the pod `random-number-generator`.
@@ -127,7 +127,7 @@ You should see something like:
 pod "random-number-generator" deleted from default namespace
 ```
 
-**Step 8.** On `$NODE`: shows the file `/data/number.out`.
+**Step 8.** On the node `$NODE`, not on the server: shows the file `/data/number.out`.
 
 ```bash
 minikube ssh -n $NODE -- cat /data/number.out
@@ -136,8 +136,8 @@ minikube ssh -n $NODE -- cat /data/number.out
 You should see something like:
 
 ```text
-67
-80
+64
+2
 ```
 
 ### If you see something else
@@ -369,13 +369,13 @@ You should see something like:
 
 ```text
 NAME        READY   STATUS    RESTARTS   AGE
-pod/mypod   1/1     Running   0          15s
+pod/mypod   1/1     Running   0          14s
 
 NAME                            STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-persistentvolumeclaim/myclaim   Bound    pv-vol1   1Gi        RWO                           <unset>                 15s
+persistentvolumeclaim/myclaim   Bound    pv-vol1   1Gi        RWO                           <unset>                 14s
 
 NAME                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-persistentvolume/pv-vol1   1Gi        RWO            Retain           Bound    default/myclaim                  <unset>                          15s
+persistentvolume/pv-vol1   1Gi        RWO            Retain           Bound    default/myclaim                  <unset>                          14s
 ```
 
 ### If you see something else
@@ -390,7 +390,7 @@ persistentvolume/pv-vol1   1Gi        RWO            Retain           Bound    d
 
 **Why it works.** A PersistentVolume is a piece of storage an admin makes available to the cluster (cluster-wide); a PersistentVolumeClaim is an application's request for storage (namespaced). Kubernetes binds a claim to a PV that satisfies its size, access modes and storage class, one to one. The pod refers only to the claim, so the same pod spec works whatever storage backs it.
 
-**Note:** this cluster, like a fresh kubeadm one, has no default StorageClass; with one, a claim without `storageClassName` would get a new dynamically provisioned volume instead of binding to pv-vol1.
+**Note:** this cluster, like minikube, has a default StorageClass (`standard`). A claim without `storageClassName` would get a new, dynamically provisioned volume from it instead of binding to pv-vol1; `storageClassName: ""` asks for a PersistentVolume without a class, so it binds to yours. A fresh kubeadm cluster has no default StorageClass, so there the line makes no difference.
 
 ---
 
@@ -411,7 +411,15 @@ The pod **webapp** writes its log to `/log/app.log` inside the container only.
 
 ### Step by step
 
-**Step 1.** Shows the pod `webapp` as YAML, as the API server stores it.
+**Step 1.** Repeats the command for each of `minikube`, `minikube-m02`, `minikube-m03`.
+
+```bash
+for n in minikube minikube-m02 minikube-m03; do minikube ssh -n $n -- sudo mkdir -p /var/log/webapp; done
+```
+
+It prints nothing when it works.
+
+**Step 2.** Shows the pod `webapp` as YAML, as the API server stores it.
 
 ```bash
 kubectl get pod webapp -o yaml > webapp.yaml
@@ -419,7 +427,7 @@ kubectl get pod webapp -o yaml > webapp.yaml
 
 It prints nothing when it works.
 
-**Step 2.** Deletes the pod `webapp`.
+**Step 3.** Deletes the pod `webapp`.
 
 ```bash
 kubectl delete pod webapp
@@ -431,7 +439,7 @@ You should see something like:
 pod "webapp" deleted from default namespace
 ```
 
-**Step 3.** Writes the file `webapp.yaml`.
+**Step 4.** Writes the file `webapp.yaml`.
 
 ```bash
 cat > webapp.yaml <<'EOF'
@@ -462,7 +470,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 4.** Creates the objects in `webapp.yaml`, or updates them if they exist.
+**Step 5.** Creates the objects in `webapp.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f webapp.yaml
@@ -474,7 +482,7 @@ You should see something like:
 pod/webapp created
 ```
 
-**Step 5.** Writes the file `pv-log.yaml`.
+**Step 6.** Writes the file `pv-log.yaml`.
 
 ```bash
 cat > pv-log.yaml <<'EOF'
@@ -494,7 +502,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 6.** Creates the objects in `pv-log.yaml`, or updates them if they exist.
+**Step 7.** Creates the objects in `pv-log.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f pv-log.yaml
@@ -506,7 +514,7 @@ You should see something like:
 persistentvolume/pv-log created
 ```
 
-**Step 7.** Writes the file `claim-log-1.yaml`.
+**Step 8.** Writes the file `claim-log-1.yaml`.
 
 ```bash
 cat > claim-log-1.yaml <<'EOF'
@@ -526,7 +534,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 8.** Creates the objects in `claim-log-1.yaml`, or updates them if they exist.
+**Step 9.** Creates the objects in `claim-log-1.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f claim-log-1.yaml
@@ -538,7 +546,7 @@ You should see something like:
 persistentvolumeclaim/claim-log-1 created
 ```
 
-**Step 9.** Lists the PersistentVolumeClaim `claim-log-1`.
+**Step 10.** Lists the PersistentVolumeClaim `claim-log-1`.
 
 ```bash
 kubectl get pvc claim-log-1
@@ -551,7 +559,7 @@ NAME          STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   VOLUME
 claim-log-1   Pending                                                     <unset>                 0s
 ```
 
-**Step 10.** Deletes the PersistentVolumeClaim `claim-log-1`.
+**Step 11.** Deletes the PersistentVolumeClaim `claim-log-1`.
 
 ```bash
 kubectl delete pvc claim-log-1
@@ -563,7 +571,7 @@ You should see something like:
 persistentvolumeclaim "claim-log-1" deleted from default namespace
 ```
 
-**Step 11.** Edits `claim-log-1.yaml`: `ReadWriteOnce` becomes `ReadWriteMany`. The fix: ask for the mode pv-log offers.
+**Step 12.** Edits `claim-log-1.yaml`: `ReadWriteOnce` becomes `ReadWriteMany`. The fix: ask for the mode pv-log offers.
 
 ```bash
 sed -i 's/ReadWriteOnce/ReadWriteMany/' claim-log-1.yaml
@@ -571,7 +579,7 @@ sed -i 's/ReadWriteOnce/ReadWriteMany/' claim-log-1.yaml
 
 It prints nothing when it works.
 
-**Step 12.** Creates the objects in `claim-log-1.yaml`, or updates them if they exist.
+**Step 13.** Creates the objects in `claim-log-1.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f claim-log-1.yaml
@@ -583,7 +591,7 @@ You should see something like:
 persistentvolumeclaim/claim-log-1 created
 ```
 
-**Step 13.** Lists the PersistentVolumeClaim `claim-log-1`.
+**Step 14.** Lists the PersistentVolumeClaim `claim-log-1`.
 
 ```bash
 kubectl get pvc claim-log-1
@@ -593,10 +601,10 @@ You should see something like:
 
 ```text
 NAME          STATUS   VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-claim-log-1   Bound    pv-log   100Mi      RWX                           <unset>                 1s
+claim-log-1   Bound    pv-log   100Mi      RWX                           <unset>                 0s
 ```
 
-**Step 14.** Deletes the pod `webapp`.
+**Step 15.** Deletes the pod `webapp`.
 
 ```bash
 kubectl delete pod webapp
@@ -608,7 +616,7 @@ You should see something like:
 pod "webapp" deleted from default namespace
 ```
 
-**Step 15.** Writes the file `webapp.yaml`.
+**Step 16.** Writes the file `webapp.yaml`.
 
 ```bash
 cat > webapp.yaml <<'EOF'
@@ -636,7 +644,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 16.** Creates the objects in `webapp.yaml`, or updates them if they exist.
+**Step 17.** Creates the objects in `webapp.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f webapp.yaml
@@ -648,7 +656,7 @@ You should see something like:
 pod/webapp created
 ```
 
-**Step 17.** Waits until the pod `webapp` is Ready.
+**Step 18.** Waits until the pod `webapp` is Ready.
 
 ```bash
 kubectl wait --for=condition=Ready pod/webapp --timeout=120s
@@ -660,7 +668,7 @@ You should see something like:
 pod/webapp condition met
 ```
 
-**Step 18.** Prints one field of the PersistentVolume `pv-log`, `echo`.
+**Step 19.** Prints one field of the PersistentVolume `pv-log`, `echo`.
 
 ```bash
 kubectl get pv pv-log -o jsonpath='{.spec.persistentVolumeReclaimPolicy}'; echo
@@ -672,7 +680,7 @@ You should see something like:
 Retain
 ```
 
-**Step 19.** Deletes the PersistentVolumeClaim `claim-log-1`.
+**Step 20.** Deletes the PersistentVolumeClaim `claim-log-1`.
 
 ```bash
 kubectl delete pvc claim-log-1 --wait=false
@@ -684,7 +692,7 @@ You should see something like:
 persistentvolumeclaim "claim-log-1" deleted from default namespace
 ```
 
-**Step 20.** Lists the PersistentVolumeClaim `claim-log-1`.
+**Step 21.** Lists the PersistentVolumeClaim `claim-log-1`.
 
 ```bash
 kubectl get pvc claim-log-1
@@ -697,7 +705,7 @@ NAME          STATUS        VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   VO
 claim-log-1   Terminating   pv-log   100Mi      RWX                           <unset>                 35s
 ```
 
-**Step 21.** Deletes the pod `webapp`.
+**Step 22.** Deletes the pod `webapp`.
 
 ```bash
 kubectl delete pod webapp
@@ -709,7 +717,7 @@ You should see something like:
 pod "webapp" deleted from default namespace
 ```
 
-**Step 22.** Waits until the PersistentVolumeClaim `claim-log-1` is deleted.
+**Step 23.** Waits until the PersistentVolumeClaim `claim-log-1` is deleted.
 
 ```bash
 kubectl wait --for=delete pvc/claim-log-1 --timeout=60s
@@ -717,7 +725,7 @@ kubectl wait --for=delete pvc/claim-log-1 --timeout=60s
 
 It prints nothing when it works.
 
-**Step 23.** Lists the PersistentVolume `pv-log`.
+**Step 24.** Lists the PersistentVolume `pv-log`.
 
 ```bash
 kubectl get pv pv-log
@@ -795,15 +803,15 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 You should see something like:
 
 ```text
-namespace/local-path-storage created
-serviceaccount/local-path-provisioner-service-account created
-role.rbac.authorization.k8s.io/local-path-provisioner-role created
+namespace/local-path-storage unchanged
+serviceaccount/local-path-provisioner-service-account unchanged
+role.rbac.authorization.k8s.io/local-path-provisioner-role unchanged
 clusterrole.rbac.authorization.k8s.io/local-path-provisioner-role unchanged
-rolebinding.rbac.authorization.k8s.io/local-path-provisioner-bind created
+rolebinding.rbac.authorization.k8s.io/local-path-provisioner-bind unchanged
 clusterrolebinding.rbac.authorization.k8s.io/local-path-provisioner-bind unchanged
-deployment.apps/local-path-provisioner created
+deployment.apps/local-path-provisioner configured
 storageclass.storage.k8s.io/local-path created
-configmap/local-path-config created
+configmap/local-path-config configured
 ```
 
 **Step 4.** Lists the StorageClass.
@@ -815,8 +823,9 @@ kubectl get storageclass
 You should see something like:
 
 ```text
-NAME         PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-local-path   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  0s
+NAME                 PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-path           rancher.io/local-path   Delete          WaitForFirstConsumer   false                  0s
+standard (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  3m54s
 ```
 
 **Step 5.** Writes the file `sc-definition.yaml`.
@@ -854,9 +863,10 @@ kubectl get sc
 You should see something like:
 
 ```text
-NAME             PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-google-storage   pd.csi.storage.gke.io   Delete          Immediate              false                  0s
-local-path       rancher.io/local-path   Delete          WaitForFirstConsumer   false                  0s
+NAME                 PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+google-storage       pd.csi.storage.gke.io   Delete          Immediate              false                  0s
+local-path           rancher.io/local-path   Delete          WaitForFirstConsumer   false                  0s
+standard (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  3m54s
 ```
 
 **Step 8.** Writes the file `pvc-definition.yaml`.
@@ -948,12 +958,12 @@ You should see something like:
 
 ```text
 NAME                            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-persistentvolumeclaim/myclaim   Bound    pvc-951edc40-ee03-4b77-bbf7-ed4d5cc0dd4e   500Mi      RWO            local-path     <unset>                 19s
+persistentvolumeclaim/myclaim   Bound    pvc-c88e2d16-4966-4951-a976-31d5f19c88fe   500Mi      RWO            local-path     <unset>                 6s
 
 NAME                                                        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM                 STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-persistentvolume/pv-log                                     100Mi      RWX            Retain           Released   default/claim-log-1                  <unset>                          90s
-persistentvolume/pv-vol1                                    1Gi        RWO            Retain           Released   default/myclaim                      <unset>                          2m28s
-persistentvolume/pvc-951edc40-ee03-4b77-bbf7-ed4d5cc0dd4e   500Mi      RWO            Delete           Bound      default/myclaim       local-path     <unset>                          3s
+persistentvolume/pv-log                                     100Mi      RWX            Retain           Released   default/claim-log-1                  <unset>                          79s
+persistentvolume/pv-vol1                                    1Gi        RWO            Retain           Released   default/myclaim                      <unset>                          2m18s
+persistentvolume/pvc-c88e2d16-4966-4951-a976-31d5f19c88fe   500Mi      RWO            Delete           Bound      default/myclaim       local-path     <unset>                          3s
 ```
 
 ### If you see something else
@@ -988,7 +998,15 @@ PersistentVolume **local-pv** on minikube-m02.
 
 ### Step by step
 
-**Step 1.** Lists the StorageClass.
+**Step 1.** On the node `minikube-m02`, not on the server: creates the folder `/opt/vol1`.
+
+```bash
+minikube ssh -n minikube-m02 -- sudo mkdir -p /opt/vol1
+```
+
+It prints nothing when it works.
+
+**Step 2.** Lists the StorageClass.
 
 ```bash
 kubectl get sc
@@ -998,13 +1016,14 @@ You should see something like:
 
 ```text
 NAME                        PROVISIONER                     RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-google-storage              pd.csi.storage.gke.io           Delete          Immediate              false                  20s
-local-path                  rancher.io/local-path           Delete          WaitForFirstConsumer   false                  20s
-local-storage               kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  0s
-portworx-io-priority-high   kubernetes.io/portworx-volume   Delete          Immediate              false                  0s
+google-storage              pd.csi.storage.gke.io           Delete          Immediate              false                  9s
+local-path                  rancher.io/local-path           Delete          WaitForFirstConsumer   false                  9s
+local-storage               kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  1s
+portworx-io-priority-high   kubernetes.io/portworx-volume   Delete          Immediate              false                  1s
+standard (default)          rancher.io/local-path           Delete          WaitForFirstConsumer   false                  4m3s
 ```
 
-**Step 2.** Writes the file `local-pvc.yaml`.
+**Step 3.** Writes the file `local-pvc.yaml`.
 
 ```bash
 cat > local-pvc.yaml <<'EOF'
@@ -1024,7 +1043,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 3.** Creates the objects in `local-pvc.yaml`, or updates them if they exist.
+**Step 4.** Creates the objects in `local-pvc.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f local-pvc.yaml
@@ -1036,7 +1055,7 @@ You should see something like:
 persistentvolumeclaim/local-pvc created
 ```
 
-**Step 4.** Lists the PersistentVolumeClaim `local-pvc`.
+**Step 5.** Lists the PersistentVolumeClaim `local-pvc`.
 
 ```bash
 kubectl get pvc local-pvc
@@ -1049,7 +1068,7 @@ NAME        STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS    VOLUMEA
 local-pvc   Pending                                      local-storage   <unset>                 0s
 ```
 
-**Step 5.** Shows the details of the PersistentVolumeClaim `local-pvc`, with its recent events at the bottom.
+**Step 6.** Shows the details of the PersistentVolumeClaim `local-pvc`, with its recent events at the bottom.
 
 ```bash
 kubectl describe pvc local-pvc
@@ -1076,7 +1095,7 @@ Events:
   Normal  WaitForFirstConsumer  0s    persistentvolume-controller  waiting for first consumer to be created before binding
 ```
 
-**Step 6.** Writes the file `nginx.yaml`.
+**Step 7.** Writes the file `nginx.yaml`.
 
 ```bash
 cat > nginx.yaml <<'EOF'
@@ -1102,7 +1121,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 7.** Creates the objects in `nginx.yaml`, or updates them if they exist.
+**Step 8.** Creates the objects in `nginx.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f nginx.yaml
@@ -1114,7 +1133,7 @@ You should see something like:
 pod/nginx created
 ```
 
-**Step 8.** Waits until the pod `nginx` is Ready.
+**Step 9.** Waits until the pod `nginx` is Ready.
 
 ```bash
 kubectl wait --for=condition=Ready pod/nginx --timeout=120s
@@ -1126,7 +1145,7 @@ You should see something like:
 pod/nginx condition met
 ```
 
-**Step 9.** Lists the PersistentVolumeClaim `local-pvc`.
+**Step 10.** Lists the PersistentVolumeClaim `local-pvc`.
 
 ```bash
 kubectl get pvc local-pvc
@@ -1139,7 +1158,7 @@ NAME        STATUS   VOLUME     CAPACITY   ACCESS MODES   STORAGECLASS    VOLUME
 local-pvc   Bound    local-pv   500Mi      RWO            local-storage   <unset>                 11s
 ```
 
-**Step 10.** Writes the file `delayed-volume-sc.yaml`.
+**Step 11.** Writes the file `delayed-volume-sc.yaml`.
 
 ```bash
 cat > delayed-volume-sc.yaml <<'EOF'
@@ -1154,7 +1173,7 @@ EOF
 
 It prints nothing when it works.
 
-**Step 11.** Creates the objects in `delayed-volume-sc.yaml`, or updates them if they exist.
+**Step 12.** Creates the objects in `delayed-volume-sc.yaml`, or updates them if they exist.
 
 ```bash
 kubectl apply -f delayed-volume-sc.yaml
@@ -1166,7 +1185,7 @@ You should see something like:
 storageclass.storage.k8s.io/delayed-volume-sc created
 ```
 
-**Step 12.** Lists the StorageClass.
+**Step 13.** Lists the StorageClass.
 
 ```bash
 kubectl get sc
@@ -1177,10 +1196,11 @@ You should see something like:
 ```text
 NAME                        PROVISIONER                     RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
 delayed-volume-sc           kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  0s
-google-storage              pd.csi.storage.gke.io           Delete          Immediate              false                  31s
-local-path                  rancher.io/local-path           Delete          WaitForFirstConsumer   false                  31s
-local-storage               kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  11s
-portworx-io-priority-high   kubernetes.io/portworx-volume   Delete          Immediate              false                  11s
+google-storage              pd.csi.storage.gke.io           Delete          Immediate              false                  20s
+local-path                  rancher.io/local-path           Delete          WaitForFirstConsumer   false                  20s
+local-storage               kubernetes.io/no-provisioner    Delete          WaitForFirstConsumer   false                  12s
+portworx-io-priority-high   kubernetes.io/portworx-volume   Delete          Immediate              false                  12s
+standard (default)          rancher.io/local-path           Delete          WaitForFirstConsumer   false                  4m14s
 ```
 
 ### If you see something else

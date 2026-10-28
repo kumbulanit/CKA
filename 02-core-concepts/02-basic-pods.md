@@ -15,7 +15,9 @@ kubectl get pods
 ```sh
 kubectl exec -it mywebserver -- bash
 ```
-You can come out of the POD with CTRL+D
+This opens a shell inside the pod: what you type now runs in the pod's container, not on the server (try `ls /` and `hostname`). Leave the pod with `exit` or CTRL+D.
+
+From the server, you can also run one command in the pod without opening a shell:
 ```sh
 kubectl exec -it mywebserver -- ls -l /
 ```

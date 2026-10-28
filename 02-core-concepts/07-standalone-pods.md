@@ -69,6 +69,7 @@ You can access the Pod to inspect logs, execute commands, or perform other troub
    ```sh
    kubectl exec -it standalone-pod -- /bin/bash
    ```
+   This opens a shell inside the pod: the commands you type then run in the pod's container, not on the server. Leave it with `exit`.
 
 ### Deleting a Standalone Pod
 

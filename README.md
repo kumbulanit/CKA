@@ -97,7 +97,11 @@ Each module has a step-by-step guide in [lab-guides](./lab-guides): every comman
 ## Conventions
 
 - Commands are written without a prompt, so you can copy them as they are. Where a lesson shows what a command prints, that is in its own block after "Output:".
-- `kubectl` commands run on the server as your own user. Commands for a node start with `minikube ssh` (`minikube ssh -n minikube-m02` for the first worker).
+- Commands run on the server, as your own user, unless the lesson says otherwise. Two kinds run elsewhere, and their blocks say so:
+  - **inside a pod**, after `kubectl exec -it <pod> -- bash` opens a shell in it: the files there (such as `/var/run/secrets/...` or `/usr/share/nginx/html`) are the container's, not the server's;
+  - **on a node**, after `minikube ssh` (`minikube ssh -n minikube-m02` for the first worker): the kubelet, its configuration and `/etc/kubernetes/manifests` are there, not on the server.
+  
+  The command that opens the shell has a block of its own, the commands for the pod or node are in the next block, and that block ends with `exit`, back to the server. A command written as `minikube ssh -n <node> -- "<command>"` or `kubectl exec <pod> -- <command>` runs there and comes straight back, so you can type it on the server.
 - Lessons are numbered in the order the course teaches them. In `01-installation`, the lessons named `kubeadm-lesson-<name>.md` have no number: they are the optional kubeadm route (the exam's tool), not the minikube practicals.
 - Every YAML example is also saved as a file in the same folder as its lesson, named after the lesson (`<lesson>.yaml`, or `<lesson>-<name>.yaml` when a lesson has several), and the line under each example names it. Go to that folder and apply it instead of typing it, for example `cd ~/CKA/02-core-concepts`, then `kubectl apply -f 03-first-pod-yaml.yaml`.
 - Files a lesson asks you to write yourself (with `vi` or `nano`, such as `role.yaml`) go in your current folder; the lesson folders belong to your user, so you can create files there.

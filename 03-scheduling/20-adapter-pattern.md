@@ -82,6 +82,8 @@ kubectl exec counter -c count -- ls /var/log/fluent
 
 `READY 2/2` shows both containers running. The two log files have different formats; fluentd follows both and writes what it collects under `/var/log/fluent/`.
 
+These files are inside the pod, not on the server: `/var/log` here is the volume the two containers share, so look at it with `kubectl exec` (as above) or `kubectl logs`, from the server.
+
 ```sh
 kubectl delete -f 20-adapter-pattern.yaml
 ```

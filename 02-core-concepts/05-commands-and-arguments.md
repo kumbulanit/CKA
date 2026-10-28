@@ -53,6 +53,7 @@ kubectl apply -f 05-commands-and-arguments-commands-2.yaml
 kubectl get pods
 kubectl exec -it command2 -- sh
 ```
+This opens a shell inside the pod `command2`: what you type then runs in its container, not on the server. Leave it with `exit`.
 
 #### Create POD with Command and Arguments
 
@@ -105,3 +106,4 @@ kubectl apply -f 05-commands-and-arguments-commands-4.yaml
 kubectl get pods
 kubectl exec -it command4 -- sh
 ```
+This opens a shell inside the pod `command4`: what you type then runs in its container, not on the server. Leave it with `exit`.
