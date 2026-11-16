@@ -1,0 +1,9 @@
+# allowed on nodes with the taint dedicated=prod
+spec:
+  template:
+    spec:
+      tolerations:
+      - key: dedicated
+        operator: Equal
+        value: prod
+        effect: NoSchedule

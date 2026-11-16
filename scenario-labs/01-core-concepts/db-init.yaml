@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init
+data:
+  init.sql: |
+    CREATE TABLE items (
+      id    SERIAL PRIMARY KEY,
+      name  TEXT NOT NULL,
+      price NUMERIC NOT NULL
+    );
+    INSERT INTO items (name, price) VALUES
+      ('Coffee', 35),
+      ('Tea', 25),
+      ('Muffin', 30);

@@ -1,0 +1,16 @@
+# EXAMPLE ONLY: do not apply. There is no NFS server in the lab.
+# This is what a disk on an NFS server looks like. Only the "nfs:" part is different.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: shop-nfs-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteMany                   # NFS can be used by many nodes at the same time
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs
+  nfs:
+    server: 10.0.0.50               # the NFS server
+    path: /exports/shop             # the shared folder on it

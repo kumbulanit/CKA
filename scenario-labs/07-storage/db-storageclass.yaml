@@ -1,0 +1,7 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: shop-disk
+provisioner: kubernetes.io/no-provisioner     # we create the disks (PVs) ourselves
+volumeBindingMode: WaitForFirstConsumer       # wait for a pod before choosing a disk
+reclaimPolicy: Retain

@@ -1,0 +1,15 @@
+# prefer nodes with the label env=prod, but run somewhere else if there is none
+spec:
+  template:
+    spec:
+      nodeSelector: null
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: env
+                operator: In
+                values:
+                - prod

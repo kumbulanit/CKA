@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Shop</title>
+      <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
+        h1 { color: #326ce5; }
+        li { padding: 6px 0; border-bottom: 1px solid #ddd; }
+        .error { color: #c00; }
+      </style>
+    </head>
+    <body>
+      <h1>Shop</h1>
+      <p>Frontend (nginx) &rarr; Backend (API) &rarr; Database (PostgreSQL)</p>
+      <ul id="items"><li>Loading...</li></ul>
+      <script>
+        fetch('/api/items')
+          .then(r => r.json())
+          .then(items => {
+            if (!Array.isArray(items)) throw new Error(items.message);
+            document.getElementById('items').innerHTML =
+              items.map(i => '<li>' + i.name + ' - R' + i.price + '</li>').join('');
+          })
+          .catch(e => {
+            document.getElementById('items').innerHTML =
+              '<li class="error">The backend has no database yet: ' + e.message + '</li>';
+          });
+      </script>
+    </body>
+    </html>
+  default.conf: |
+    server {
+      listen 80;
+      # the web page
+      location / {
+        root /usr/share/nginx/html;
+        index index.html;
+      }
+      # everything under /api/ goes to the backend Service
+      location /api/ {
+        proxy_pass http://backend:3000/;
+      }
+    }

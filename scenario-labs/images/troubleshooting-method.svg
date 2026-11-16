@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 190" width="900" height="190" font-family="Helvetica, Arial, sans-serif">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#333"/></marker></defs>
+  <text x="450" y="26" text-anchor="middle" font-size="17" font-weight="700" fill="#222">Troubleshooting: always walk the same path</text>
+  <g font-size="13" text-anchor="middle">
+    <rect x="15" y="50" width="150" height="80" rx="8" fill="#e6f4ea" stroke="#2e7d32" stroke-width="2"/>
+    <text x="90" y="76" font-weight="700" fill="#1b5e20">1. Pods</text><text x="90" y="96" fill="#333">Running? Ready?</text><text x="90" y="116" fill="#555" font-size="11">get pods, describe</text>
+    <rect x="195" y="50" width="150" height="80" rx="8" fill="#fff4e0" stroke="#e65100" stroke-width="2"/>
+    <text x="270" y="76" font-weight="700" fill="#bf360c">2. Logs</text><text x="270" y="96" fill="#333">What does it say?</text><text x="270" y="116" fill="#555" font-size="11">logs, logs --previous</text>
+    <rect x="375" y="50" width="150" height="80" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+    <text x="450" y="76" font-weight="700" fill="#0d47a1">3. Service</text><text x="450" y="96" fill="#333">Pods behind it?</text><text x="450" y="116" fill="#555" font-size="11">endpointslices, selector</text>
+    <rect x="555" y="50" width="150" height="80" rx="8" fill="#ede7f6" stroke="#4527a0" stroke-width="2"/>
+    <text x="630" y="76" font-weight="700" fill="#311b92">4. Rules</text><text x="630" y="96" fill="#333">Quota? Network?</text><text x="630" y="116" fill="#555" font-size="11">events, networkpolicy</text>
+    <rect x="735" y="50" width="150" height="80" rx="8" fill="#fde7e9" stroke="#b71c1c" stroke-width="2"/>
+    <text x="810" y="76" font-weight="700" fill="#b71c1c">5. Nodes</text><text x="810" y="96" fill="#333">Ready? kubelet?</text><text x="810" y="116" fill="#555" font-size="11">get nodes, systemctl</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="167" y1="90" x2="192" y2="90"/><line x1="347" y1="90" x2="372" y2="90"/><line x1="527" y1="90" x2="552" y2="90"/><line x1="707" y1="90" x2="732" y2="90"/></g>
+  <text x="450" y="165" text-anchor="middle" font-size="13" fill="#555">Stop at the first box that shows a problem. Read the message. Fix that. Then check again.</text>
+</svg>

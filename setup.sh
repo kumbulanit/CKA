@@ -6,7 +6,7 @@
 #   sudo ./setup.sh
 #
 # It installs the same tools as the minikube lesson (01-installation/01-install-minikube.md): Docker, minikube, kubectl v1.36 and helm, plus git, curl,
-# jq, vim, nano and bash completion. Then, as the user who ran sudo, it creates and starts a
+# jq, vim, nano, bash completion, and the shortcuts kubens and kubectx. Then, as the user who ran sudo, it creates and starts a
 # minikube cluster on Docker: Kubernetes v1.36.5 with Calico, 3 nodes: one control plane (minikube)
 # and two workers (minikube-m02 and minikube-m03). It takes about 10 minutes the first time.
 #
@@ -82,6 +82,12 @@ apt-get update -q
 apt-get install -y -q kubectl helm
 kubectl version --client | head -1
 helm version --short
+
+step "kubens and kubectx"
+# Shortcuts: kubens dev switches the namespace, kubectx the context. The labs work without them,
+# so a server where the package cannot be installed carries on.
+apt-get install -y -q kubectx \
+  || echo "note: the package kubectx could not be installed; the labs work without kubens and kubectx"
 
 # What kind and minikube recommend for several Kubernetes nodes on one Docker host.
 printf 'fs.inotify.max_user_watches = 524288\nfs.inotify.max_user_instances = 512\n' > /etc/sysctl.d/99-cka-minikube.conf
@@ -184,6 +190,7 @@ cat <<EOF
 
 The cluster is ready. As $user:
   kubectl get nodes               the cluster (kubectl is set up in $home/.kube/config)
+  kubens dev                      work in the namespace dev (kubectx: switch context)
   minikube ssh                    a shell on the control plane node; minikube ssh -n minikube-m02 for a worker
   minikube stop / minikube start  stop and start the cluster; sudo ./setup.sh also starts it
 Log out and in again once (or run: newgrp docker) so minikube and docker work without sudo.

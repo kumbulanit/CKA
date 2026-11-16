@@ -1,0 +1,6 @@
+# run only on nodes with the label env=prod
+spec:
+  template:
+    spec:
+      nodeSelector:
+        env: prod
