@@ -349,7 +349,9 @@ kubectl uncordon minikube-m03
 kubectl get node minikube-m03
 ```
 
-`STATUS` shows `Ready`, without `SchedulingDisabled`.
+`STATUS` shows `Ready`, without `SchedulingDisabled`. (The line `Warning: ignoring DaemonSet-managed Pods: ...` from `kubectl drain` is normal: see Lab 2.7.)
+
+`--force` deletes pods that have no controller (no Deployment brings them back). Your exam pods (`web`, `settings`, `secret-reader`, `healthy`) are such pods: the taint from "Before you start" kept them off this node, so the drain did not touch them. In the real exam, read the task: if it says to drain a node, `--force` is usually what it wants.
 
 ## Task 15 (10 points)
 

@@ -8,6 +8,8 @@
 
 **What you learn:** Metrics Server, `kubectl top`, CPU requests, the HorizontalPodAutoscaler (HPA).
 
+📘 **More detail:** [Lab 6.3 explained](./lab-6.3-metrics-server-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 > **How to use this lab**
 >
 > - **📋 Copy and paste into your terminal:** copy the whole grey box (the copy button is in its top right corner), paste it into the terminal of your server, and press Enter.
@@ -57,23 +59,26 @@ minikube addons enable metrics-server
 * The 'metrics-server' addon is enabled
 ```
 
-Wait one minute for the first measurements. Then:
+The Metrics Server needs a minute or more for its first measurements. This box waits for it:
 
 **📋 Copy and paste into your terminal:**
 
 ```bash
+kubectl wait --for=condition=Available apiservice/v1beta1.metrics.k8s.io --timeout=180s
 kubectl top nodes
 kubectl top pods
 ```
 
 **What this does:**
 
+- `kubectl wait --for=condition=Available apiservice/v1beta1.metrics.k8s.io ...`: Waits until the Metrics API answers (at most 3 minutes). The Metrics Server adds its numbers to the API server as an extra API, `metrics.k8s.io`, and that API is only `Available` once the first measurements are in.
 - `kubectl top nodes`: Shows how much CPU and memory the nodes use right now.
 - `kubectl top pods`: Shows how much CPU and memory the pods use right now.
 
-**👀 You should see** (your numbers differ) *(do not paste)*:
+**👀 You should see** (after about a minute; your numbers differ) *(do not paste)*:
 
 ```text
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io condition met
 NAME           CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)
 minikube       428m         10%      1114Mi          22%
 minikube-m02   207m         5%       781Mi           15%
@@ -244,8 +249,10 @@ The HPA waits **5 minutes** before it removes pods, so that it does not go up an
 **📖 Read only (do not paste):**
 
 ```text
-kubectl autoscale deployment backend --min=2 --max=5 --cpu-percent=25
+kubectl autoscale deployment backend --min=2 --max=5 --cpu=25%
 ```
+
+Older versions of `kubectl` write it `--cpu-percent=25`. Version v1.36 still accepts that, but warns that it is deprecated.
 
 An HPA only works when the pods have a CPU **request**. Without it, `TARGETS` stays `<unknown>`.
 

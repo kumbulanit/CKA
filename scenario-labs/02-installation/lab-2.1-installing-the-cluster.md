@@ -6,6 +6,8 @@
 
 **What you learn:** how the cluster was installed with **minikube**, what a node is made of, how to validate a cluster.
 
+📘 **More detail:** [Lab 2.1 explained](./lab-2.1-installing-the-cluster-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 Your cluster was installed by `setup.sh` with **minikube**, on your Ubuntu server. minikube builds a full Kubernetes cluster inside Docker: every node is one container.
 
 > **How to use this lab**

@@ -8,6 +8,8 @@
 
 **What you learn:** ConfigMaps, Secrets, environment variables, files mounted from a ConfigMap.
 
+📘 **More detail:** [Lab 1.5 explained](./lab-1.5-configmaps-and-secrets-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 Settings do not belong inside the image. Kubernetes keeps them apart:
 
 - a **ConfigMap** holds normal settings;
@@ -160,25 +162,24 @@ deployment "backend" successfully rolled out
 **📋 Copy and paste into your terminal:**
 
 ```bash
-kubectl exec deployment/backend -- env | grep -E "PGRST|PGPASS"
+kubectl describe deployment backend | grep -A4 "Environment Variables from"
 ```
 
-**What this does:** Lists the settings (environment variables) inside a backend pod. `| grep` keeps only the ones from the ConfigMap (`PGRST_...`) and from the Secret (`PGPASSWORD`).
+**What this does:** Shows where the backend's pods get their settings (environment variables) from. `| grep` keeps only that part of the long answer.
 
 **👀 You should see** *(do not paste)*:
 
 ```text
-PGPASSWORD=dev-pass-123
-PGRST_DB_SCHEMAS=public
-PGRST_DB_URI=postgres://shop@db:5432/shop
-PGRST_LOG_LEVEL=info
-PGRST_ADMIN_SERVER_PORT=3001
-PGRST_DB_ANON_ROLE=shop
+    Environment Variables from:
+      backend-config  ConfigMap  Optional: false
+    Environment:
+      PGPASSWORD:  <set to the key 'password' in secret 'db-secret'>  Optional: false
+    Mounts:        <none>
 ```
 
-(The order of the lines can differ.)
+Every key of the ConfigMap `backend-config` becomes a setting, and `PGPASSWORD` comes from the Secret `db-secret`.
 
-Five settings from the ConfigMap, and the password from the Secret.
+💡 **Tip:** why not look inside the pod with `kubectl exec deployment/backend -- env`? The backend image is very small: it holds only the PostgREST program, without a shell or tools such as `env`. Many production images are built like that.
 
 ## Part B: the frontend
 
@@ -190,15 +191,15 @@ This ConfigMap holds two **files**: the Shop web page (`index.html`) and the ngi
 
 ```bash
 kubectl apply -f frontend-config.yaml
-kubectl describe configmap frontend-config | tail -18
+kubectl describe configmap frontend-config | grep -A14 "^default.conf"
 ```
 
 **What this does:**
 
 - `kubectl apply -f frontend-config.yaml`: Creates (or updates) what is described in `frontend-config.yaml`.
-- `kubectl describe configmap frontend-config | tail -18`: Shows all the details of the ConfigMap `frontend-config`. The events at the bottom say what happened to it. `| tail` shows only the last 18 lines.
+- `kubectl describe configmap frontend-config | grep -A14 "^default.conf"`: Shows the ConfigMap `frontend-config`. `| grep` keeps only the file `default.conf` (the nginx settings) and the 14 lines after its name.
 
-**👀 You should see** the nginx settings at the end *(do not paste)*:
+**👀 You should see** the nginx settings *(do not paste)*:
 
 ```text
 default.conf:
@@ -242,12 +243,14 @@ This file is the frontend Deployment from Lab 1.3, with the ConfigMap mounted as
 ```bash
 kubectl apply -f frontend-deployment-with-config.yaml
 kubectl rollout status deployment/frontend
+sleep 15
 ```
 
 **What this does:**
 
 - `kubectl apply -f frontend-deployment-with-config.yaml`: Creates (or updates) what is described in `frontend-deployment-with-config.yaml`.
 - `kubectl rollout status deployment/frontend`: Waits until the new pods of the Deployment `frontend` are all ready, and says when it is done.
+- `sleep 15`: Waits 15 seconds, until the old pods are gone everywhere. Right after an update, a request can still be sent to a pod that is stopping, and then it hangs.
 
 **👀 You should see** (the last line) *(do not paste)*:
 
@@ -299,7 +302,7 @@ Read the message: the request went **frontend → backend**, and the backend now
 kubectl create configmap my-config --from-literal=KEY=value --from-file=file.conf
 ```
 
-✅ **Check:** Step 4 shows six lines, and Step 7 shows `<h1>Shop</h1>`.
+✅ **Check:** Step 4 shows the ConfigMap `backend-config` and the Secret `db-secret`, and Step 7 shows `<h1>Shop</h1>`.
 
 **The Shop so far:** frontend and backend run with their settings. Only the database is missing.
 

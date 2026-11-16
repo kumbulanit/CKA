@@ -8,6 +8,8 @@
 
 **What you learn:** version rules, the upgrade order, upgrading with minikube.
 
+📘 **More detail:** [Lab 2.6 explained](./lab-2.6-upgrade-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 Kubernetes brings a new minor version about three times a year (v1.35, v1.36, v1.37). A cluster is upgraded **one minor version at a time**, and **one node at a time**, so that the applications keep running.
 
 > **How to use this lab**

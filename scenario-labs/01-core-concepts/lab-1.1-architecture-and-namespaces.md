@@ -8,6 +8,8 @@
 
 **What you learn:** nodes, the control plane and its parts, `kubectl`, namespaces.
 
+📘 **More detail:** [Lab 1.1 explained](./lab-1.1-architecture-and-namespaces-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 > **How to use this lab**
 >
 > - **📋 Copy and paste into your terminal:** copy the whole grey box (the copy button is in its top right corner), paste it into the terminal of your server, and press Enter.

@@ -8,6 +8,8 @@
 
 **What you learn:** node affinity (required and preferred), pod anti-affinity.
 
+📘 **More detail:** [Lab 4.2 explained](./lab-4.2-affinity-and-anti-affinity-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 | Rule | It says | Example |
 | --- | --- | --- |
 | **Node affinity** | "Put me on a node with this label" | PROD pods on the PROD node |

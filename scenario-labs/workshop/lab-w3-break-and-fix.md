@@ -2,6 +2,8 @@
 
 **Goal:** the Shop in `dev` gets **five faults at the same time**. As a pair, find and fix all five, and explain each one.
 
+📘 **More detail:** [Workshop 3 explained](./lab-w3-break-and-fix-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 This is the hardest kind of troubleshooting: one fault can hide another. Fix one, check, and go on.
 
 > **How to use this lab**

@@ -8,6 +8,8 @@
 
 **What you learn:** liveness probes, readiness probes.
 
+📘 **More detail:** [Lab 1.7 explained](./lab-1.7-health-checks-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 `Running` only means "the program started". It does not mean "the program works". A **probe** is a check that Kubernetes does again and again:
 
 | Probe | The question | When the answer is no |

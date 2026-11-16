@@ -19,8 +19,10 @@ for s in db backend frontend; do
         -o jsonpath='{range .items[*].endpoints[?(@.conditions.ready==true)]}x{end}' 2>/dev/null | wc -c)
   [ "$n" -gt 0 ] && pass "service $s has $n ready pod(s) behind it" || fail "service $s has no ready pods behind it"
 done
-page=$(kubectl run check-$RANDOM -n "$env" --rm -i --quiet --restart=Never --image=busybox:1.36 \
-  -- wget -q -T 5 -O- http://frontend/api/items 2>/dev/null)
+# Asked from inside a frontend pod, as nginx passes /api/ on: frontend -> backend -> database.
+# (A throwaway test pod with "kubectl run --rm -i" sometimes lost its output when it finished
+# before kubectl could attach, which gave a false FAIL.)
+page=$(kubectl exec -n "$env" deployment/frontend -- curl -s -m 5 http://localhost/api/items 2>/dev/null)
 echo "$page" | grep -q '"name"' && pass "frontend -> backend -> database returns the items" \
   || fail "frontend -> backend -> database gives no items"
 echo

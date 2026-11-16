@@ -2,6 +2,8 @@
 
 **Goal:** a Kubernetes cluster with three nodes, running on your Ubuntu server.
 
+📘 **More detail:** [Setup explained](./00-setup-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 You need one Ubuntu server (24.04 or newer) with 4 CPUs, 8 GB RAM and 30 GB free disk. You do everything **on that server**, in a terminal, as your own user.
 
 > **How to use this lab**
@@ -144,9 +146,52 @@ One script checks everything the labs need: the server, the tools, the cluster a
 
 **What this does:** Runs the course script that checks the server, the tools, the cluster and the Shop, and prints one line per check.
 
-**👀 You should see** *(do not paste)* (the start and the end):
+**👀 You should see** *(do not paste)*, before Lab 1.1 (your numbers of CPUs, memory and disk, and the versions, can differ):
 
-SEE-CHECK-READY-OUTPUT
+```text
+Checking your server and cluster for the labs (about 30 seconds).
+
+Server
+  OK    Ubuntu 24.04
+  OK    16 CPUs
+  OK    22.5 GB memory
+  OK    78 GB free disk space
+  OK    internet: images can be downloaded from Docker Hub
+
+Tools
+  OK    Docker 29.10.0 runs, and you may use it without sudo
+  OK    minikube v1.39.0
+  OK    kubectl v1.36.6
+  OK    helm v4.3.0
+  OK    jq 1.7
+  OK    shortcuts kubens and kubectx
+
+Cluster
+  OK    minikube: 3 nodes are running
+  OK    kubectl uses the cluster (context minikube)
+  OK    the API server answers
+  OK    3 nodes, all Ready
+  OK    etcd                     1 of 1 pod(s) ready
+  OK    kube-apiserver           1 of 1 pod(s) ready
+  OK    kube-controller-manager  1 of 1 pod(s) ready
+  OK    kube-scheduler           1 of 1 pod(s) ready
+  OK    coredns                  1 of 1 pod(s) ready
+  OK    calico-node              3 of 3 pod(s) ready
+  OK    calico-kube-controllers  1 of 1 pod(s) ready
+  OK    kube-proxy               3 of 3 pod(s) ready
+  OK    storage-provisioner      1 of 1 pod(s) ready
+  OK    a test pod starts, downloads its image and finds Services by name (DNS)
+  OK    storage: default StorageClass standard (disks on request)
+  INFO  Ingress controller is not on yet (Lab 3.2 switches it on)
+  INFO  Metrics Server is not on yet (Lab 6.3 switches it on)
+
+The Shop
+  INFO  dev: no namespace yet (you make it in Lab 1.1)
+  INFO  uat: no namespace yet (you make it in Lab 1.1)
+  INFO  prod: no namespace yet (you make it in Lab 1.1)
+
+Everything is ready for the labs.
+```
 
 | The line says | Meaning |
 | --- | --- |
@@ -167,3 +212,4 @@ Run `~/CKA/scenario-labs/scripts/check-ready.sh` first: every `FAIL` line says w
 | A node says `NotReady` | Wait one minute and look again. Still `NotReady`: run `cd ~/CKA && sudo ./setup.sh`. |
 | `permission denied ... docker.sock` | Run `newgrp docker`, or log out and in again. |
 | The server was restarted | Run `cd ~/CKA && sudo ./setup.sh`. Your work in the cluster is kept. |
+| A `curl` command hangs, right after pods were replaced | Press **Ctrl+C** and run it again. For a few seconds after an update, a request can still go to a pod that is stopping. |

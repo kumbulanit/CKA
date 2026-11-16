@@ -8,6 +8,8 @@
 
 **What you learn:** how the parts of one application use everything from this module together: a Deployment, a Service, a ConfigMap and a Secret.
 
+📘 **More detail:** [Lab 1.6 explained](./lab-1.6-the-database-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 > **How to use this lab**
 >
 > - **📋 Copy and paste into your terminal:** copy the whole grey box (the copy button is in its top right corner), paste it into the terminal of your server, and press Enter.

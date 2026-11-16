@@ -8,6 +8,8 @@
 
 **What you learn:** standalone pods, owner references, static pods and mirror pods.
 
+📘 **More detail:** [Lab 2.3 explained](./lab-2.3-standalone-pods-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 | Kind of pod | Who looks after it | When it dies |
 | --- | --- | --- |
 | Pod of a **Deployment** | The Deployment (through a ReplicaSet) | A new one is made |

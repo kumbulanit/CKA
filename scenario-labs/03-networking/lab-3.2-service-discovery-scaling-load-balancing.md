@@ -8,6 +8,8 @@
 
 **What you learn:** how a Service load-balances, scaling a Deployment, Service types, Ingress.
 
+📘 **More detail:** [Lab 3.2 explained](./lab-3.2-service-discovery-scaling-load-balancing-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 | Word | Meaning |
 | --- | --- |
 | **Service discovery** | A pod finds another part of the application by its Service name, not by an IP address |
@@ -173,18 +175,23 @@ minikube addons enable ingress
 **📋 Copy and paste into your terminal:**
 
 ```bash
+kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx
+sleep 20
 kubectl get pods -n ingress-nginx
 kubectl get ingressclass
 ```
 
 **What this does:**
 
+- `kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx`: Waits until the Ingress controller is ready. `minikube addons enable` says "enabled" before the controller is ready.
+- `sleep 20`: Waits 20 seconds more: the controller also checks every new Ingress (a webhook), and that check needs a moment longer to answer.
 - `kubectl get pods -n ingress-nginx`: Lists the pods in the namespace `ingress-nginx`.
 - `kubectl get ingressclass`: Lists the Ingress classes.
 
 **👀 You should see** *(do not paste)*:
 
 ```text
+deployment "ingress-nginx-controller" successfully rolled out
 NAME                                        READY   STATUS      RESTARTS   AGE
 ingress-nginx-admission-create-r6knf        0/1     Completed   0          3m50s
 ingress-nginx-admission-patch-hndfg         0/1     Completed   0          3m50s
@@ -250,6 +257,8 @@ ingress.networking.k8s.io/shop created
 NAME   CLASS   HOSTS        ADDRESS   PORTS   AGE
 shop   nginx   shop.local             80      21s
 ```
+
+If you see `failed calling webhook "validate.nginx.ingress.kubernetes.io" ... connection refused` instead, the controller is still starting: wait 30 seconds and run the box again.
 
 ### Step 8: teach your server the name
 

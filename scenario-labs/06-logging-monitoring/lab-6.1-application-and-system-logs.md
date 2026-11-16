@@ -8,6 +8,8 @@
 
 **What you learn:** `kubectl logs` and its options, events, the logs of the control plane pods, the logs of the kubelet.
 
+📘 **More detail:** [Lab 6.1 explained](./lab-6.1-application-and-system-logs-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 | Where to look | What it tells you | Command |
 | --- | --- | --- |
 | **Application logs** | What your program says | `kubectl logs` |

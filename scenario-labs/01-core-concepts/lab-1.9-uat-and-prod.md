@@ -8,6 +8,8 @@
 
 **What you learn:** deploying the same files into another namespace, and how namespaces keep environments apart.
 
+📘 **More detail:** [Lab 1.9 explained](./lab-1.9-uat-and-prod-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 There is no pipeline in this course. You move the application yourself, with `kubectl`. That is also how the exam works.
 
 > **How to use this lab**

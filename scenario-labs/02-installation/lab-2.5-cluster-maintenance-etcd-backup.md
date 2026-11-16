@@ -8,6 +8,8 @@
 
 **What you learn:** what etcd is, `etcdctl snapshot save`, `etcdutl snapshot restore`, where etcd keeps its data.
 
+📘 **More detail:** [Lab 2.5 explained](./lab-2.5-cluster-maintenance-etcd-backup-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 **etcd** is the database of Kubernetes. Every Deployment, Service, Secret and ConfigMap you made is stored in it. If etcd is lost, the cluster forgets everything. So you back it up.
 
 ⚠️ A restore puts the **whole cluster** back to the moment of the backup: all namespaces, not only `prod`. Do the steps in order, and do not skip the checks. The restore restarts the cluster, so the Shop is closed for about three minutes.
@@ -303,7 +305,7 @@ deployment "frontend" successfully rolled out
 
 One thing to understand: etcd holds the **Kubernetes objects**. It does **not** hold the data **inside** your database. The PROD database pod is a new pod, and it started with the first three items again. The data of an application needs its own storage and its own backup. That is the Storage module.
 
-💡 **Exam tip:** the exam asks for the same two commands: `etcdctl snapshot save` and `etcdutl snapshot restore`. Know the four options of the save command by heart: `--endpoints`, `--cacert`, `--cert`, `--key`. You find the certificate paths in the etcd file: `minikube ssh -- sudo grep -E "cert|key|trusted" /etc/kubernetes/manifests/etcd.yaml`.
+💡 **Exam tip:** the exam asks for the same two commands: `etcdctl snapshot save` and `etcdutl snapshot restore`. Know the four options of the save command by heart: `--endpoints`, `--cacert`, `--cert`, `--key`. You find the certificate paths in the etcd file: `minikube ssh -- 'sudo grep -E "cert|key|trusted" /etc/kubernetes/manifests/etcd.yaml'` (the single quotes send the whole command, with its `|`, to the node).
 
 ✅ **Check:** the last command of Step 8 gives the items.
 

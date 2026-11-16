@@ -173,6 +173,11 @@ done
 for n in $(kc get nodes -l '!node-role.kubernetes.io/control-plane' -o name); do
   kc label "$n" node-role.kubernetes.io/worker= --overwrite >/dev/null
 done
+# A node is Ready before its network pod (calico-node) and the other system pods are: wait for
+# them too, so that the cluster is fully ready (and check-ready.sh passes) when the script ends.
+step "Waiting for the system pods to be ready"
+kc wait --for=condition=Ready pods --all -n kube-system --field-selector=status.phase!=Succeeded --timeout=300s >/dev/null \
+  || echo "note: some pods in kube-system are not ready yet; look with: kubectl get pods -n kube-system"
 cps=$(kc get nodes -l node-role.kubernetes.io/control-plane --no-headers | grep -cw Ready || true)
 workers=$(kc get nodes -l node-role.kubernetes.io/worker --no-headers | grep -cw Ready || true)
 kc get nodes -o wide

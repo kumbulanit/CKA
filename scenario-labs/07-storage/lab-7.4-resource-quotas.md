@@ -8,6 +8,8 @@
 
 **What you learn:** requests and limits, QoS classes, LimitRange, ResourceQuota for pods, CPU, memory and storage.
 
+📘 **More detail:** [Lab 7.4 explained](./lab-7.4-resource-quotas-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 | Word | Meaning |
 | --- | --- |
 | **Request** | What the container needs for sure. The scheduler uses it to choose a node. |

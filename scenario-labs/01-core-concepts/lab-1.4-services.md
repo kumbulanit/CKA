@@ -8,6 +8,8 @@
 
 **What you learn:** Services (ClusterIP and NodePort), selectors, endpoints, Service names.
 
+📘 **More detail:** [Lab 1.4 explained](./lab-1.4-services-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 Pods come and go, and each new pod gets a new IP address. A **Service** is a fixed name and address in front of a group of pods. It finds its pods by their **label**.
 
 > **How to use this lab**
@@ -174,6 +176,16 @@ Address: 10.103.30.79
 
 pod "dns-test" deleted from dev namespace
 ```
+
+In your terminal, `kubectl` often adds three lines, and then shows the answer a second time:
+
+```text
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+warning: couldn't attach to pod/dns-test, falling back to streaming logs: ...
+```
+
+That is fine. The pod finished before `kubectl` could connect to it, so `kubectl` shows its log instead. The answer is the same. Every `kubectl run ... --rm -i` in the course (Labs 3.1 and 3.3, Workshop 2) can do this.
 
 The name is built like this: `<service>.<namespace>.svc.cluster.local`. Inside the same namespace, the short name `backend` is enough. Lab 3.3 looks at DNS in detail.
 

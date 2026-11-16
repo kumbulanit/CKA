@@ -8,6 +8,8 @@
 
 **What you learn:** pod IP addresses, the network plugin (CNI), pod-to-pod traffic across nodes, NetworkPolicy.
 
+📘 **More detail:** [Lab 3.1 explained](./lab-3.1-network-model-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 > **How to use this lab**
 >
 > - **📋 Copy and paste into your terminal:** copy the whole grey box (the copy button is in its top right corner), paste it into the terminal of your server, and press Enter.

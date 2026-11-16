@@ -8,6 +8,8 @@
 
 **What you learn:** how the scheduler chooses a node, node labels, `nodeSelector`.
 
+📘 **More detail:** [Lab 4.1 explained](./lab-4.1-node-selectors-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 The **scheduler** chooses a node for every new pod. By default it picks any node with enough room. A **nodeSelector** on the pod says: only nodes with this label.
 
 > **How to use this lab**

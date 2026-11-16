@@ -8,6 +8,8 @@
 
 **What you learn:** rolling updates, `kubectl rollout status`, `history` and `undo`.
 
+📘 **More detail:** [Lab 1.8 explained](./lab-1.8-releases-and-rollbacks-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 A Deployment replaces its pods **one by one**: it starts a new pod, waits until it is ready, and only then stops an old one. That is a **rolling update**. Users notice nothing.
 
 > **How to use this lab**
@@ -70,6 +72,7 @@ REVISION  CHANGE-CAUSE
 kubectl set image deployment/frontend frontend=nginx:1.28-alpine
 kubectl annotate deployment/frontend kubernetes.io/change-cause="nginx 1.28"
 kubectl rollout status deployment/frontend
+sleep 15
 ```
 
 **What this does:**
@@ -77,6 +80,7 @@ kubectl rollout status deployment/frontend
 - `kubectl set image deployment/frontend ...`: Changes the image of the container `frontend` in the Deployment `frontend` to `nginx:1.28-alpine`. This starts a rolling update.
 - `kubectl annotate deployment/frontend kubernetes.io/change-cause="nginx ...`: Writes the note "nginx 1.28" on the Deployment. It shows up in the rollout history.
 - `kubectl rollout status deployment/frontend`: Waits until the new pods of the Deployment `frontend` are all ready, and says when it is done.
+- `sleep 15`: Waits 15 seconds, until the old pods are gone everywhere. Right after an update, a request can still be sent to a pod that is stopping, and then it hangs.
 
 **👀 You should see** (the last line) *(do not paste)*:
 

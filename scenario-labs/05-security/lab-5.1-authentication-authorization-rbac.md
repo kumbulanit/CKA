@@ -8,6 +8,8 @@
 
 **What you learn:** the difference between authentication and authorization, Roles, ClusterRoles, RoleBindings, `kubectl auth can-i`, ServiceAccounts.
 
+📘 **More detail:** [Lab 5.1 explained](./lab-5.1-authentication-authorization-rbac-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 Every request to the cluster passes two gates:
 
 | Gate | The question | How |

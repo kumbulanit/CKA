@@ -8,6 +8,8 @@
 
 **What you learn:** where container logs are stored, log rotation, node-level logging agents (DaemonSet), sidecars.
 
+📘 **More detail:** [Lab 6.2 explained](./lab-6.2-cluster-wide-logging-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 > **How to use this lab**
 >
 > - **📋 Copy and paste into your terminal:** copy the whole grey box (the copy button is in its top right corner), paste it into the terminal of your server, and press Enter.

@@ -8,6 +8,8 @@
 
 **What you learn:** how TLS protects the API, the cluster's certificate authority (CA), certificate signing requests, kubeconfig users and contexts.
 
+📘 **More detail:** [Lab 5.2 explained](./lab-5.2-tls-access-to-the-api-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 All traffic to the API server is encrypted with **TLS**. Both sides prove who they are with a **certificate**:
 
 | Who | Proves it with | Signed by |

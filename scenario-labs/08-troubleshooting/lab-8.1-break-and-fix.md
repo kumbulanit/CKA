@@ -8,6 +8,8 @@
 
 **What you learn:** a fixed way to troubleshoot, and the six most common faults. Each fault comes from a module you did: workloads, Services, configuration, quotas, networking, nodes.
 
+📘 **More detail:** [Lab 8.1 explained](./lab-8.1-break-and-fix-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 Troubleshooting is 30% of the exam. Do not guess. Walk the same path every time.
 
 > **How to use this lab**

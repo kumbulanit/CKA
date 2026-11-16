@@ -2,6 +2,8 @@
 
 Work in **pairs**: one person types, the other reads the task and checks. Swap after every round.
 
+📘 **More detail:** [Workshop 2 explained](./lab-w2-challenge-rounds-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 - Each round has 5 tasks and takes about 30 minutes. The trainer goes through the answers after each round.
 - All tasks are in the namespace **`dev`**, on the Shop.
 - Try first. Open **Show the answer** only when you are stuck for more than 5 minutes.
@@ -275,7 +277,11 @@ kubectl exec deployment/db -n dev -- psql -U shop -d shop -c "INSERT INTO items 
 kubectl delete pod -n dev -l app=db
 kubectl rollout status deployment/db -n dev
 kubectl exec deployment/db -n dev -- psql -U shop -d shop -c "SELECT * FROM items;"
+kubectl rollout restart deployment/backend -n dev
+kubectl rollout status deployment/backend -n dev
 ```
+
+The last two lines restart the backend, as in Lab 7.3. By itself, a backend pod can take several minutes to reconnect to the new database pod, and until then it is not ready.
 
 </details>
 
@@ -292,6 +298,8 @@ kubectl rollout history deployment/frontend -n dev
 kubectl rollout undo deployment/frontend -n dev
 kubectl rollout status deployment/frontend -n dev
 ```
+
+As in Lab 1.8, `rollout undo` also prints a `Warning` line about `kubectl apply`. You can ignore it here.
 
 </details>
 
@@ -340,3 +348,5 @@ kubectl -n kube-system exec etcd-minikube -- etcdutl snapshot status /var/lib/mi
 ```text
 All 8 checks passed. The Shop works.
 ```
+
+If it says `deployment backend: 0/2 ready` or `1/2 ready`, the backend has not reconnected to the new database pod from Task 3.2 yet. Restart it, then run the check again: `kubectl rollout restart deployment/backend -n dev`, then `kubectl rollout status deployment/backend -n dev`.

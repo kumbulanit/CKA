@@ -6,6 +6,8 @@
 
 **What you learn:** what happens when a node joins, node roles, removing a node.
 
+📘 **More detail:** [Lab 2.2 explained](./lab-2.2-growing-the-cluster-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 **The situation:** the Shop gets more users, and three nodes are not enough. A cluster grows by **joining** more nodes. With minikube that is one command: `minikube node add`. It creates the node, gives it a certificate, and joins it to the control plane.
 
 > **How to use this lab**
@@ -181,7 +183,7 @@ minikube-m02   Ready    worker          3h    v1.36.5
 minikube-m03   Ready    worker          3h    v1.36.5
 ```
 
-(`kubectl drain` is explained in Lab 2.7.)
+(`kubectl drain` is explained in Lab 2.7. Its line `Warning: ignoring DaemonSet-managed Pods: ...` is normal.)
 
 💡 **Exam tip:** always empty a node (`kubectl drain`) before you remove it. A node that is removed without a drain takes its pods with it.
 

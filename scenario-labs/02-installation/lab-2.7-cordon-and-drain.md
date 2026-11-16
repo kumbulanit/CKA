@@ -8,6 +8,8 @@
 
 **What you learn:** `cordon`, `drain`, `uncordon`.
 
+📘 **More detail:** [Lab 2.7 explained](./lab-2.7-cordon-and-drain-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 | Command | What it does |
 | --- | --- |
 | `kubectl cordon <node>` | No **new** pods on this node. The pods that are there stay. |
@@ -110,9 +112,13 @@ kubectl drain minikube-m03 --ignore-daemonsets --delete-emptydir-data
 
 **What this does:** Empties the node `minikube-m03`: marks it as closed and moves its pods to other nodes.
 
-**👀 You should see** the pods being moved away, and at the end *(do not paste)*:
+**👀 You should see** a `Warning` that the DaemonSet pods stay (that is what `--ignore-daemonsets` asks for), the pods being moved away, and at the end *(do not paste)*:
 
 ```text
+node/minikube-m03 already cordoned
+Warning: ignoring DaemonSet-managed Pods: kube-system/calico-node-jnmmz, kube-system/kube-proxy-tzm95
+evicting pod dev/frontend-5dcb7d4748-s6rxg
+...
 pod/frontend-6f7c8c9d4f-8s58d evicted
 pod/frontend-5bcf598847-7mwgn evicted
 pod/backend-5bdb6c7b78-t4fxw evicted

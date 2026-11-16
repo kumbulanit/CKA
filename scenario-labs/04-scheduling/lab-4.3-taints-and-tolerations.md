@@ -8,6 +8,8 @@
 
 **What you learn:** taints, their effects, tolerations.
 
+📘 **More detail:** [Lab 4.3 explained](./lab-4.3-taints-and-tolerations-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 Affinity works from the side of the **pod**: "I want that node". A taint works from the side of the **node**: "I do not want pods".
 
 | Word | On | Think of it as |

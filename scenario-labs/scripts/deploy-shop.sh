@@ -9,7 +9,8 @@ labs=$(dirname "$here")
 pv=$labs/07-storage/db-pv-$env.yaml
 
 echo "==> Namespace $env"
-kubectl create namespace "$env" --dry-run=client -o yaml | kubectl apply -f -
+# Only when it is missing: "apply" on a namespace made with "kubectl create" (Lab 1.1) prints a warning.
+kubectl get namespace "$env" >/dev/null 2>&1 || kubectl create namespace "$env"
 echo "==> Database password (Secret db-secret)"
 kubectl get secret db-secret -n "$env" >/dev/null 2>&1 \
   || kubectl create secret generic db-secret -n "$env" --from-literal=password="$env-pass-123"

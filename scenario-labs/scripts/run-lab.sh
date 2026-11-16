@@ -16,6 +16,7 @@ rl_list() {
   echo "The labs. Run one with: $0 <number>   (add --all to run it without stopping)"
   local f n t
   for f in "$RL_labs"/0[1-8]-*/lab-*.md "$RL_labs"/workshop/lab-*.md; do
+    case $f in *-explained.md) continue ;; esac   # the companion pages have no commands to run
     n=$(basename "$f" .md); n=${n#lab-}
     case $n in *solutions) n="${n%%-*}-solutions" ;; *) n=${n%%-*} ;; esac
     t=$(head -1 "$f" | sed -E 's/^# //')
@@ -28,7 +29,7 @@ rl_find() {
   [ -f "$1" ] && { echo "$1"; return; }
   case $a in
     *-solutions) ls "$RL_labs"/*/lab-"${a%-solutions}"-*solutions.md 2>/dev/null | head -1 ;;
-    *) ls "$RL_labs"/*/lab-"$a"-*.md 2>/dev/null | grep -v solutions | head -1 ;;
+    *) ls "$RL_labs"/*/lab-"$a"-*.md 2>/dev/null | grep -v -e solutions -e -explained | head -1 ;;
   esac
 }
 

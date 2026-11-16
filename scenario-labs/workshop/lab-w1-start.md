@@ -2,6 +2,8 @@
 
 **Goal:** everyone starts the workshop day with the same working Shop in the `dev` namespace.
 
+📘 **More detail:** [Workshop 1 explained](./lab-w1-start-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 - If you did the course labs on this server, your Shop is already there. Do **Step 2** only.
 - If you are new on this server (the first group), do **Step 1** and **Step 2**.
 

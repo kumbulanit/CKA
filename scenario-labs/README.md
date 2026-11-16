@@ -45,10 +45,15 @@ Every step looks the same:
 | **The situation** | At the top of a lab: what the Shop needs now, and why this topic comes now. |
 | **✅ Check** | At the end of a lab: what must work before you go on. |
 | **🧹** | Clean up. |
+| **📘 More detail** | At the top of a lab: a link to its "explained" page (see below). |
 
 Every lab starts the same way: **Before you start** takes you to the folder of the module and makes `dev` your working namespace. Commands for `uat` or `prod` always say so with `-n uat` or `-n prod`.
 
 Run every command **on your server, as your own user** (not root), unless the step says something else.
+
+### Two pages for every lab: the lab, and the lab explained
+
+Every lab has a companion page next to it, with the same name and `-explained` at the end (for example `lab-1.3-deployments-explained.md`). The lab page is short: the steps, a line on what each command does, and what you should see. The **explained** page goes through the same steps in more depth: what happens inside the cluster, why the Shop needs it, common mistakes, exam notes and a few questions to check yourself. It has no commands to paste: the commands are only on the lab page. Setup and the four workshops have one too ([Setup explained](./00-setup-explained.md)).
 
 ### Shortcuts (recommended)
 
@@ -184,6 +189,7 @@ The jobs that are not the lesson are done by scripts, in `~/CKA/scenario-labs/sc
 | `deploy-shop.sh dev` | You fell behind, or the Shop is broken | Builds the whole Shop in one environment, with everything from the course |
 | `check-shop.sh dev` | After a change to the Shop | Checks that the Shop works |
 | `break.sh 1` | Lab 8.1 and Workshop 3 | Puts a fault into the Shop |
+| `test/run-all.sh` | Before a course, on a test server (trainer only) | Runs every command of every lab on a fresh cluster and compares the output with the pages. See [Testing the labs](./scripts/test/README.md) |
 
 ### Is everything ready?
 
@@ -205,7 +211,32 @@ The jobs that are not the lesson are done by scripts, in `~/CKA/scenario-labs/sc
 
 **What this does:** Runs Lab 1.3 from its own page, one command at a time. Before every command it shows the command and what it does. **Enter** runs it, **s** skips it, **q** stops. **Ctrl+C** stops a command that runs too long. `run-lab.sh` alone lists the labs.
 
-SEE-RUN-LAB-OUTPUT
+**👀 You should see**, for example with `run-lab.sh 2.1` after pressing Enter twice *(do not paste)*:
+
+```text
+══ Lab 2.1: Installing the cluster: what is under the Shop ══
+The situation: the Shop runs in three environments. Before you put real users on it, ...
+Page: 02-installation/lab-2.1-installing-the-cluster.md   Commands: 10
+Before every command: Enter runs it, s skips it, q stops. Ctrl+C stops a running command.
+
+── Before you start ──
+
+$ cd ~/CKA/scenario-labs/02-installation
+  kubectl config set-context --current --namespace=dev
+What this does:
+- `cd ~/CKA/scenario-labs/02-installation`: Goes to the folder `~/CKA/scenario-labs/02-installation`.
+- `kubectl config set-context --current --namespace=dev`: Makes `dev` your working namespace: ...
+▶ [1/10] Enter: run   s: skip   q: stop
+Context "minikube" modified.
+
+── Step 1: see the cluster as minikube sees it ──
+
+$ minikube status
+What this does: Shows if each node and its parts are running.
+▶ [2/10] Enter: run   s: skip   q: stop
+```
+
+![run-lab.sh showing Lab 2.1 step by step](./images/run-lab-demo.png)
 
 The participants then do the same steps themselves, from the lab page.
 
@@ -236,3 +267,7 @@ And check that the Shop works:
 ```bash
 ~/CKA/scenario-labs/scripts/check-shop.sh dev
 ```
+
+### Test the whole course before it starts (trainer only)
+
+`scripts/test/run-all.sh` runs every command of every lab, in course order, on a fresh cluster, and lists every output that differs from the page. It deletes the cluster first, so run it on a test server, not on a participant's. [Testing the labs](./scripts/test/README.md) says how, and [TEST-REPORT.md](./TEST-REPORT.md) has the last result.

@@ -1,0 +1,417 @@
+# Every command in the lab pages that run-lab.sh --all does not run by itself:
+# commands in tips, exam tips, "Read only" boxes, tables and the "explained" pages, and the
+# "Check:" boxes of the mock exam solutions. run-all.sh runs each section right after its lab,
+# so the cluster is in the state the page describes.
+#
+# Format: "## <lab>" starts a section. A "#" line says where the next command comes from.
+# One command per line; it runs with bash -c in the lab's folder.
+#   !command   must FAIL (the page says it fails)
+#   ~command   keeps running (watch, follow, port-forward): stopped after 8 seconds, that is fine
+# Values the page leaves to you (NAME, <pod>, ...) are filled in with real ones.
+# Throwaway objects go in the namespace "cmdtest", which each section deletes again.
+
+## setup
+# 00-setup.md Step 1 (the repository can be cloned; the files the course uses must be pushed first)
+rm -rf /tmp/clonetest && git clone -q https://github.com/kumbulanit/CKA.git /tmp/clonetest && ls /tmp/clonetest/scenario-labs/scripts && rm -rf /tmp/clonetest
+# 00-setup.md Step 4
+kubectl get nodes
+# 00-setup.md Step 5
+kubens
+kubectx
+# 00-setup.md Step 5 table, README.md: k is kubectl (an alias, in an interactive shell)
+setsid -w bash -ic 'k get pods -A | head -3'
+# 00-setup.md Step 5 table: Tab completion is set up for kubectl and k
+setsid -w bash -ic 'complete -p kubectl k'
+# 00-setup.md Step 5 table, README.md
+~kubectl get pods -A -w
+# 00-setup-explained.md: the nodes are Docker containers
+docker ps
+# 00-setup-explained.md, Lab 2.1: the start command setup.sh uses
+grep -E '^(NODES|CNI|K8S_VERSION)=|mk start --driver' ~/CKA/setup.sh
+minikube profile list
+# 00-setup-explained.md: the context kubectl uses
+kubectl config use-context minikube
+
+## 1.1
+# lab-1.1 tip, and every lab's "Before you start" tip
+kubens dev
+kubens
+# lab-1.1-explained.md, Lab 1.9 exam tip
+kubectl get pods -A
+
+## 1.2
+# lab-1.2 tip: k and Tab
+setsid -w bash -ic 'k get pods'
+kubectl get po
+# lab-1.2 tip
+kubectl explain pod.spec.containers | head -12
+# lab-1.2-explained.md: write a pod's YAML without a file
+kubectl run web --image=nginx:1.27-alpine --dry-run=client -o yaml > /tmp/pod.yaml && cat /tmp/pod.yaml
+# lab-1.2-explained.md (the pod "backend" was deleted at the end of the lab: make it again for these)
+kubectl apply -f backend-pod.yaml && kubectl wait --for=condition=Ready pod/backend --timeout=120s
+kubectl describe pod backend | head -15
+kubectl describe pod | head -5
+kubectl label pod backend tier=api && kubectl get pod backend --show-labels
+kubectl delete pod backend --now
+
+## 1.3
+# lab-1.3 tip
+~kubectl get pods -w
+# lab-1.3-explained.md
+kubectl get deployments,replicasets,pods
+kubectl rollout status deployment/backend
+# lab-1.3 exam tip (Read only box), lab-1.3-explained.md: create and scale without a file
+kubectl create namespace cmdtest
+kubectl create deployment frontend --image=nginx:1.27-alpine --replicas=2 -n cmdtest && kubectl rollout status deployment/frontend -n cmdtest && kubectl get deployment frontend -n cmdtest
+kubectl scale deployment frontend --replicas=3 -n cmdtest && kubectl rollout status deployment/frontend -n cmdtest
+kubectl scale deployment frontend --replicas=0 -n cmdtest && kubectl get deployment frontend -n cmdtest
+kubectl delete namespace cmdtest --wait=false
+
+## 1.4
+# lab-1.4-explained.md
+kubectl get services
+kubectl get svc
+kubectl get pods -o wide
+kubectl get pods --show-labels
+# lab-1.4 exam tip (Read only box): the same Service as backend-service.yaml, without a file
+kubectl expose deployment backend --port=3000 --target-port=3000 --dry-run=client -o yaml
+# lab-1.4-explained.md: the frontend reaches the backend by name
+kubectl exec deployment/frontend -- curl -s -m 5 http://backend:3000/items; echo
+
+## 1.5
+# lab-1.5-explained.md
+kubectl get configmap backend-config -o yaml | head -12
+kubectl describe deployment backend | head -20
+kubectl get secret db-secret -o jsonpath='{.data.password}' | base64 -d; echo
+# lab-1.5 tip and lab-1.5-explained.md: the backend image has no env program
+!kubectl exec deployment/backend -- env
+# lab-1.5-explained.md: a debug container (with tools) can look inside the backend from outside
+p=$(kubectl get pod -l app=backend -o name | head -1); kubectl debug $p --image=busybox:1.36 --target=backend --container=dbg -- sh -c 'tr "\0" "\n" < /proc/1/environ | grep PGRST_DB_URI'; sleep 10; kubectl logs $p -c dbg
+kubectl describe pod -l app=backend | grep -A3 "Environment Variables from" | head -4
+# lab-1.5 exam tip (Read only box), lab-1.5-explained.md: ConfigMap and Secret without a file
+kubectl create namespace cmdtest
+cd /tmp && printf 'colour=blue\n' > file.conf && kubectl create configmap my-config --from-literal=KEY=value --from-file=file.conf -n cmdtest && kubectl describe configmap my-config -n cmdtest | head -14
+kubectl create secret generic my-secret --from-literal=password=s3cret -n cmdtest && kubectl get secret my-secret -n cmdtest -o jsonpath='{.data.password}' | base64 -d; echo
+kubectl delete namespace cmdtest --wait=false
+
+## 1.6
+# lab-1.6-explained.md
+kubectl get all
+kubectl logs deployment/db --tail=5
+# lab-1.6-explained.md: restart (on a throwaway Deployment: the Shop's revision numbers stay as Lab 1.8 shows them)
+kubectl create namespace cmdtest
+kubectl create deployment web --image=nginx:1.27-alpine -n cmdtest && kubectl rollout status deployment/web -n cmdtest && kubectl rollout restart deployment/web -n cmdtest && kubectl rollout status deployment/web -n cmdtest
+kubectl delete namespace cmdtest --wait=false
+# lab-1.6-explained.md (port-forward alone keeps running)
+~kubectl port-forward service/frontend 8080:80
+
+## 1.7
+# lab-1.7-explained.md
+kubectl describe deployment backend | grep -E "Liveness|Readiness"
+kubectl get events --field-selector reason=Unhealthy
+kubectl explain pod.spec.containers.livenessProbe | head -12
+
+## 1.8
+# lab-1.8-explained.md
+kubectl rollout history deployment/backend
+kubectl get deployment backend -o wide
+# lab-1.8 text: go back to a chosen revision (then forward again to the newest one)
+kubectl rollout history deployment/backend --revision=2
+kubectl rollout undo deployment/backend --to-revision=2 && kubectl rollout status deployment/backend
+kubectl rollout undo deployment/backend && kubectl rollout status deployment/backend && kubectl get deployment backend -o wide
+# lab-1.8-explained.md: set image and annotate, in a throwaway namespace
+kubectl create namespace cmdtest
+kubectl create deployment web --image=nginx:1.27-alpine -n cmdtest && kubectl rollout status deployment/web -n cmdtest
+kubectl set image deployment/web nginx=nginx:1.28-alpine -n cmdtest && kubectl annotate deployment/web kubernetes.io/change-cause="nginx 1.28" -n cmdtest && kubectl rollout status deployment/web -n cmdtest && kubectl rollout history deployment/web -n cmdtest
+kubectl delete namespace cmdtest --wait=false
+
+## 1.9
+# lab-1.9-explained.md
+kubectl get deployments -A
+# lab-1.9-explained.md: objects put in the wrong namespace are removed with the same files
+kubectl create namespace cmdtest
+kubectl apply -f shop/ -n cmdtest >/dev/null && kubectl delete -f shop/ -n cmdtest
+kubectl delete namespace cmdtest --wait=false
+# lab-1.9-explained.md: one exec per environment
+for ns in dev uat prod; do echo -n "$ns: "; kubectl exec -n $ns deployment/frontend -- curl -s -m 5 http://localhost/api/items | head -c 60; echo; done
+
+## 2.1
+# lab-2.1-explained.md
+docker ps --format '{{.Names}}'
+minikube ssh -- hostname
+kubectl get --raw='/readyz?verbose' | tail -3
+minikube update-context
+minikube ssh -- sudo systemctl status kubelet --no-pager | head -4
+minikube ssh -- sudo journalctl -u kubelet --no-pager -n 3
+
+## 2.2
+# lab-2.2-explained.md
+free -h
+kubectl get pods -n kube-system -o wide | head -6
+kubectl label node minikube-m02 node-role.kubernetes.io/worker= --overwrite && kubectl get node minikube-m02
+# lab-2.2-explained.md: a kubeadm command, run with the kubeadm of the minikube control plane
+minikube ssh -- 'sudo /var/lib/minikube/binaries/$(ls /var/lib/minikube/binaries | tail -1)/kubeadm token create --print-join-command --kubeconfig /etc/kubernetes/admin.conf' | sed -E 's/(token |sha256:)[^ ]*/\1.../g'
+
+## 2.3
+# lab-2.3-explained.md (the toolbox was deleted at the end of the lab: make it again)
+kubectl run toolbox --image=busybox:1.36 -- sleep 3600 && kubectl wait --for=condition=Ready pod/toolbox --timeout=120s
+kubectl exec toolbox -- wget -q -O- http://backend:3000/items; echo
+kubectl delete pod toolbox --now
+# lab-2.3 exam tip, lab-2.3-explained.md: where the static pods live
+minikube ssh -- sudo grep staticPodPath /var/lib/kubelet/config.yaml
+# lab-2.3-explained.md
+kubectl run web --image=nginx:1.27-alpine --dry-run=client -o yaml | head -8
+# lab-2.3-explained.md: a throwaway pod with a shell (here the shell gets its commands from a pipe)
+echo 'wget -q -O- http://backend:3000/items; echo; exit' | kubectl run tmp --rm -i --image=busybox:1.36 --restart=Never -- sh
+
+## 2.4
+# lab-2.4-explained.md
+kubectl -n kube-system exec etcd-minikube -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/var/lib/minikube/certs/etcd/ca.crt --cert=/var/lib/minikube/certs/etcd/server.crt --key=/var/lib/minikube/certs/etcd/server.key member list
+minikube ssh -- 'sudo grep -E "cert|key" /etc/kubernetes/manifests/etcd.yaml'
+# lab-2.4-explained.md: kubeadm flags exist (an HA kubeadm cluster is not built in this course)
+minikube ssh -- 'sudo /var/lib/minikube/binaries/$(ls /var/lib/minikube/binaries | tail -1)/kubeadm init --help' | grep -- "--control-plane-endpoint"
+minikube ssh -- 'sudo /var/lib/minikube/binaries/$(ls /var/lib/minikube/binaries | tail -1)/kubeadm join --help' | grep -- "--control-plane "
+
+## 2.5
+# lab-2.5 text
+minikube ssh -- 'sudo grep -E "cert|key|trusted" /etc/kubernetes/manifests/etcd.yaml'
+# lab-2.5-explained.md
+kubectl -n kube-system exec etcd-minikube -- etcdutl snapshot status /var/lib/minikube/etcd/shop-backup.db --write-out=table
+kubectl -n kube-system exec etcd-minikube -- etcdutl snapshot restore /var/lib/minikube/etcd/shop-backup.db --data-dir /var/lib/minikube/etcd/cmdtest-restore && minikube ssh -- sudo ls /var/lib/minikube/etcd/cmdtest-restore && minikube ssh -- sudo rm -rf /var/lib/minikube/etcd/cmdtest-restore
+# lab-2.5-explained.md: "etcdctl snapshot restore" is the old way
+kubectl -n kube-system exec etcd-minikube -- etcdctl snapshot restore --help 2>&1 | head -4
+
+## 2.6
+# lab-2.6-explained.md: kubeadm upgrade commands exist (minikube runs them for you in Lab 2.6)
+minikube ssh -- 'sudo /var/lib/minikube/binaries/$(ls /var/lib/minikube/binaries | tail -1)/kubeadm upgrade --help' | grep -E "^  (apply|node|plan)"
+minikube ssh -- 'sudo /var/lib/minikube/binaries/$(ls /var/lib/minikube/binaries | tail -1)/kubeadm upgrade plan --kubeconfig /etc/kubernetes/admin.conf' 2>&1 | grep -iE "version|upgrade|error" | head -12
+# lab-2.6-explained.md: after a new kubelet, on a node
+minikube ssh -n minikube-m02 -- 'sudo systemctl daemon-reload && sudo systemctl restart kubelet && sleep 5 && systemctl is-active kubelet'
+kubectl wait --for=condition=Ready node/minikube-m02 --timeout=120s
+# lab-2.6 exam tip, lab-2.6-explained.md
+kubectl uncordon minikube-m02
+
+## 2.7
+# lab-2.7 and lab-2.7-explained.md: cordon, drain, uncordon, with a real node
+kubectl cordon minikube-m02 && kubectl get node minikube-m02
+kubectl drain minikube-m02 --ignore-daemonsets --delete-emptydir-data --timeout=180s
+kubectl uncordon minikube-m02 && kubectl get node minikube-m02
+for ns in dev uat prod; do kubectl rollout status deployment/frontend deployment/backend deployment/db -n $ns --timeout=180s; done
+
+## 3.1
+# lab-3.1-explained.md
+kubectl get pods -n prod --show-labels
+kubectl describe networkpolicy -n prod | head -20
+kubectl exec -n prod deployment/frontend -- curl -s -m 5 http://localhost/api/items | head -c 80; echo
+# lab-3.1 exam tip
+kubectl get pods --show-labels
+# lab-3.1 text: a pod without the right label is blocked (wget times out)
+!kubectl run nettest -n prod --rm -i --restart=Never --image=busybox:1.36 -- wget -q -T 5 -O- http://backend.prod:3000/items
+# lab-3.1 Step 11: dev has the same policies now: only a pod with app=backend reaches the database
+!kubectl run nettest -n dev --rm -i --restart=Never --image=busybox:1.36 -- nc -zv -w 3 db 5432
+kubectl run nettest2 -n dev --rm -i --restart=Never --labels=app=backend --image=busybox:1.36 -- nc -zv -w 3 db 5432
+
+## 3.2
+# lab-3.2-explained.md
+kubectl logs -n dev -l app=frontend --prefix --tail=2
+kubectl get endpointslices -n dev -l kubernetes.io/service-name=frontend
+grep shop.local /etc/hosts
+curl -s http://shop.local | grep "<h1>"
+curl -s http://shop.local/api/items; echo
+kubectl describe ingress shop -n prod | head -15
+kubectl get endpointslices -n prod
+# lab-3.2 exam tip (Read only box)
+kubectl create ingress shop --class=nginx --rule="shop.local/*=frontend:80" --dry-run=client -o yaml
+# lab-3.2-explained.md: scale
+kubectl scale deployment frontend -n dev --replicas=3 && kubectl rollout status deployment/frontend -n dev && kubectl scale deployment frontend -n dev --replicas=2
+
+## 3.3
+# lab-3.3-explained.md, lab-3.3 text: from inside a pod
+kubectl run tmp1 --rm -i --image=busybox:1.36 --restart=Never -- cat /etc/resolv.conf
+kubectl run tmp2 --rm -i --image=busybox:1.36 --restart=Never -- nslookup db.dev.svc.cluster.local
+kubectl run tmp3 --rm -i --image=busybox:1.36 --restart=Never -- nslookup backend.dev.svc.cluster.local
+kubectl get endpointslices -n dev -l kubernetes.io/service-name=db
+
+## 4.1
+# lab-4.1 text, lab-4.1-explained.md
+kubectl get nodes --show-labels
+kubectl label node minikube-m02 cmdtest=yes && kubectl get nodes -l cmdtest=yes
+kubectl label node minikube-m02 cmdtest- && kubectl get nodes -l cmdtest=yes
+
+## 4.2
+# lab-4.2 text, lab-4.2-explained.md
+kubectl get pods -n dev -l app=backend -o wide
+kubectl explain pod.spec.affinity | head -12
+kubectl explain pod.spec.affinity.nodeAffinity | head -12
+
+## 4.3
+# lab-4.3-explained.md
+kubectl describe node | grep Taints
+kubectl describe node minikube-m03 | grep Taints
+kubectl explain pod.spec.tolerations | head -10
+# lab-4.3 exam tip: remove the taint and the label ... and put them back at once (the Shop keeps them)
+kubectl taint node minikube-m03 dedicated=prod:NoSchedule- && kubectl label node minikube-m03 env- && kubectl describe node minikube-m03 | grep Taints
+kubectl label node minikube-m03 env=prod && kubectl taint node minikube-m03 dedicated=prod:NoSchedule && kubectl describe node minikube-m03 | grep Taints
+# lab-4.3-explained.md: a taint on another node, removed again
+kubectl taint node minikube-m02 cmdtest=yes:NoSchedule && kubectl taint node minikube-m02 cmdtest=yes:NoSchedule-
+
+## 5.1
+# lab-5.1-explained.md
+kubectl auth can-i create deployments -n dev --as=thabo
+# (can-i answers "no" with exit code 1)
+!kubectl auth can-i delete pods -n prod --as=thabo
+kubectl create namespace cmdtest
+kubectl create serviceaccount robot -n cmdtest
+kubectl create role robot -n cmdtest --verb=get,list --resource=pods && kubectl create rolebinding robot -n cmdtest --role=robot --serviceaccount=cmdtest:robot
+kubectl auth can-i list pods -n cmdtest --as=system:serviceaccount:cmdtest:robot
+kubectl create clusterrole cmdtest-node-reader --verb=get,list --resource=nodes && kubectl create clusterrolebinding cmdtest-node-reader --clusterrole=cmdtest-node-reader --user=thabo && kubectl auth can-i list nodes --as=thabo
+kubectl delete clusterrolebinding cmdtest-node-reader && kubectl delete clusterrole cmdtest-node-reader
+kubectl delete namespace cmdtest --wait=false
+
+## 5.2
+# lab-5.2-explained.md
+openssl x509 -in ~/thabo/thabo.crt -noout -subject -issuer
+openssl x509 -in ~/thabo/thabo.crt -noout -dates
+kubectl certificate approve thabo
+kubectl --context=thabo get pods -n dev
+# lab-5.2 text, 00-setup.md table, README.md: switch user and back
+kubectx thabo && kubectl get pods -n dev && kubectx minikube
+kubectl config use-context thabo && kubectl config use-context minikube
+kubectx
+# lab-5.2-explained.md: certificate dates of the cluster
+minikube ssh -- 'sudo /var/lib/minikube/binaries/$(ls /var/lib/minikube/binaries | tail -1)/kubeadm certs check-expiration --cert-dir /var/lib/minikube/certs' 2>&1 | head -8
+
+## 6.1
+# lab-6.1 text, lab-6.1-explained.md
+kubectl logs deployment/backend -n prod --tail=3
+~kubectl logs -n prod deployment/backend -f
+kubectl get events -n dev --sort-by=.lastTimestamp | tail -5
+kubectl logs -n kube-system -l component=kube-scheduler --tail=3
+minikube ssh -- sudo journalctl -u kubelet --no-pager -n 5
+minikube ssh -- sudo journalctl -u containerd --no-pager -n 5
+minikube ssh -- sudo crictl ps | head -5
+minikube ssh -- sudo crictl ps -a | head -5
+minikube ssh -- "sudo crictl ps --name kube-scheduler -q | head -1 | xargs sudo crictl logs --tail 3"
+minikube ssh -- sudo systemctl status kubelet --no-pager | head -3
+docker ps --format '{{.Names}}'
+kubectl logs -n prod deployment/backend | grep -i listening > /tmp/backend-listening.txt; cat /tmp/backend-listening.txt
+# lab-6.1 text: --previous needs a container that restarted
+p=$(kubectl get pods -A --no-headers | awk '$5+0>0 {print $1" "$2; exit}'); if [ -n "$p" ]; then set -- $p; kubectl logs -n $1 $2 --previous --tail=3; else echo "no pod has restarted: --previous has nothing to show"; fi
+
+## 6.2
+# lab-6.2-explained.md
+minikube ssh -- sudo ls /var/log/pods | head -5
+kubectl get pods -n prod -o wide
+# lab-6.2-explained.md: logs of one container of a pod with two
+kubectl create namespace cmdtest
+kubectl run two -n cmdtest --image=busybox:1.36 --overrides='{"spec":{"containers":[{"name":"app","image":"busybox:1.36","command":["sh","-c","while true; do date >> /var/log/app.log; sleep 2; done"],"volumeMounts":[{"name":"log","mountPath":"/var/log"}]},{"name":"sidecar","image":"busybox:1.36","command":["sh","-c","tail -F /var/log/app.log"],"volumeMounts":[{"name":"log","mountPath":"/var/log"}]}],"volumes":[{"name":"log","emptyDir":{}}]}}' && kubectl wait --for=condition=Ready pod/two -n cmdtest --timeout=120s && sleep 5 && kubectl logs two -n cmdtest -c sidecar --tail=2
+kubectl delete namespace cmdtest --wait=false
+
+## 6.3
+# lab-6.3-explained.md
+kubectl get pods -n kube-system -l k8s-app=metrics-server
+kubectl wait --for=condition=Available apiservice/v1beta1.metrics.k8s.io --timeout=180s
+kubectl get hpa
+kubectl describe deployment backend | grep -A3 -E "Limits|Requests"
+# lab-6.3 exam tip (Read only box): the same HPA as backend-hpa.yaml, without a file
+kubectl autoscale deployment backend --min=2 --max=5 --cpu=25% --dry-run=client -o yaml
+kubectl create namespace cmdtest
+kubectl create deployment web --image=nginx:1.27-alpine -n cmdtest && kubectl set resources deployment web -n cmdtest --requests=cpu=50m,memory=32Mi --limits=cpu=200m,memory=64Mi && kubectl autoscale deployment web -n cmdtest --min=1 --max=3 --cpu=50% && kubectl get hpa -n cmdtest
+kubectl delete namespace cmdtest --wait=false
+
+## 6.4
+# lab-6.4-explained.md (the lab uninstalled Prometheus at the end)
+helm list -A
+helm repo update >/dev/null && helm install prometheus prometheus-community/prometheus -n cmdtest --create-namespace --set server.persistentVolume.enabled=false --set alertmanager.enabled=false --set prometheus-pushgateway.enabled=false --dry-run=client | head -5
+helm upgrade --help | head -3
+kubectl get namespace cmdtest >/dev/null 2>&1 && kubectl delete namespace cmdtest --wait=false || true
+
+## 7.1
+# lab-7.1-explained.md, lab-7.1 text
+kubectl get pvc -A
+
+## 7.2
+# lab-7.2 text, lab-7.2-explained.md
+kubectl get pvc
+kubectl describe pvc db-data | head -12
+kubectl describe pod -l app=db | grep -A3 Volumes
+# lab-7.2-explained.md: delete a PVC (a throwaway one)
+kubectl create namespace cmdtest
+printf 'apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: scratch\nspec:\n  accessModes: [ReadWriteOnce]\n  resources:\n    requests:\n      storage: 100Mi\n' | kubectl apply -n cmdtest -f - && kubectl describe pvc scratch -n cmdtest | head -6 && kubectl delete pvc scratch -n cmdtest
+kubectl delete namespace cmdtest --wait=false
+
+## 7.3
+# lab-7.3-explained.md
+kubectl describe resourcequota -n dev 2>&1 | head -12
+
+## 7.4
+# lab-7.4 text, lab-7.4-explained.md
+kubectl get resourcequota -A
+kubectl describe resourcequota -n uat
+kubectl get events -n uat --sort-by=.lastTimestamp | tail -5
+kubectl create namespace cmdtest
+kubectl create quota small --hard=pods=10,requests.cpu=1,requests.memory=1Gi -n cmdtest && kubectl describe resourcequota small -n cmdtest
+kubectl create deployment web --image=nginx:1.27-alpine -n cmdtest && kubectl set resources deployment web -n cmdtest --requests=cpu=50m,memory=32Mi --limits=cpu=200m,memory=64Mi && kubectl rollout status deployment/web -n cmdtest --timeout=120s
+kubectl delete namespace cmdtest --wait=false
+
+## 8.1
+# lab-8.1 toolkit table, lab-8.1-explained.md (with real names)
+kubectl get pods -n dev -o wide
+kubectl describe pod -n dev -l app=backend | tail -8
+kubectl logs -n dev deployment/backend --tail=3
+kubectl describe service backend -n dev
+kubectl get events -n dev --sort-by=.lastTimestamp | tail -5
+kubectl get networkpolicy -n dev
+kubectl describe networkpolicy -n prod | head -12
+kubectl describe node minikube-m02 | grep -A6 Conditions
+kubectl describe resourcequota -n dev | head -8
+minikube ssh -n minikube-m02 -- sudo systemctl status kubelet --no-pager | head -3
+# lab-8.1 text: "kubectl edit deployment backend also works": break it as the lab does, fix it with an editor
+kubectl patch deployment backend -n dev --type=json -p '[{"op":"replace","path":"/spec/template/spec/containers/0/env/0/valueFrom/secretKeyRef/name","value":"db-secrets"}]' && sleep 5 && kubectl get pods -n dev -l app=backend
+KUBE_EDITOR="sed -i s/db-secrets/db-secret/" kubectl edit deployment backend -n dev && kubectl rollout status deployment/backend -n dev --timeout=180s
+# lab-8.1 text, lab-8.1-explained.md: build the whole Shop again
+cd ~/CKA/scenario-labs/scripts && ./deploy-shop.sh dev | tail -3
+~/CKA/scenario-labs/scripts/check-shop.sh dev | tail -2
+
+## w1
+# lab-w1-start-explained.md
+kubectl get deployments,services,pvc,networkpolicies,resourcequota -n dev
+
+## w2
+# lab-w2-challenge-rounds-explained.md
+kubectl describe networkpolicy -n dev | head -12
+kubectl describe rolebinding -n dev | head -12
+# lab-w2 text: "kubectl edit deployment frontend -n dev also works" (set it back to 5 first, then 3 with the editor)
+kubectl patch deployment frontend -n dev --type=json -p '[{"op":"replace","path":"/spec/template/spec/containers/0/readinessProbe/periodSeconds","value":5}]' && kubectl rollout status deployment/frontend -n dev
+KUBE_EDITOR="sed -i '/readinessProbe:/,/periodSeconds:/ s/periodSeconds: 5/periodSeconds: 3/'" kubectl edit deployment frontend -n dev && kubectl describe deployment frontend -n dev | grep Readiness
+
+## w4-solutions
+# lab-w4-mock-exam-solutions.md: the "Check:" boxes
+kubectl get pod web -n exam --show-labels
+kubectl get deployment frontend -n exam
+curl -s -o /dev/null -w "%{http_code}\n" http://$(minikube ip):30090
+kubectl exec settings -n exam -- env | grep SHOP
+kubectl exec secret-reader -n exam -- cat /etc/db/password; echo
+kubectl get pvc exam-pvc -n exam
+kubectl describe pod healthy -n exam | grep Readiness
+kubectl get deployment frontend -n exam -o jsonpath='{.spec.template.spec.containers[0].resources}{"\n"}'
+kubectl get pod fast -n exam -o wide
+kubectl describe networkpolicy web-only-from-frontend -n exam
+cat ~/exam/task11.txt
+cat ~/exam/task12.txt
+wc -l ~/exam/task13.txt
+kubectl get node minikube-m03
+kubectl get deployment broken -n exam
+# lab-w4-mock-exam.md Task 7 text
+kubectl auth can-i list pods -n exam --as=system:serviceaccount:exam:viewer
+# lab-w4-mock-exam.md, lab-w4-mock-exam-explained.md: help without leaving the terminal
+kubectl explain pod.spec.containers.resources | head -8
+kubectl expose --help | head -3
+kubectl create deployment web --image=nginx:1.27-alpine --dry-run=client -o yaml | head -5
+
+## end
+# README.md: the trainer commands
+~/CKA/scenario-labs/scripts/check-ready.sh | tail -3
+~/CKA/scenario-labs/scripts/run-lab.sh | head -5
+~/CKA/scenario-labs/scripts/deploy-shop.sh dev | tail -2
+~/CKA/scenario-labs/scripts/check-shop.sh dev | tail -2

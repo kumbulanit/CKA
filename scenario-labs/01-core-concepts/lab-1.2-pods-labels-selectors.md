@@ -8,6 +8,8 @@
 
 **What you learn:** pods, YAML files, labels, selectors, logs, `describe`.
 
+📘 **More detail:** [Lab 1.2 explained](./lab-1.2-pods-labels-selectors-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 A **pod** is the smallest thing Kubernetes runs: one container (sometimes more) with its own IP address.
 
 > **How to use this lab**

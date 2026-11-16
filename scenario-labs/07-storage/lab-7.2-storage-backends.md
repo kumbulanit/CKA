@@ -8,6 +8,8 @@
 
 **What you learn:** PersistentVolume, PersistentVolumeClaim, access modes, reclaim policy, local and network storage backends.
 
+📘 **More detail:** [Lab 7.2 explained](./lab-7.2-storage-backends-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 A **storage backend** is where the bytes really are. The PersistentVolume hides it: the application only sees a claim.
 
 | Backend | Where the data is | Can pods on different nodes share it? |

@@ -8,6 +8,8 @@
 
 **What you learn:** what Prometheus is, how it collects numbers, a first query.
 
+📘 **More detail:** [Lab 6.4 explained](./lab-6.4-prometheus-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 | | Metrics Server (Lab 6.3) | Prometheus |
 | --- | --- | --- |
 | Keeps a history | No, only now | Yes, days or weeks |
@@ -142,10 +144,14 @@ Questions to Prometheus are written in its own language, **PromQL**.
 **📋 Copy and paste into your terminal:**
 
 ```bash
+sleep 60
 curl -s 'http://localhost:9090/api/v1/query' --data-urlencode 'query=count by (namespace) (kube_pod_info{namespace=~"dev|uat|prod"})' | jq -r '.data.result[] | "\(.metric.namespace): \(.value[1]) pods"'
 ```
 
-**What this does:** Asks for `http://localhost:9090/api/v1/query`, as a web browser would, and prints the answer. `| jq` picks the parts we want out of the JSON answer.
+**What this does:**
+
+- `sleep 60`: Waits one minute. Prometheus collects its numbers once a minute, so right after the start it has none yet.
+- `curl -s 'http://localhost:9090/api/v1/query' ...`: Asks for `http://localhost:9090/api/v1/query`, as a web browser would, and prints the answer. `| jq` picks the parts we want out of the JSON answer.
 
 **👀 You should see** the three environments of the Shop *(do not paste)*:
 

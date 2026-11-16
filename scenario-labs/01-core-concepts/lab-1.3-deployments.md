@@ -8,6 +8,8 @@
 
 **What you learn:** Deployments, ReplicaSets, self-healing, scaling.
 
+📘 **More detail:** [Lab 1.3 explained](./lab-1.3-deployments-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 A **Deployment** says: "keep this many copies of this pod running". Kubernetes does the rest.
 
 > **How to use this lab**

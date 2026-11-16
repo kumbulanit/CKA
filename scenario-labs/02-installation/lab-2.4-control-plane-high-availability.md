@@ -8,6 +8,8 @@
 
 **What you learn:** what keeps running without a control plane, leader election, etcd members, the parts of a highly available (HA) control plane.
 
+📘 **More detail:** [Lab 2.4 explained](./lab-2.4-control-plane-high-availability-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 Your cluster has **one** control plane node. That is fine for learning. In production it is a risk: if that node is lost, nobody can change anything.
 
 > **How to use this lab**

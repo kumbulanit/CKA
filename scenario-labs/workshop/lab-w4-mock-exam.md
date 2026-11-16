@@ -2,6 +2,8 @@
 
 This is a practice exam on the Shop. Work **alone**. You may use `kubectl explain`, `kubectl <command> --help` and <https://kubernetes.io/docs>, as in the real exam.
 
+📘 **More detail:** [Workshop 4 explained](./lab-w4-mock-exam-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 - 15 tasks, 100 points. **66 points is a pass**, as in the real exam.
 - Do the easy tasks first. Skip a task that takes more than 6 minutes and come back to it.
 - The answers are in [lab-w4-mock-exam-solutions.md](./lab-w4-mock-exam-solutions.md). Do not open them before the time is up.
@@ -15,14 +17,18 @@ The exam uses its own namespace, `exam`, so it does not touch `dev`, `uat` or `p
 ```bash
 kubectl create namespace exam
 kubectl create secret generic db-secret -n exam --from-literal=password=exam-pass-123
+kubectl taint node minikube-m03 exam=maintenance:NoSchedule --overwrite
 mkdir -p ~/exam
 ```
+
+The third line keeps the pods of this exam off the node `minikube-m03`. In Task 14 you take that node down for maintenance, and that must not delete the pods of your other tasks.
 
 **👀 You should see:**
 
 ```text
 namespace/exam created
 secret/db-secret created
+node/minikube-m03 modified
 ```
 
 💡 Save typing, as in the exam:
@@ -135,7 +141,10 @@ Check your work with the [solutions](./lab-w4-mock-exam-solutions.md) and add up
 kubectl delete namespace exam
 kubectl delete pv exam-pv
 kubectl label node minikube-m02 disk-
+kubectl taint node minikube-m03 exam=maintenance:NoSchedule-
 kubectl uncordon minikube-m03
 ```
 
 **👀 You should see** one line for each command. `not found` or `already uncordoned` is fine: that part was already clean.
+
+If you did the course labs: Task 14 moved your PROD pods off `minikube-m03`, and pods do not move back by themselves (Lab 2.7). To put them back there: `kubectl rollout restart deployment/frontend deployment/backend -n prod`.

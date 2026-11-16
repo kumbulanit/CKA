@@ -8,6 +8,8 @@
 
 **What you learn:** StorageClass, provisioners, static and dynamic provisioning, the default class, binding modes, reclaim policies.
 
+📘 **More detail:** [Lab 7.3 explained](./lab-7.3-storage-classes-and-dynamic-provisioning-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 | | Static provisioning (Lab 7.2) | Dynamic provisioning (this lab) |
 | --- | --- | --- |
 | Who makes the PersistentVolume | The administrator, before | The **StorageClass**, when a claim arrives |

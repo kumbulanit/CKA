@@ -140,10 +140,12 @@ if [ "$api" = 1 ]; then
   done
 
   # A real test: a pod must start on a node, download its image and find a Service by name.
+  # stdin comes from /dev/null: timeout runs kubectl in the background, and a background
+  # process that reads the terminal is stopped by the shell, so the check would hang.
   testpod="ready-check-$RANDOM"
   dns=$(timeout 150 kubectl --context minikube run "$testpod" -n default --rm -i --quiet \
           --restart=Never --image=busybox:1.36 --pod-running-timeout=120s \
-          -- nslookup kubernetes.default.svc.cluster.local 2>&1)
+          -- nslookup kubernetes.default.svc.cluster.local </dev/null 2>&1)
   if grep -q '^Name:.*kubernetes.default' <<<"$dns"; then
     ok "a test pod starts, downloads its image and finds Services by name (DNS)"
   else

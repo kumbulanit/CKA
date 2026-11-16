@@ -8,6 +8,8 @@
 
 **What you learn:** CoreDNS, the DNS name of a Service, short names and full names, `/etc/resolv.conf` in a pod.
 
+📘 **More detail:** [Lab 3.3 explained](./lab-3.3-dns-explained.md): what happens in the cluster at each step, common mistakes and exam notes.
+
 > **How to use this lab**
 >
 > - **📋 Copy and paste into your terminal:** copy the whole grey box (the copy button is in its top right corner), paste it into the terminal of your server, and press Enter.
