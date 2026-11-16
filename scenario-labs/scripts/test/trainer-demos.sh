@@ -37,10 +37,18 @@ for s in $steps; do
     minikube start --kubernetes-version="$to" 2>&1 | tee -a "$out"
     rc=${PIPESTATUS[0]}
     say "minikube start exit $rc after $(( $(date +%s) - start ))s"
-    sleep 20; kill $watcher
+    # does the Shop come back by itself? check-shop.sh every 15 seconds, for 10 minutes at most
+    envs=$(for ns in dev uat prod; do kubectl get namespace $ns >/dev/null 2>&1 && echo $ns; done)
+    back=$(date +%s); bad=x
+    while [ -n "$bad" ] && [ $(( $(date +%s) - back )) -lt 600 ]; do
+      bad=""; for ns in $envs; do "$L/scripts/check-shop.sh" $ns 2>&1 | tail -1 | grep -q 'All 8' || bad="$bad $ns"; done
+      [ -n "$bad" ] && sleep 15
+    done
+    if [ -z "$bad" ]; then say "after the upgrade, check-shop.sh passes in all environments after $(( $(date +%s) - back ))s"
+    else say "after 10 minutes, check-shop.sh still fails in:$bad"; fi
+    kill $watcher
     total=$(wc -l < "$T/upgrade-shop.txt"); failed=$(grep -vc ' 200$' "$T/upgrade-shop.txt")
-    say "the Shop during the upgrade: $failed of $total requests failed"
-    grep -v ' 200$' "$T/upgrade-shop.txt" | head -20 | tee -a "$out"
+    say "the Shop (dev, port 30080) during the upgrade: $failed of $total requests failed, from $(grep -vm1 ' 200$' "$T/upgrade-shop.txt" | cut -d' ' -f1) to $(grep -v ' 200$' "$T/upgrade-shop.txt" | tail -1 | cut -d' ' -f1)"
     # Step 1 and Step 4 of Lab 2.6, after the upgrade
     show "kubectl version"
     show "kubectl get nodes -o custom-columns=NODE:.metadata.name,KUBELET:.status.nodeInfo.kubeletVersion,RUNTIME:.status.nodeInfo.containerRuntimeVersion"
@@ -50,7 +58,7 @@ for s in $steps; do
     for ns in dev uat prod; do show "$L/scripts/check-shop.sh $ns | tail -1"; done
     ;;
   ha)
-    say "=== three control plane nodes (Lab 2.4): minikube start --ha --nodes=5  $(date +%T)"
+    say "=== three control plane nodes (Lab 2.4): the read-only box of the lab  $(date +%T)"
     show "free -g | head -2"
     # The lab's command, as written, next to an existing cluster: what does minikube say?
     show "minikube start --ha --nodes=5 2>&1 | tail -5"
@@ -62,6 +70,14 @@ for s in $steps; do
     show "kubectl get pods -n kube-system -l component=kube-apiserver -o wide"
     show "kubectl -n kube-system exec etcd-ha-demo -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/var/lib/minikube/certs/etcd/ca.crt --cert=/var/lib/minikube/certs/etcd/server.crt --key=/var/lib/minikube/certs/etcd/server.key member list"
     show "minikube delete -p ha-demo 2>&1 | tail -1"
+    # back to the course cluster, as a trainer does after the demo
+    show "kubectl config current-context"
+    minikube start 2>&1 | tail -2 | tee -a "$out"
+    show "kubectl config current-context"
+    show "kubectl get nodes"
+    for ns in dev uat prod; do kubectl get namespace $ns >/dev/null 2>&1 || continue
+      kubectl rollout status deployment/db deployment/backend deployment/frontend -n $ns --timeout=300s >/dev/null 2>&1
+      show "$L/scripts/check-shop.sh $ns | tail -1"; done
     ;;
   restore)
     say "=== a fresh course cluster again  $(date +%T)"

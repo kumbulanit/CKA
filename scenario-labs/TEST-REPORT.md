@@ -1,17 +1,17 @@
 # Test report: all scenario labs on a DaDesktop VM
 
-**Date:** 16 November 2026
+**Date:** 16 and 17 November 2026
 **Tested on:** the DaDesktop VM `kumbulani-swdq`: Ubuntu 24.04.4 LTS, 16 CPUs, 22 GB memory, 96 GB disk, user `student` with `sudo` without a password.
 **Course files:** the local `CKA` folder at the time of the test (setup, 33 labs, 4 workshops, scripts).
 
 ## Summary
 
-**Every lab and workshop now runs from start to finish on a fresh cluster, and the Shop passes all its checks at every milestone.**
+**Every command in the course has now been run on the VM: every 📋 box, every command in a tip, table, "Read only" box and explained page, the keyboard and browser steps by hand, and the two trainer demos. Everything works, with the fixes below in your local files.**
 
-- The labs were run twice, all 33 labs and the 4 workshops, in course order, on the same VM.
-- The two runs found **11 problems**: 3 in the course scripts, 7 in lab pages and 1 in a workshop page. All of them are fixed in your local files, and each fix was tested on the VM first.
-- **Run 2**, on a brand-new cluster with all fixes, passed everywhere: `setup.sh` + `check-ready.sh` ready at once, every lab ran to its end, and `check-shop.sh` gave **All 8 checks passed** in `dev`, `uat` and `prod` at all **10 milestones** (30 of 30).
-- Time without stopping: `setup.sh` under 2 minutes (images already downloaded), then all labs and workshops in about **30 minutes**.
+- **Final run** (17 November, 21:04), on a fresh cluster with all fixes: every lab and workshop ran to the end in 35 minutes. The Shop passed **30 of 30** checks at the 10 milestones, **none of the ~230 extra commands failed**, and `check-ready.sh` said ready at the end.
+- **The Day 4 capstone for the first group** (fresh server, no labs, Workshop 1 builds the Shop) passes from start to finish.
+- **24 problems found and fixed** over all runs, each tested on the VM before it went into the files: 4 in the course scripts, 16 in lab and workshop pages, 2 in the mock exam, 1 on a slide and 1 in the test scripts.
+- Nothing is committed.
 
 ## How the labs were tested
 
@@ -115,12 +115,43 @@ All earlier runs did the workshops after the 33 labs, which is the path of the g
 
 **Result after the fixes, from a fresh cluster:** Workshop 1 built the Shop, and `check-shop.sh dev` passed 8 of 8. Workshop 2's answers and its round-3 check passed. Workshop 3 put in five faults, and after the fixes 8 of 8 passed. Workshop 4 ran all 15 solutions, and all their checks found the answers. `check-ready.sh` said ready at the end. For the course group nothing changes: Task 14 always moved their PROD pods to the other nodes (PROD only *prefers* `minikube-m03`, Lab 4.2), so the Shop stays open. The clean-up now tells them how to move PROD back (`kubectl rollout restart ... -n prod`), and run 4 below tested that.
 
-**Still to do after run 3:**
-- the interactive steps, by hand in a real terminal: `newgrp docker`, Tab completion, `minikube ssh` alone, `run-lab.sh` step by step, `kubectl run -it ... -- sh`, and `kubectl edit` with vi
-- the browser steps (Labs 1.6 and 6.4, `shop.local`)
-- the `kubectl run -i` lines "All commands and output from this session will be recorded..." that a real terminal shows
-- the trainer demos (`scripts/test/trainer-demos.sh`: the Lab 2.6 upgrade and Lab 2.4 `--ha`)
-- one more full `run-all.sh` with fixes 12 to 18 (the course group's path, including the new Workshop 4 set-up)
+## Final run, hand tests, browser and trainer demos (16 and 17 November, night)
+
+**Final full run** with fixes 12 to 18: fresh cluster (`setup.sh` 107 seconds), then all labs and workshops in 35 minutes. Every lab ran to its end, and the Shop passed 30 of 30 checks. 0 of the extra commands failed; the only warnings were the known harmless kinds. After the mock exam, the PROD pods ran on the other nodes, and `kubectl rollout restart deployment/frontend deployment/backend -n prod` put them all back on `minikube-m03`.
+
+**By hand, in a real terminal:**
+
+| Step | Result |
+| --- | --- |
+| `newgrp docker` (Setup Step 3) | A new shell with the `docker` group; `docker ps` works without `sudo`; `exit` goes back |
+| `k get pods`, Tab completion (Setup Step 5, Lab 1.2) | `k` works. `kubectl get po` + Tab gives `pod`; `kubectl describe pod back` + Tab completes the pod name |
+| `kubectl get pods -w`, stopped with Ctrl+C | Stops, and the prompt comes back |
+| `minikube ssh` alone (Labs 2.1, 2.3) | A shell on the node (`docker@minikube:~$`); commands work; `exit` goes back |
+| `kubectl run tmp --rm -it ... -- sh` (Lab 2.3 explained) | A shell in a pod; `exit` deletes the pod |
+| `kubectl edit` (Lab 8.1, Workshop 2) | Opens vi with the Deployment; `:q` says "Edit cancelled, no changes made" (the change itself was tested with a scripted editor in run 3) |
+| `run-lab.sh 2.6` and `run-lab.sh 6.4` step by step (README) | Enter runs, `s` skips, `q` stops ("Stopped at command 4 of 5"); all of Lab 6.4 ran this way |
+| Lab 1.6 Step 6 typed in, then `kill %1` | `<h1>Shop</h1>`, then `[1]+ Terminated kubectl port-forward ...` |
+| Lab 1.4 `kubectl run dns-test --rm -i ...` as pasted | Works, but a real terminal adds two lines ("All commands and output from this session will be recorded..." and "If you don't see a command prompt, try pressing enter.") and the "couldn't attach" warning, then shows the answer twice. **Fix 19** below |
+
+**In the VM's browser (Firefox):** Lab 1.6's `http://localhost:8080` shows the Shop page with its items. `http://shop.local` (Lab 3.2) shows the PROD Shop through the Ingress. Lab 6.4's `http://localhost:9090` shows Prometheus, and the lab's query typed into the page gives 5 pods each for dev, uat and prod.
+
+**Trainer demos** (`scripts/test/trainer-demos.sh`, with the Shop in all three environments):
+
+| Demo | Result |
+| --- | --- |
+| Lab 2.6 upgrade: `minikube start --kubernetes-version=v1.37.0` | Works with minikube v1.39.0 in about 4½ minutes. Afterwards the API server and all three kubelets are on v1.37.0, the nodes are `Ready`, and `readyz check passed`. But the Shop **could not be reached for about 5 minutes** (77 of 87 requests failed), because minikube does not drain the nodes. It came back by itself 57 seconds after the command ended, in all three environments. **Fix 22** below |
+| Lab 2.4 HA: `minikube start --ha --nodes=5` | With its own name (`-p ha-demo`): 3 control plane nodes, 3 API servers, 3 etcd members and 2 workers in under 2 minutes. **Exactly as the page wrote it**, on a server that already has the course cluster, it only starts the course cluster again: no HA cluster. After `minikube delete -p ha-demo`, `kubectl` has no cluster until `minikube start` brings the course cluster back, with the Shop intact (8 of 8 in all three environments). **Fix 21** below |
+
+At the end the script built a fresh course cluster again: `check-ready.sh` says "Everything is ready for the labs." That is the state the VM is in now.
+
+| # | Where | What went wrong | The fix | Tested |
+| --- | --- | --- | --- | --- |
+| 19 | Lab 1.4, Step 4 note | The note only mentioned the "couldn't attach" warning. In a real terminal there are two more lines, and the answer appears twice | The note shows the three lines and says the answer can appear twice, for every `kubectl run ... --rm -i` in the course | By hand, twice |
+| 20 | Workshop 4 clean-up | My first wording said the PROD pods "go back now"; they do not (pods never move back by themselves, Lab 2.7) | It says how to move them back: `kubectl rollout restart deployment/frontend deployment/backend -n prod` | Final run: all PROD pods back on `minikube-m03` |
+| 21 | Lab 2.4, the HA demo | `minikube start --ha --nodes=5` does nothing new next to the course cluster | A "Read only" box with the trainer's five commands (`minikube stop`, `minikube start -p ha-demo --ha --nodes=5`, `kubectl get nodes`, `minikube delete -p ha-demo`, `minikube start`) and why | The demo script runs exactly these |
+| 22 | Lab 2.6 Step 3 and "Why the Shop stays open", plus its explained page | The page said the Shop stays open, but minikube's quick upgrade pauses it for about 5 minutes | Step 3 says what happens and how long it takes. "Why the Shop stays open" now says the drain-upgrade-uncordon method does it, and the minikube shortcut does not | Measured twice on the VM |
+| 23 | Slide 105 (Metrics Server) | It shows the deprecated `--cpu-percent=25` | `--cpu=25%`, as in Lab 6.3 | Deck validated |
+| 24 | `scripts/test/trainer-demos.sh` | It waited only 20 seconds after the upgrade | It waits until `check-shop.sh` passes (at most 10 minutes) and says how long that took | Ran twice |
 
 ## Not problems (differences that only the automatic run shows)
 
@@ -136,15 +167,16 @@ All earlier runs did the workshops after the 33 labs, which is the path of the g
 
 ## Not tested, or worth knowing
 
-- **Lab 2.6:** only the read-only steps run; the upgrade itself is a trainer demo and was not run, so the labs stay on v1.36.5.
-- **Two terminals and a desktop browser:** steps that say "open it in a browser" were checked with `curl` only.
+- **Nothing is left untested.** The trainer demos (Labs 2.4 and 2.6) and the browser steps were tested in the final round above.
+- **Not run on purpose:** the kubeadm commands that the explained pages mention as background (`kubeadm init`, `kubeadm join`, `kubeadm upgrade apply` and `node`). They would break the course's minikube cluster. Their options were checked with `--help` with minikube's own kubeadm, and the read-only ones ran (`kubeadm upgrade plan`, `kubeadm token create --print-join-command`, `kubeadm certs check-expiration`).
+- **Before the course:** `git clone` (Setup Step 1) works, but it gets what is on GitHub, and today's changes are only in your local files. Push them before the course, or participants get the old labs.
 - **Timing in class:** the runner is much faster than people. Where a lab waits for something (a rollout, Metrics Server, Prometheus, the Ingress controller), the page now has an explicit wait, so it works at any speed.
 - **The non-stop runner (`run-lab.sh --all`):** good for catching up and for the trainer's demo; the only step it cannot do is Lab 1.3 Step 3, which needs a pod name.
 
 ## DaDesktop notes for the trainer
 
 - **Uploading files:** the "Drop file here" box at the bottom of DaDesktop writes every uploaded file **twice** into `~/uploads-to-dadesktop` (sometimes mixed together). For the course this does not matter, because participants get the files with `git clone`. If you upload a file, check its size.
-- **Speed:** on this VM, `setup.sh` took about **4½ minutes** the first time (downloads) and under **2 minutes** after that. All labs and workshops, run one after the other without stopping, took about **30 minutes**.
+- **Speed:** on this VM, `setup.sh` took about **4½ minutes** the first time (downloads) and under **2 minutes** after that, but once **10 minutes** when the downloads were slow. All labs and workshops, run one after the other without stopping, took 30 to 35 minutes (about 60 with all the extra commands).
 - **Memory:** with all three environments, Prometheus and the Ingress controller running, the VM had plenty of room. The course minimum (4 CPUs, 8 GB) is tight for Labs 2.2 and 6.4; 16 GB is comfortable.
 
 ## Files changed by this test
@@ -164,7 +196,17 @@ All earlier runs did the workshops after the 33 labs, which is the path of the g
 | `scenario-labs/03-networking/lab-3.2-service-discovery-scaling-load-balancing.md` (and `-explained`) | Wait for the Ingress controller; note in Step 7 |
 | `scenario-labs/06-logging-monitoring/lab-6.3-metrics-server.md` (and `-explained`) | Wait for the Metrics API |
 | `scenario-labs/06-logging-monitoring/lab-6.4-prometheus.md` | Wait before the first query |
-| `scenario-labs/workshop/lab-w2-challenge-rounds.md` | Note at the round-3 check |
-| `CKA-new-scenario-based.pptx` | Lab 1.5 slide: the new check line |
+| `scenario-labs/workshop/lab-w2-challenge-rounds.md` | Task 3.2 restarts the backend; the round-3 note; the rollback warning note |
+| `scenario-labs/scripts/deploy-shop.sh` | Creates the namespace only when it is missing (no warning) |
+| `scenario-labs/01-core-concepts/lab-1.4-services.md` (again) | The note now shows all the extra lines a real terminal prints |
+| `scenario-labs/02-installation/lab-2.2-growing-the-cluster.md`, `lab-2.7-cordon-and-drain.md` | The drain warning shown or mentioned |
+| `scenario-labs/02-installation/lab-2.4-control-plane-high-availability.md` (and `-explained`) | The trainer's HA demo commands; the quoted `minikube ssh ... grep` |
+| `scenario-labs/02-installation/lab-2.5-cluster-maintenance-etcd-backup.md` | The quoted `minikube ssh ... grep` |
+| `scenario-labs/02-installation/lab-2.6-upgrade.md` (and `-explained`) | What the minikube upgrade really does, and how long it takes |
+| `scenario-labs/06-logging-monitoring/lab-6.3-metrics-server.md` (and `-explained`) | `--cpu=25%` |
+| `scenario-labs/workshop/lab-w4-mock-exam.md`, `-solutions.md`, `-explained.md` | The taint that protects the exam pods from Task 14, its clean-up, notes on `--force` and on moving PROD back |
+| `scenario-labs/README.md` | The test scripts in the helper table, and a short section |
+| `scenario-labs/scripts/test/` | New: the test scripts (README, `run-all.sh`, `run-extras.sh`, `extra-commands.txt`, `compare.py`, `trainer-demos.sh`, `nodeport-after-rollout.sh`) |
+| `CKA-new-scenario-based.pptx` | Lab 1.5 slide: the new check line; slide 105: `--cpu=25%` |
 
-No command was changed except where it was broken or needed a wait. Nothing is committed.
+No command was changed except where it was broken, needed a wait, or printed a deprecation warning. Nothing is committed.

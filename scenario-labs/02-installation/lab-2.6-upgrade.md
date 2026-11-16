@@ -122,6 +122,8 @@ minikube then does, for you, what an administrator does by hand:
 | 3 | The kubelet of each node is replaced and restarted | One node after the other |
 | 4 | The nodes report `Ready` with the new version | Check with `kubectl get nodes` |
 
+On the test server, this took about **5 minutes**. minikube does not drain the nodes first, so the Shop could not be reached during those minutes. It came back by itself about one minute after the command ended. The next section explains how a real upgrade avoids that pause.
+
 ⚠️ **Do not run the upgrade on your own server during the course.** All the labs are tested on v1.36.5. The trainer shows the upgrade on the screen, and you watch the `VERSION` column of `kubectl get nodes` change.
 
 ## Step 4: after an upgrade: validate
@@ -150,7 +152,9 @@ readyz check passed
 
 ## Why the Shop stays open during an upgrade
 
-Because of what you built in Module 1: two copies of the frontend and the backend. When one node is taken out, the other copy answers. You try exactly that in the next lab.
+On a real cluster, the administrator upgrades one node at a time: drain it, upgrade it, uncordon it. Then what you built in Module 1 keeps the Shop open: there are two copies of the frontend and the backend, so when one node is taken out, the other copy answers. You try exactly that in the next lab.
+
+minikube's one-command upgrade in the demo skips the drains, which is why the Shop paused there. It is quick for a lab, but not the way to upgrade a cluster that users depend on.
 
 💡 **Exam tip:** the order is always the same: back up etcd, control plane first, then each worker: drain, upgrade, uncordon. Do not forget the last step: `kubectl uncordon`.
 

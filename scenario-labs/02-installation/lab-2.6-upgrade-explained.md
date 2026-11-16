@@ -52,6 +52,8 @@ An upgrade changes the control plane and can change stored objects. If it fails 
 
 `minikube start --kubernetes-version=v1.37.0` on a running cluster upgrades it: minikube runs the kubeadm steps inside its node containers. You watch the same order as on a kubeadm cluster: the control plane first (its static pods restart in the new version), then the kubelets.
 
+Tested on the course VM with minikube v1.39.0: the upgrade from v1.36.5 to v1.37.0 took about 5 minutes, and every node's kubelet ended on v1.37.0. minikube does not drain the nodes first, so the Shop could not be reached for most of those minutes. It came back by itself about a minute later, in all three environments.
+
 The participants do not run it: all the labs are tested on v1.36.5, and a cluster cannot go back down a version. Downgrades are not supported in Kubernetes; the way back is a new cluster plus the etcd backup.
 
 ### Step 4: after an upgrade: validate
@@ -60,7 +62,7 @@ The same three checks as after an install: nodes `Ready` on the new version, `ku
 
 ### Why the Shop stays open during an upgrade
 
-Each node is drained before its kubelet is upgraded. Because the frontend and the backend run two copies each, there is always a copy on another node to answer. The database runs one copy, so it has a short pause when its node is drained: one more reason to give real databases several copies. Lab 2.7 is the drain on its own.
+In a real upgrade, each node is drained before its kubelet is upgraded (minikube's quick upgrade in Step 3 skips this, which is why the Shop paused there). Because the frontend and the backend run two copies each, there is always a copy on another node to answer. The database runs one copy, so it has a short pause when its node is drained: one more reason to give real databases several copies. Lab 2.7 is the drain on its own.
 
 ## When something goes wrong
 

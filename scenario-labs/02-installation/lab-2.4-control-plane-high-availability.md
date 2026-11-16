@@ -190,7 +190,19 @@ kubectl get nodes
 2. Three control plane nodes instead of one. Each has an API server, a scheduler, a controller manager and an etcd member.
 3. The workers and `kubectl` talk to the load balancer address, never to one control plane node.
 
-minikube can build this too, when the cluster is created: `minikube start --ha --nodes=5` makes three control plane nodes and two workers. It needs more memory than your server has, so the trainer shows it on the screen.
+minikube can build this too, when the cluster is created: `minikube start --ha --nodes=5` makes three control plane nodes and two workers. It needs more memory than a course server has, so the trainer shows it on the screen, like this:
+
+**📖 Read only (do not paste):**
+
+```text
+minikube stop
+minikube start -p ha-demo --ha --nodes=5
+kubectl get nodes
+minikube delete -p ha-demo
+minikube start
+```
+
+The demo cluster gets its own name (`-p ha-demo`): on a server that already has the course cluster, `minikube start --ha --nodes=5` alone only starts the course cluster again. The course cluster is stopped first to free memory. The last line starts it again, and points `kubectl` back at it, with the Shop as it was. On the test server the HA cluster was ready in under 2 minutes.
 
 💡 **Exam tip:** "stacked" etcd means etcd runs on the control plane nodes. "External" etcd means etcd has its own machines.
 
