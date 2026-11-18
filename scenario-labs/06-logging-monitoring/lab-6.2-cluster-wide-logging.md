@@ -74,15 +74,17 @@ prod_frontend-7df5f9757c-g2ph4_f2b9bc64-d4f4-430f-bd8a-cc47970216a1
 prod_frontend-7df5f9757c-s2jrb_76a8e625-6ac9-4a22-8d9b-f0f269f265fc
 ```
 
+⚠️ **No `prod` folders?** Then no PROD pod runs on `minikube-m03` now. See where they are with `kubectl get pods -n prod -o wide`, and use that node's name instead of `minikube-m03` in this lab. (After Lab 4.3 they should be on `minikube-m03`. If they are not, `kubectl rollout restart deployment/frontend deployment/backend -n prod` puts them back.)
+
 ## Step 2: read a log file straight from the node
 
 **📋 Copy and paste into your terminal:**
 
 ```bash
-minikube ssh -n minikube-m03 -- "sudo sh -c 'tail -n 2 /var/log/pods/prod_frontend-*/frontend/0.log'"
+minikube ssh -n minikube-m03 -- "sudo sh -c 'tail -n 2 /var/log/pods/prod_frontend-*/frontend/*.log'"
 ```
 
-**What this does:** On the node `minikube-m03`: shows the last 2 lines of the log files `/var/log/pods/prod_frontend-*/frontend/0.log`.
+**What this does:** On the node `minikube-m03`: shows the last 2 lines of the log files `/var/log/pods/prod_frontend-*/frontend/*.log`. The file is called `0.log` for the first start of the container, `1.log` after one restart, and so on.
 
 **👀 You should see** the last two lines of each frontend log file. They are the same lines that `kubectl logs` shows, with a time and the word `stdout` or `stderr` in front *(do not paste)*:
 
@@ -332,10 +334,10 @@ Without looking at the answer: the PROD frontend writes its access log to the sc
 **📋 Copy and paste into your terminal:**
 
 ```bash
-minikube ssh -n minikube-m03 -- "sudo du -ch /var/log/pods/prod_frontend-*/ | tail -1"
+minikube ssh -n minikube-m03 -- "sudo sh -c 'du -ch /var/log/pods/prod_frontend-*/ | tail -1'"
 ```
 
-**What this does:** On the node `minikube-m03`, adds up the size of the log folders of the PROD frontend pods (`du -ch`), and shows only the total.
+**What this does:** On the node `minikube-m03`, adds up the size of the log folders of the PROD frontend pods (`du -ch`), and shows only the total. `sudo sh -c '...'` is needed because only `root` may look inside `/var/log/pods`, also to fill in the `*`.
 
 **👀 You should see** a small size and the word `total`. Each container may grow to `containerLogMaxSize` (10Mi by default) times `containerLogMaxFiles` (5) before the oldest file is removed (Step 5).
 

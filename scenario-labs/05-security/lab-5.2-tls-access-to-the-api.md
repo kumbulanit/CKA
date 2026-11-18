@@ -179,6 +179,8 @@ thabo   5s    kubernetes.io/kube-apiserver-client   minikube-user   24h         
 
 ## Step 5: fetch the certificate and make the login
 
+Do this step soon after Step 4: the cluster deletes an approved request after **1 hour**, and the signed certificate goes with it. If `kubectl get csr thabo` says `NotFound`, do Steps 3 and 4 again.
+
 Three lines:
 
 1. Save Thabo's signed certificate in the file `~/thabo/thabo.crt`.

@@ -452,25 +452,26 @@ for i in 1 2 3; do kubectl create configmap cm-$i -n sandbox --from-literal=n=$i
 
 ### 🔵 Optional 6: challenge
 
-Without looking at the answer: in `sandbox`, make a quota `cpu-budget` with `requests.cpu=500m`. Then `kubectl run test -n sandbox --image=busybox:1.36 -- sleep 3600`. Why is it refused? Fix it **without** changing the `kubectl run` command.
+Without looking at the answer: make a namespace `budget` with a quota `cpu-budget` of `requests.cpu=500m`, and nothing else. Then `kubectl run test -n budget --image=busybox:1.36 -- sleep 3600`. Why is it refused? Fix it **without** changing the `kubectl run` command.
 
 <details><summary>Show the answer</summary>
 
 **📋 Copy and paste into your terminal:**
 
 ```bash
-kubectl create quota cpu-budget -n sandbox --hard=requests.cpu=500m
-kubectl run test -n sandbox --image=busybox:1.36 -- sleep 3600
+kubectl create namespace budget
+kubectl create quota cpu-budget -n budget --hard=requests.cpu=500m
+kubectl run test -n budget --image=busybox:1.36 -- sleep 3600
 ```
 
-**What this does:** Creates the quota, then tries to start a pod with no requests.
+**What this does:** Creates the namespace and the quota, then tries to start a pod with no requests.
 
-**👀 You should see** `must specify requests.cpu`: with a quota on `requests.cpu`, every pod must say what it requests, and this one does not. The `max-size` LimitRange has no `defaultRequest`. Add a LimitRange that gives a default:
+**👀 You should see** `must specify requests.cpu`: with a quota on `requests.cpu`, every pod must say what it requests, and this one does not. Add a LimitRange that gives a default:
 
 **📋 Copy and paste into your terminal:**
 
 ```bash
-kubectl apply -n sandbox -f - <<'YAML'
+kubectl apply -n budget -f - <<'YAML'
 apiVersion: v1
 kind: LimitRange
 metadata:
@@ -481,8 +482,8 @@ spec:
     defaultRequest:
       cpu: 50m
 YAML
-kubectl run test -n sandbox --image=busybox:1.36 -- sleep 3600
-kubectl describe quota cpu-budget -n sandbox | tail -1
+kubectl run test -n budget --image=busybox:1.36 -- sleep 3600
+kubectl describe quota cpu-budget -n budget | tail -1
 ```
 
 **What this does:**
@@ -493,6 +494,8 @@ kubectl describe quota cpu-budget -n sandbox | tail -1
 
 **👀 You should see** `pod/test created`, and `requests.cpu  50m  500m`. This is the reason the Shop has `limitrange.yaml` next to `quota.yaml`.
 
+Why a new namespace? In `sandbox` the same command works at once: the LimitRange `max-size` of Optional 4 sets only a `max`, and a LimitRange with only a `max` also fills in the **default** limit (the max) and the default request (the same). Check it: `kubectl get limitrange max-size -n sandbox -o yaml | grep -A3 default`.
+
 </details>
 
 🧹 **Clean up the practice:**
@@ -501,14 +504,14 @@ kubectl describe quota cpu-budget -n sandbox | tail -1
 
 ```bash
 kubectl delete pod no-resources vip greedy -n dev --now --ignore-not-found
-kubectl delete namespace sandbox --ignore-not-found
+kubectl delete namespace sandbox budget --ignore-not-found
 rm -f vip.yaml greedy.yaml big.yaml
 ```
 
 **What this does:**
 
 - `kubectl delete pod ...`: Deletes the test pods in `dev`, at once.
-- `kubectl delete namespace sandbox`: Deletes the namespace `sandbox` and everything in it.
+- `kubectl delete namespace sandbox budget`: Deletes the namespaces `sandbox` and `budget` and everything in them.
 - `rm -f ...`: Deletes the YAML files of this practice.
 
 **The Shop now:** it runs in three environments. PROD has its own node, a hostname, a firewall, access rules, a disk that keeps its data and a budget. One module is left: what to do when it breaks.

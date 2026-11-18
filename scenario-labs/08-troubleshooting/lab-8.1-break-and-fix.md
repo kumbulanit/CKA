@@ -586,10 +586,11 @@ Then:
 **📋 Copy and paste into your terminal:**
 
 ```bash
+sleep 20
 kubectl get pods -l app=frontend
 ```
 
-**What this does:** Lists the frontend pods.
+**What this does:** Waits 20 seconds, then lists the frontend pods.
 
 One frontend pod stays `Pending`. Find out why, and fix it.
 
@@ -733,7 +734,7 @@ Both frontend pods are in `CrashLoopBackOff` or `Error`. The image is the same a
 
 <details><summary>Hint</summary>
 
-A container that crashes at start writes the reason in its log. Use `--previous` if the current container has not written anything yet.
+A container that crashes at start writes the reason in its log. When a container has crashed, `kubectl logs` shows the log of that crashed container.
 
 </details>
 
@@ -742,13 +743,13 @@ A container that crashes at start writes the reason in its log. Use `--previous`
 **Find** (📋 copy and paste into your terminal):
 
 ```bash
-kubectl logs deployment/frontend --previous --tail=3
+kubectl logs -l app=frontend --tail=3 --prefix
 kubectl get configmap frontend-config -o jsonpath='{.data.default\.conf}' | head -3
 ```
 
 **What this does:**
 
-- `kubectl logs deployment/frontend --previous --tail=3`: Shows the last 3 lines of the frontend container before its last restart.
+- `kubectl logs -l app=frontend --tail=3 --prefix`: Shows the last 3 lines of each frontend container, with the pod name in front. A container in `Error` or `CrashLoopBackOff` is the one that crashed, so this is its log. (`--previous` would ask for the container **before** it, which Kubernetes may already have removed: then it says `unable to retrieve container logs`.)
 - `kubectl get configmap frontend-config -o jsonpath=...`: Prints the first lines of the nginx settings in the ConfigMap.
 
 nginx says `unknown directive "listne"`: the settings file in the ConfigMap has a typing mistake. nginx stops at once, and Kubernetes restarts it again and again.

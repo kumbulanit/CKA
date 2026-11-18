@@ -12,7 +12,8 @@
 #          ~/labtest/extras.log           every extra command with its output
 #          ~/labtest/shop.txt             check-shop.sh at the milestones
 #
-# FRESH=0 keeps the cluster (no minikube delete + setup.sh). FROM=2.4 starts at that lab.
+# FRESH=0 keeps the cluster (no minikube delete + setup.sh). FROM=2.4 starts at that lab, UNTIL=8.1
+# stops after that lab.
 # WORKSHOPS_ONLY=1 tests the Day 4 workshop as the first group does it: a fresh cluster, no labs,
 # then Workshops 1 to 4 (Workshop 1 builds the Shop in dev with deploy-shop.sh).
 # WARNING: without FRESH=0 it deletes the cluster first.
@@ -44,6 +45,7 @@ extras() {    # the other commands of the lab's pages
 run() {   # id, page
   local id=$1 page=$2 start rc
   [ -n "$FROM" ] && [ "$id" != "$FROM" ] && [ -z "$STARTED" ] && return 0
+  [ -n "$DONE" ] && return 0
   STARTED=1
   start=$(date +%s)
   p ">>> $id  $(date +%T)"
@@ -58,6 +60,7 @@ run() {   # id, page
   fi
   milestone "$id"
   extras "$id"
+  [ -n "$UNTIL" ] && [ "$id" = "$UNTIL" ] && DONE=1
 }
 
 milestone() {   # checks the --all run cannot do by itself

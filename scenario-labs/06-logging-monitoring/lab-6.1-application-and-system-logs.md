@@ -90,7 +90,7 @@ In this example the request arrived at 15:04:05. One frontend pod and one backen
 ```bash
 curl -s -o /dev/null http://shop.local/api/items
 sleep 2
-kubectl logs -n ingress-nginx deployment/ingress-nginx-controller --tail=1
+kubectl logs -n ingress-nginx deployment/ingress-nginx-controller --tail=20 | grep "GET /api/items" | tail -1
 kubectl logs -n prod -l app=frontend --tail=1 --prefix
 kubectl logs -n prod -l app=backend --tail=1 --prefix
 ```
@@ -99,7 +99,7 @@ kubectl logs -n prod -l app=backend --tail=1 --prefix
 
 - `curl -s -o /dev/null http://shop.local/api/items`: Asks for `http://shop.local/api/items`, as a web browser would, and prints the answer.
 - `sleep 2`: Waits 2 seconds, to give Kubernetes time.
-- `kubectl logs -n ingress-nginx ...`: Shows the log (what the program printed) of one pod of the Deployment `ingress-nginx-controller` in the namespace `ingress-nginx`: only the last line.
+- `kubectl logs -n ingress-nginx ... | grep "GET /api/items" | tail -1`: Shows the log (what the program printed) of the Ingress controller, keeps only the requests for `/api/items`, and shows the last one. (The controller also logs its own status lines, so its very last line is not always your request.)
 - `kubectl logs -n prod -l app=frontend --tail=1 --prefix`: Shows the log (what the program printed) of all pods with the label `app=frontend` in the namespace `prod`: only the last line, with the pod name in front of each line.
 - `kubectl logs -n prod -l app=backend --tail=1 --prefix`: Shows the log (what the program printed) of all pods with the label `app=backend` in the namespace `prod`: only the last line, with the pod name in front of each line.
 
@@ -160,6 +160,14 @@ kubectl logs -n kube-system kube-controller-manager-minikube --tail=3
 - `kubectl logs -n kube-system ...`: Shows the log (what the program printed) of the pod `kube-controller-manager-minikube` in the namespace `kube-system`: only the last 3 lines.
 
 **👀 You should see** the last lines of the scheduler and the controller manager. When a pod stays `Pending` and the events say nothing, the scheduler's log is the place to look.
+
+Lines that start with `E` (error) are not always a problem. Read the time at the start of the line and what it says. Lines you will often see on a healthy cluster:
+
+| The line says | Meaning |
+| --- | --- |
+| scheduler: `"Failed to watch" ... User "system:kube-scheduler" cannot list resource ...`, with a time from when the cluster started | At start-up the scheduler asked before its access rules were loaded. It tried again a second later, and it worked. Only a problem if these lines keep coming **now**. |
+| controller manager: `... is not as new as written version ...` | Two updates of the same object crossed. The controller simply tries again. |
+| controller manager: `"Cleaning CSR as it is more than approvedExpiration duration old and approved." csr="thabo"` | Housekeeping: an approved certificate request is deleted after 1 hour (Lab 5.2). The certificate Thabo got stays valid. |
 
 ### Step 5: the kubelet
 
@@ -295,15 +303,19 @@ kubectl logs two -n dev --all-containers --prefix --tail=1
 
 ### 🔵 Optional 4: events, the cluster's own short log
 
+Optional 4 and 5 need the pod `crasher` of Practice 2. The first line below starts it again if it is not there (if you cleaned up already, for example):
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
+kubectl get pod crasher -n dev >/dev/null 2>&1 || { kubectl run crasher -n dev --image=busybox:1.36 -- sh -c 'echo "starting, attempt at $(date +%T)"; echo "error: cannot open /etc/app/config" >&2; sleep 5; exit 1'; sleep 40; }
 kubectl events -n dev --for pod/crasher | tail -4
 kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | tail -5
 ```
 
 **What this does:**
 
+- `kubectl get pod crasher ... || { kubectl run crasher ...; sleep 40; }`: If there is no pod `crasher`, starts it as in Practice 2 and waits 40 seconds. If it is there, does nothing.
 - `kubectl events -n dev --for pod/crasher`: Shows only the events of the pod `crasher`. `| tail -4` keeps the last 4.
 - `kubectl get events -A --field-selector type=Warning ...`: Shows the **warnings** of all namespaces, newest last.
 
