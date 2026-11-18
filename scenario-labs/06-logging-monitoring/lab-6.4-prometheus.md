@@ -185,6 +185,102 @@ frontend-5fddf7f475-rwg72: 0 restarts
 
 A number that goes up here is the first sign of a problem. In a real cluster an **alert** watches it for you, and **Grafana** draws it as a graph.
 
+## More practice (before you clean up)
+
+Do these while Prometheus still runs and the port-forward of Step 3 is still on. Step 6 below removes it all.
+
+The answer of the API is JSON; `jq` turns it into short lines. In the Prometheus web page you would type only the part after `query=`.
+
+### 🟡 Practice 1: memory per environment
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+curl -s 'http://localhost:9090/api/v1/query' --data-urlencode 'query=sum by (namespace) (container_memory_working_set_bytes{namespace=~"dev|uat|prod", container!=""})' \
+  | jq -r '.data.result[] | "\(.metric.namespace): \(.value[1] | tonumber / 1048576 | floor) MiB"'
+```
+
+**What this does:** Asks Prometheus: the memory all containers use now, added up (`sum`) per namespace, for `dev`, `uat` and `prod`. `jq` turns the bytes into MiB.
+
+**👀 You should see** three lines such as `prod: 180 MiB`. The numbers come from the kubelet of every node (cAdvisor), the same source as `kubectl top`.
+
+### 🟡 Practice 2: CPU per pod, as a rate
+
+CPU is counted as "seconds of CPU used so far", a number that only goes up. `rate(...[5m])` turns it into "CPU per second over the last 5 minutes":
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+curl -s 'http://localhost:9090/api/v1/query' --data-urlencode 'query=sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="prod", container!=""}[5m]))' \
+  | jq -r '.data.result[] | "\(.metric.pod): \(.value[1] | tonumber * 1000 | floor)m CPU"'
+```
+
+**What this does:** Asks Prometheus: the CPU each PROD pod used per second, on average over the last 5 minutes. `jq` shows it in millicores (`m`), like `kubectl top`.
+
+**👀 You should see** one line per PROD pod, with small numbers such as `2m CPU`. Unlike `kubectl top`, you can change `[5m]` to `[1h]` and look further back.
+
+### 🟡 Practice 3: what does Prometheus collect from?
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+curl -s http://localhost:9090/api/v1/targets | jq -r '.data.activeTargets[] | "\(.labels.job)  \(.health)"' | sort | uniq -c
+```
+
+**What this does:** Asks Prometheus for the list of places (**targets**) it collects numbers from, prints the job name and health of each, and counts the same lines.
+
+**👀 You should see** jobs such as `kubernetes-nodes`, `kubernetes-nodes-cadvisor`, `kubernetes-apiservers` and `kubernetes-service-endpoints`, nearly all `up`. Prometheus **pulls** the numbers: every minute it asks each target for them.
+
+### 🔵 Optional 4: the question behind an alert: which pods are not ready?
+
+Make a pod that is never ready, and let Prometheus find it:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run never-ready -n dev --image=busybox:1.36 --overrides='{"spec":{"containers":[{"name":"never-ready","image":"busybox:1.36","command":["sleep","3600"],"readinessProbe":{"exec":{"command":["false"]},"periodSeconds":5}}]}}'
+sleep 90
+curl -s 'http://localhost:9090/api/v1/query' --data-urlencode 'query=kube_pod_status_ready{condition="false", namespace=~"dev|uat|prod"} == 1' \
+  | jq -r '.data.result[] | "\(.metric.namespace)/\(.metric.pod) is not ready"'
+```
+
+**What this does:**
+
+- `kubectl run never-ready ... --overrides='...'`: Starts a pod whose readiness check is the command `false`: it always fails, so the pod is never ready.
+- `sleep 90`: Waits 90 seconds: Prometheus collects every minute.
+- `curl ... kube_pod_status_ready{condition="false", ...} == 1`: Asks Prometheus for every Shop pod that is **not** ready now.
+
+**👀 You should see** `dev/never-ready is not ready`. An **alert rule** is this same question, asked every minute, with "for 5 minutes" added: if the answer is not empty that long, someone gets a message.
+
+### 🔵 Optional 5: challenge
+
+Without looking at the answer: which **node** uses the most memory? Use the numbers of node-exporter: `node_memory_MemTotal_bytes` and `node_memory_MemAvailable_bytes`.
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+curl -s 'http://localhost:9090/api/v1/query' --data-urlencode 'query=sort_desc(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)' \
+  | jq -r '.data.result[] | "\(.metric.instance): \(.value[1] | tonumber / 1048576 | floor) MiB used"'
+```
+
+**What this does:** Asks Prometheus for the memory in use (total minus available) on every node, biggest first. `jq` shows it in MiB.
+
+**👀 You should see** one line per node, with the address of the node in front. The first line is the node that uses the most; compare with `kubectl top nodes`.
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pod never-ready -n dev --now --ignore-not-found
+```
+
+**What this does:** Deletes the test pod, at once. Now go on with Step 6 to remove Prometheus.
+
 ## Step 6: clean up
 
 Prometheus uses memory that the next labs need. Remove it:

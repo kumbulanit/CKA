@@ -204,6 +204,19 @@ The controller pod is `Running`. The two `Completed` pods did a one-time setup j
 
 ### Step 6: look at the rules
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl create ingress shop -n prod --class=nginx --rule="shop.local/*=frontend:80"
+```
+
+**What this does:**
+
+- `kubectl create ingress shop -n prod ...`: Creates the Ingress `shop` in the namespace `prod`, for the class `nginx`.
+- `--rule="shop.local/*=frontend:80"`: The host `shop.local`, path `/`, goes to the Service `frontend`, port 80. The `*` after the `/` makes the `pathType` `Prefix`; without it, it is `Exact`.
+
+💡 Add `--dry-run=client -o yaml` to print the YAML without creating anything. With `> file.yaml` at the end, that is the fastest way to start a YAML file in the exam.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash

@@ -125,6 +125,18 @@ frontend-77994594d8-n9nzj   Burstable
 
 ### Step 3: give DEV a budget
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl create quota env-quota --hard=pods=10,requests.cpu=1,requests.memory=1Gi,limits.cpu=2,limits.memory=2Gi,persistentvolumeclaims=2,requests.storage=2Gi
+```
+
+**What this does:**
+
+- `kubectl create quota env-quota --hard=...`: Creates the quota `env-quota` in your working namespace. Each `name=value` after `--hard` becomes one line of the budget.
+
+💡 Add `--dry-run=client -o yaml` to print the YAML without creating anything. With `> file.yaml` at the end, that is the fastest way to start a YAML file in the exam.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -286,6 +298,8 @@ deployment.apps/frontend scaled
 
 The storage budget of DEV is 2Gi, and the database uses 1Gi. Ask for 5Gi more:
 
+**⌨️ Command line option:** none. kubectl has no command that creates a PersistentVolumeClaim, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -317,6 +331,185 @@ The claim is refused at once. Nothing was created.
 💡 **Exam tip:** when a Deployment does not reach its number of pods and the pods are not even listed, look at the events of the namespace: `kubectl get events -n <namespace>`. A quota is a common cause.
 
 ✅ **Check:** `kubectl get resourcequota -A` shows `env-quota` in `dev`, `uat` and `prod`.
+
+## More practice
+
+The Shop part of the lab is done. Practices 1 to 3 use test pods in `dev` (the DEV budget has room for them). Practices 4 and 5 use a new namespace `sandbox`, so the budgets of the Shop do not change. The clean-up at the end removes it all.
+
+### 🟡 Practice 1: the LimitRange fills in what you leave out
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run no-resources -n dev --image=busybox:1.36 -- sleep 3600
+kubectl get pod no-resources -n dev -o jsonpath='{.spec.containers[0].resources}{"\n"}'
+kubectl get pod no-resources -n dev -o jsonpath='{.status.qosClass}{"\n"}'
+```
+
+**What this does:**
+
+- `kubectl run no-resources ...`: Starts a pod with **no** requests or limits.
+- `kubectl get pod ... -o jsonpath='{.spec.containers[0].resources}'`: Prints the requests and limits the pod has now.
+- `kubectl get pod ... -o jsonpath='{.status.qosClass}'`: Prints its QoS class.
+
+**👀 You should see** *(do not paste)*:
+
+```text
+{"limits":{"cpu":"100m","memory":"64Mi"},"requests":{"cpu":"25m","memory":"32Mi"}}
+Burstable
+```
+
+You asked for nothing, and got the values of `limitrange.yaml`. Without them, the quota would have refused the pod: a quota on `requests.cpu` needs every pod to say how much it requests.
+
+### 🟡 Practice 2: make a pod `Guaranteed`
+
+When a node runs out of memory, Kubernetes removes `BestEffort` pods first, then `Burstable`, and `Guaranteed` last. A pod is `Guaranteed` when requests and limits are **the same**.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run vip -n dev --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600 > vip.yaml
+kubectl set resources -f vip.yaml --local --requests=cpu=50m,memory=64Mi --limits=cpu=50m,memory=64Mi -o yaml | kubectl apply -f -
+kubectl get pod vip -n dev -o jsonpath='{.status.qosClass}{"\n"}'
+```
+
+**What this does:**
+
+- `kubectl run vip ... --dry-run=client -o yaml ... > vip.yaml`: Writes the YAML of a pod into `vip.yaml`, without creating it.
+- `kubectl set resources -f vip.yaml --local ... | kubectl apply -f -`: Sets requests and limits to the same values in that YAML, and creates the pod.
+- `kubectl get pod vip ... qosClass`: Prints its QoS class.
+
+**👀 You should see** `Guaranteed`. (The PROD database is a good candidate for this in a real cluster.)
+
+### 🟡 Practice 3: one pod that is too big for the budget
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run greedy -n dev --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600 > greedy.yaml
+kubectl set resources -f greedy.yaml --local --requests=cpu=2 --limits=cpu=2 -o yaml | kubectl apply -f -
+```
+
+**What this does:**
+
+- `kubectl run greedy ... > greedy.yaml`: Writes the YAML of a pod into `greedy.yaml`.
+- `kubectl set resources ... | kubectl apply -f -`: Asks for 2 whole CPUs for it, and tries to create it.
+
+**👀 You should see** an error at once: `exceeded quota: env-quota, requested: limits.cpu=2,requests.cpu=2, ...`. A **pod** you create yourself gets the error straight away. A **Deployment** is created without complaint, and its pods are refused later, quietly, in the events (Step 5). That is why missing pods are often a quota problem.
+
+### 🔵 Optional 4: a LimitRange that also sets a maximum
+
+**⌨️ Command line option:** none for the LimitRange: kubectl has no `create limitrange`.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create namespace sandbox
+kubectl apply -n sandbox -f - <<'YAML'
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: max-size
+spec:
+  limits:
+  - type: Container
+    max:                     # no container may ask for more than this
+      cpu: 200m
+      memory: 128Mi
+YAML
+kubectl run big -n sandbox --image=busybox:1.36 --dry-run=client -o yaml -- sleep 3600 > big.yaml
+kubectl set resources -f big.yaml --local --limits=cpu=500m,memory=64Mi -o yaml | kubectl apply -f -
+```
+
+**What this does:**
+
+- `kubectl create namespace sandbox`: Makes a new namespace for the practice.
+- `kubectl apply -n sandbox -f - <<'YAML' ...`: Creates a LimitRange `max-size` in `sandbox`: at most 200m CPU and 128Mi memory per container.
+- `kubectl run big ... > big.yaml`: Writes the YAML of a pod into `big.yaml`.
+- `kubectl set resources ... | kubectl apply -f -`: Gives it a CPU limit of 500m, and tries to create it.
+
+**👀 You should see** an error with `maximum cpu usage per Container is 200m, but limit is 500m`. A quota limits the **namespace** in total; a LimitRange limits **each container**.
+
+### 🔵 Optional 5: count objects, not only CPU
+
+A quota can also count objects: ConfigMaps, Secrets, Services and more.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create quota objects -n sandbox --hard=configmaps=3,services=1
+kubectl describe quota objects -n sandbox | tail -3
+for i in 1 2 3; do kubectl create configmap cm-$i -n sandbox --from-literal=n=$i; done
+```
+
+**What this does:**
+
+- `kubectl create quota objects -n sandbox --hard=configmaps=3,services=1`: Allows at most 3 ConfigMaps and 1 Service in `sandbox`.
+- `kubectl describe quota objects -n sandbox | tail -3`: Shows what is used now.
+- `for i in 1 2 3; do ... done`: Tries to create three ConfigMaps, `cm-1` to `cm-3`.
+
+**👀 You should see** `configmaps 1 3` already **before** you made any: every namespace gets the ConfigMap `kube-root-ca.crt` by itself. So `cm-1` and `cm-2` are created, and `cm-3` is refused with `exceeded quota: objects`.
+
+### 🔵 Optional 6: challenge
+
+Without looking at the answer: in `sandbox`, make a quota `cpu-budget` with `requests.cpu=500m`. Then `kubectl run test -n sandbox --image=busybox:1.36 -- sleep 3600`. Why is it refused? Fix it **without** changing the `kubectl run` command.
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create quota cpu-budget -n sandbox --hard=requests.cpu=500m
+kubectl run test -n sandbox --image=busybox:1.36 -- sleep 3600
+```
+
+**What this does:** Creates the quota, then tries to start a pod with no requests.
+
+**👀 You should see** `must specify requests.cpu`: with a quota on `requests.cpu`, every pod must say what it requests, and this one does not. The `max-size` LimitRange has no `defaultRequest`. Add a LimitRange that gives a default:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n sandbox -f - <<'YAML'
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: defaults
+spec:
+  limits:
+  - type: Container
+    defaultRequest:
+      cpu: 50m
+YAML
+kubectl run test -n sandbox --image=busybox:1.36 -- sleep 3600
+kubectl describe quota cpu-budget -n sandbox | tail -1
+```
+
+**What this does:**
+
+- `kubectl apply ...`: Creates a LimitRange `defaults` that gives every container a CPU request of 50m when it has none.
+- `kubectl run test ...`: Tries the same command again.
+- `kubectl describe quota cpu-budget ... | tail -1`: Shows how much of the budget is used.
+
+**👀 You should see** `pod/test created`, and `requests.cpu  50m  500m`. This is the reason the Shop has `limitrange.yaml` next to `quota.yaml`.
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pod no-resources vip greedy -n dev --now --ignore-not-found
+kubectl delete namespace sandbox --ignore-not-found
+rm -f vip.yaml greedy.yaml big.yaml
+```
+
+**What this does:**
+
+- `kubectl delete pod ...`: Deletes the test pods in `dev`, at once.
+- `kubectl delete namespace sandbox`: Deletes the namespace `sandbox` and everything in it.
+- `rm -f ...`: Deletes the YAML files of this practice.
 
 **The Shop now:** it runs in three environments. PROD has its own node, a hostname, a firewall, access rules, a disk that keeps its data and a budget. One module is left: what to do when it breaks.
 

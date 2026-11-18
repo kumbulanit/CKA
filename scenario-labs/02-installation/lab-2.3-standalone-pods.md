@@ -151,6 +151,18 @@ minikube ssh -n minikube-m02
 
 Your prompt changes to `docker@minikube-m02`. Now, **on the node**:
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl run static-web --image=nginx:1.27-alpine --dry-run=client -o yaml
+```
+
+**What this does:**
+
+- `kubectl run static-web ... --dry-run=client -o yaml`: Prints the YAML of a pod `static-web` with the image `nginx:1.27-alpine`, and creates nothing.
+
+The node has no kubectl, so run this on your server, then copy what it prints into the file on the node. The printed YAML has a few extra lines (`resources: {}`, `status: {}`); they do no harm.
+
 **📋 Copy and paste into the node's terminal** (your prompt shows `docker@...`)**:**
 
 ```bash

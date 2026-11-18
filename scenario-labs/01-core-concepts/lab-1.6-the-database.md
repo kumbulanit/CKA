@@ -43,6 +43,22 @@ Context "minikube" modified.
 
 ## Step 1: look at the three files
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl create deployment db --image=postgres:16-alpine --port=5432
+kubectl set env deployment/db POSTGRES_USER=shop POSTGRES_DB=shop PGDATA=/var/lib/postgresql/data/pgdata
+kubectl set env deployment/db --from=secret/db-secret --keys=password --prefix=POSTGRES_
+```
+
+**What this does:**
+
+- `kubectl create deployment db ...`: Creates the Deployment `db` with the image `postgres:16-alpine` and port 5432.
+- `kubectl set env deployment/db POSTGRES_USER=shop ...`: Adds the three plain settings.
+- `kubectl set env ... --from=secret/db-secret --keys=password --prefix=POSTGRES_`: Adds `POSTGRES_PASSWORD`, taken from the key `password` of the Secret `db-secret`.
+
+Not possible with a command: the `Recreate` strategy and the two volumes. Add them with `kubectl edit deployment db`. Also, kubectl names the container `postgres` (after the image); the file names it `db`.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash

@@ -56,6 +56,8 @@ Context "minikube" modified.
 
 ### Step 1: look at the disk (PersistentVolume)
 
+**⌨️ Command line option:** none. kubectl has no command that creates a PersistentVolume, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -134,6 +136,8 @@ The disk is `Available`: nobody uses it yet. (The storage class `shop-disk` is e
 
 ### Step 3: ask for the disk (PersistentVolumeClaim)
 
+**⌨️ Command line option:** none. kubectl has no command that creates a PersistentVolumeClaim, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -185,6 +189,12 @@ db-data   Pending                                      shop-disk      <unset>   
 ### Step 4: give the disk to the database
 
 This file is the database Deployment from Lab 1.6, with one change at the end: the `emptyDir` is replaced by the claim.
+
+**⌨️ Command line option:** none for these lines. kubectl has no command that adds a volume to a Deployment. The command-line way is to open the Deployment in the editor and type the lines yourself:
+
+```bash
+kubectl edit deployment db
+```
 
 **📖 Read only (do not paste):**
 
@@ -331,6 +341,8 @@ A local disk has one weak point: if the node `minikube-m02` is lost, the data is
 
 ### Step 8: read an NFS volume
 
+**⌨️ Command line option:** none. kubectl has no command that creates a PersistentVolume, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -378,5 +390,270 @@ That last line is the point of the whole design: the application's claim does no
 💡 **Exam tip:** a claim stays `Pending` when no volume fits. Check four things: the **size** (the volume must be at least as big), the **access mode**, the **storage class name** (must be the same on both), and `kubectl describe pvc <name>` for the reason.
 
 ✅ **Check:** Step 6 shows four items, with the Juice, after the database pod was deleted.
+
+## More practice
+
+The Shop part of the lab is done. These exercises use their own disk (`practice-pv`) and claim, with the class name `manual`, so they never touch the database's disk. The clean-up at the end removes them.
+
+### 🟡 Practice 1: who uses the disk?
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl get pv shop-dev-pv -o jsonpath='{.spec.claimRef.namespace}/{.spec.claimRef.name}{"\n"}'
+kubectl describe pvc db-data | grep -E "^(Status|Volume|Used By)"
+```
+
+**What this does:**
+
+- `kubectl get pv shop-dev-pv -o jsonpath=...`: Prints which claim the disk belongs to (namespace/name).
+- `kubectl describe pvc db-data | grep ...`: Shows the claim's status, its disk, and the pods that use it.
+
+**👀 You should see** `dev/db-data`, then `Bound`, `shop-dev-pv` and the name of the `db` pod. The disk points to the claim, and the claim to the disk.
+
+### 🟡 Practice 2: when does a claim get a disk?
+
+A claim binds to a disk only when **all** of these match: the class, the access mode, and a size that is **at least** what it asks.
+
+**⌨️ Command line option:** none. kubectl has no command that creates a PersistentVolume or a PersistentVolumeClaim.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -f - <<'YAML'
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: practice-pv
+spec:
+  capacity:
+    storage: 200Mi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /data/practice
+    type: DirectoryOrCreate
+YAML
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: too-much
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi            # more than the disk has
+YAML
+sleep 3
+kubectl get pv practice-pv
+kubectl get pvc too-much -n dev
+```
+
+**What this does:**
+
+- First `kubectl apply`: Creates a disk `practice-pv` of 200Mi, class `manual`.
+- Second `kubectl apply`: Creates a claim `too-much` in `dev` that asks for 500Mi of class `manual`.
+- `sleep 3`: Waits 3 seconds.
+- `kubectl get pv practice-pv` and `kubectl get pvc too-much -n dev`: Show the disk and the claim.
+
+**👀 You should see** the disk `Available` and the claim `Pending`: no disk is big enough. Delete it, and ask for less:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pvc too-much -n dev
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: small
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi            # less than the disk has
+YAML
+sleep 3
+kubectl get pvc small -n dev
+```
+
+**What this does:**
+
+- `kubectl delete pvc too-much -n dev`: Deletes the claim that was too big.
+- `kubectl apply ...`: Creates a claim `small` that asks for 100Mi.
+- `sleep 3`: Waits 3 seconds.
+- `kubectl get pvc small -n dev`: Shows the claim.
+
+**👀 You should see** `Bound` to `practice-pv`, with a capacity of **200Mi**, not 100Mi. A claim gets a whole disk; the rest is not shared with anyone.
+
+(The class `manual` has no StorageClass object. Then there is no `WaitForFirstConsumer`: the claim binds at once.)
+
+### 🟡 Practice 3: after `Retain`, the disk is `Released`, not free
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pvc small -n dev
+sleep 3
+kubectl get pv practice-pv
+```
+
+**What this does:** Deletes the claim `small`, waits 3 seconds, and shows the disk.
+
+**👀 You should see** `Released`. The data is kept (`Retain`), and the disk still remembers its old claim, so **no new claim** can get it. An administrator decides: delete the data, or give the disk free again. Give it free:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl patch pv practice-pv -p '{"spec":{"claimRef":null}}'
+kubectl get pv practice-pv
+```
+
+**What this does:**
+
+- `kubectl patch pv practice-pv -p '{"spec":{"claimRef":null}}'`: Removes the link to the old claim from the disk.
+- `kubectl get pv practice-pv`: Shows the disk.
+
+**👀 You should see** `Available` again. The old files are still in the folder: the next claim gets them.
+
+### 🔵 Optional 4: why the database's disk names its node
+
+`practice-pv` has no `nodeAffinity`. Watch what that does to a pod on another node. (Do Practice 3 first: the disk must be `Available`.)
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: small
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+YAML
+for n in minikube minikube-m02; do
+  kubectl run use-$n -n dev --image=busybox:1.36 --overrides='{"spec":{"nodeSelector":{"kubernetes.io/hostname":"'$n'"},"containers":[{"name":"app","image":"busybox:1.36","command":["sleep","3600"],"volumeMounts":[{"name":"d","mountPath":"/d"}]}],"volumes":[{"name":"d","persistentVolumeClaim":{"claimName":"small"}}]}}'
+done
+kubectl wait pod/use-minikube pod/use-minikube-m02 -n dev --for=condition=Ready --timeout=60s
+kubectl exec use-minikube-m02 -n dev -- sh -c 'echo hello > /d/file.txt'
+kubectl exec use-minikube -n dev -- ls /d
+```
+
+**What this does:**
+
+- `kubectl apply ...`: Makes the claim `small` again. It binds to `practice-pv`.
+- `for n in ...; do kubectl run use-$n ...; done`: Starts two pods that use the **same** claim: one on `minikube`, one on `minikube-m02`.
+- `kubectl wait ...`: Waits until both are ready.
+- `kubectl exec use-minikube-m02 ...`: Writes a file through the pod on `minikube-m02`.
+- `kubectl exec use-minikube -n dev -- ls /d`: Looks for it through the pod on `minikube`.
+
+**👀 You should see** both pods running, and **no** file from `minikube`. With `hostPath`, each node has its own `/data/practice`. Kubernetes did not stop it, because the disk did not say where it lives. `nodeAffinity` on the disk (as in `db-pv-dev.yaml`) makes the scheduler put the pod on the right node. (`ReadWriteOnce` means one **node**, but it is not checked for `hostPath`.)
+
+### 🔵 Optional 5: challenge
+
+Without looking at the answer: make a disk `log-pv` of 100Mi, `ReadWriteMany`, class `manual`, at `/data/logs` on the node `minikube-m02` only. Make a claim `log-claim` of 50Mi in `dev`, and a pod `log-writer` that mounts it at `/var/log/app`. Check that the pod runs on `minikube-m02`.
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -f - <<'YAML'
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: log-pv
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+  - ReadWriteMany
+  storageClassName: manual
+  hostPath:
+    path: /data/logs
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - minikube-m02
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: log-claim
+  namespace: dev
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: log-writer
+  namespace: dev
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/app
+  volumes:
+  - name: logs
+    persistentVolumeClaim:
+      claimName: log-claim
+YAML
+kubectl wait pod/log-writer -n dev --for=condition=Ready --timeout=60s
+kubectl get pvc log-claim -n dev
+kubectl get pod log-writer -n dev -o wide
+```
+
+**What this does:** Creates the disk, the claim and the pod from one YAML (the `---` lines separate them), waits until the pod is ready, and shows the claim and the pod with its node.
+
+**👀 You should see** `log-claim` `Bound` to `log-pv`, and `log-writer` on `minikube-m02`: the scheduler read the disk's `nodeAffinity`. (`practice-pv` is `ReadWriteOnce`, so the `ReadWriteMany` claim can only get `log-pv`.)
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pod use-minikube use-minikube-m02 log-writer -n dev --now --ignore-not-found
+kubectl delete pvc small too-much log-claim -n dev --ignore-not-found
+kubectl delete pv practice-pv log-pv --ignore-not-found
+minikube ssh -- sudo rm -rf /data/practice
+minikube ssh -n minikube-m02 -- sudo rm -rf /data/practice /data/logs
+kubectl get pv
+```
+
+**What this does:**
+
+- `kubectl delete pod ...`, `pvc ...`, `pv ...`: Delete the test pods, claims and disks of this practice.
+- `minikube ssh ... sudo rm -rf ...`: Delete the practice folders on the nodes. (`Retain` keeps them, so you remove them yourself.)
+- `kubectl get pv`: Lists the disks that are left.
+
+**👀 You should see** only `shop-dev-pv`, `Bound` to `dev/db-data`.
 
 **Next:** [Lab 7.3: Storage classes and dynamic provisioning](./lab-7.3-storage-classes-and-dynamic-provisioning.md)

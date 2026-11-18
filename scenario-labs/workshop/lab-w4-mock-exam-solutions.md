@@ -37,7 +37,17 @@ kubectl get deployment frontend -n exam
 
 ## Task 3 (6 points)
 
-`kubectl expose` cannot set the node port, so write the file:
+`kubectl expose` cannot set the node port. `kubectl create service nodeport` can, or you write the file:
+
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl create service nodeport frontend -n exam --tcp=80:80 --node-port=30090
+```
+
+**What this does:**
+
+- `kubectl create service nodeport frontend ...`: Creates the Service `frontend` of type NodePort in `exam`: port 80, node port 30090, selector `app=frontend` (the name). Unlike `expose`, `create service` can set the node port.
 
 **📋 Copy and paste:**
 
@@ -68,6 +78,18 @@ It prints `200`.
 
 ## Task 4 (6 points)
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl run settings -n exam --image=busybox:1.36 --dry-run=client -o yaml --command -- sleep 3600 > settings.yaml
+```
+
+**What this does:**
+
+- `kubectl run settings ... --dry-run=client -o yaml ... > settings.yaml`: Writes the YAML of the pod into `settings.yaml`, without creating it.
+
+`kubectl run` cannot load a whole ConfigMap. Open `settings.yaml`, add the three `envFrom` lines under the container, then `kubectl apply -f settings.yaml`.
+
 **📋 Copy and paste:**
 
 ```bash
@@ -97,6 +119,18 @@ kubectl exec settings -n exam -- env | grep SHOP
 It prints both `SHOP_NAME=Corner Shop` and `SHOP_CURRENCY=ZAR`.
 
 ## Task 5 (6 points)
+
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl run secret-reader -n exam --image=busybox:1.36 --dry-run=client -o yaml --command -- sleep 3600 > secret-reader.yaml
+```
+
+**What this does:**
+
+- `kubectl run secret-reader ... > secret-reader.yaml`: Writes the YAML of the pod into `secret-reader.yaml`, without creating it.
+
+`kubectl run` cannot add a volume. Open the file, add the `volumeMounts` and `volumes` lines, then `kubectl apply -f secret-reader.yaml`.
 
 **📋 Copy and paste:**
 
@@ -130,6 +164,8 @@ kubectl exec secret-reader -n exam -- cat /etc/db/password
 It prints `exam-pass-123`.
 
 ## Task 6 (8 points)
+
+**⌨️ Command line option:** none. kubectl has no command that creates a PersistentVolume or a PersistentVolumeClaim, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
 
 **📋 Copy and paste:**
 
@@ -172,6 +208,18 @@ kubectl get pvc exam-pvc -n exam
 `STATUS` shows `Bound` and `VOLUME` shows `exam-pv`.
 
 ## Task 7 (6 points)
+
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl run healthy -n exam --image=nginx:1.27-alpine --dry-run=client -o yaml > healthy.yaml
+```
+
+**What this does:**
+
+- `kubectl run healthy ... > healthy.yaml`: Writes the YAML of the pod into `healthy.yaml`, without creating it.
+
+kubectl has no flag for probes. Open the file, add the `readinessProbe` lines under the container, then `kubectl apply -f healthy.yaml`.
 
 **📋 Copy and paste:**
 
@@ -219,6 +267,18 @@ It shows the four values.
 
 ## Task 9 (6 points)
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl label node minikube-m02 disk=fast
+kubectl run fast -n exam --image=nginx:1.27-alpine --overrides='{"spec":{"nodeSelector":{"disk":"fast"}}}'
+```
+
+**What this does:**
+
+- `kubectl label node minikube-m02 disk=fast`: Gives the node `minikube-m02` the label `disk=fast`.
+- `kubectl run fast ... --overrides='...'`: Creates the pod `fast` with the node selector `disk=fast`, with no file.
+
 **📋 Copy and paste:**
 
 ```bash
@@ -246,6 +306,8 @@ kubectl get pod fast -n exam -o wide
 `NODE` shows `minikube-m02`.
 
 ## Task 10 (8 points)
+
+**⌨️ Command line option:** none. kubectl has no command that creates a NetworkPolicy, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
 
 **📋 Copy and paste:**
 

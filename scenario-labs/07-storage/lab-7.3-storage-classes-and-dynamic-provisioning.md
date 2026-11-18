@@ -79,6 +79,8 @@ standard (default)   k8s.io/minikube-hostpath       Delete          Immediate   
 
 The Shop wants a place for its monthly reports. Look at the claim:
 
+**⌨️ Command line option:** none. kubectl has no command that creates a PersistentVolumeClaim, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -167,6 +169,8 @@ On your three-node cluster, the `standard` class makes its folders on **one** no
 ## Part B: disks for UAT and PROD
 
 ### Step 4: look at the storage class of the Shop
+
+**⌨️ Command line option:** none. kubectl has no command that creates a StorageClass, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
 
 **📋 Copy and paste into your terminal:**
 
@@ -302,5 +306,193 @@ From now on, PROD keeps what its users add.
 💡 **Exam tip:** to make a class the default, it gets the annotation `storageclass.kubernetes.io/is-default-class: "true"`. A claim without `storageClassName` uses the default class.
 
 ✅ **Check:** `kubectl get pv` shows three volumes, all `Bound`.
+
+## More practice
+
+The Shop part of the lab is done. These exercises make their own claims and one extra storage class, and the clean-up at the end removes them.
+
+### 🟡 Practice 1: a claim that names no class
+
+**⌨️ Command line option:** none. kubectl has no command that creates a PersistentVolumeClaim.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: no-class
+spec:                           # no storageClassName at all
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+YAML
+sleep 5
+kubectl get pvc no-class -n dev
+```
+
+**What this does:** Creates a claim `no-class` in `dev` that does not say which storage class it wants, waits 5 seconds and shows it.
+
+**👀 You should see** `Bound`, with `standard` in the column `STORAGECLASS`. A claim with no class gets the **default** class: the one marked `(default)` in `kubectl get storageclass`.
+
+⚠️ `storageClassName: ""` (empty) is **not** the same as no line: it means "no class at all, only a disk made by hand".
+
+### 🟡 Practice 2: your own class that keeps the data
+
+The class `standard` deletes the disk with its claim (Step 3). Make a class with the same provisioner that keeps it:
+
+**⌨️ Command line option:** none. kubectl has no command that creates a StorageClass.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -f - <<'YAML'
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard-retain
+provisioner: k8s.io/minikube-hostpath    # the same program as "standard"
+reclaimPolicy: Retain                    # but keep the disk when the claim is deleted
+volumeBindingMode: Immediate
+YAML
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keep-me
+spec:
+  storageClassName: standard-retain
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+YAML
+sleep 5
+kubectl get pvc keep-me -n dev
+```
+
+**What this does:**
+
+- First `kubectl apply`: Creates the storage class `standard-retain`: disks are made by the minikube provisioner, and kept after their claim is gone.
+- Second `kubectl apply`: Creates the claim `keep-me` of that class in `dev`.
+- `sleep 5`: Waits 5 seconds.
+- `kubectl get pvc keep-me -n dev`: Shows the claim.
+
+**👀 You should see** `Bound` to a new `pvc-...` volume. Now delete the claim:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+PV=$(kubectl get pvc keep-me -n dev -o jsonpath='{.spec.volumeName}')
+kubectl delete pvc keep-me -n dev
+sleep 3
+kubectl get pv $PV
+```
+
+**What this does:**
+
+- `PV=$(...)`: Keeps the name of the claim's volume in the variable `PV`.
+- `kubectl delete pvc keep-me -n dev`: Deletes the claim.
+- `sleep 3`: Waits 3 seconds.
+- `kubectl get pv $PV`: Shows that volume.
+
+**👀 You should see** the volume still there, with `RECLAIM POLICY` `Retain` and `STATUS` `Released`. Compare Step 3, where the disk of `reports` was gone at once. The reclaim policy is copied from the **class** to each disk it makes.
+
+### 🟡 Practice 3: where is a dynamic disk?
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl get pv $PV -o jsonpath='{.spec.hostPath.path}{"\n"}'
+kubectl get pod -n kube-system storage-provisioner -o wide
+```
+
+**What this does:**
+
+- `kubectl get pv $PV -o jsonpath=...`: Prints the folder of the volume.
+- `kubectl get pod -n kube-system storage-provisioner -o wide`: Shows the provisioner pod and its node.
+
+**👀 You should see** a folder such as `/tmp/hostpath-provisioner/dev/keep-me`, and the provisioner on the node `minikube`. On a real cloud the provisioner makes a cloud disk (for example an AWS EBS volume) instead of a folder; the claim looks the same.
+
+### 🔵 Optional 4: `WaitForFirstConsumer` in action
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: waiting
+spec:
+  storageClassName: shop-disk
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+YAML
+sleep 3
+kubectl get pvc waiting -n dev
+kubectl describe pvc waiting -n dev | tail -2
+```
+
+**What this does:** Creates a claim `waiting` of the class `shop-disk`, waits 3 seconds, shows it, and shows the last lines of its details (the events).
+
+**👀 You should see** `Pending`, and the event `WaitForFirstConsumer`: `waiting for first consumer to be created before binding`. That is not an error: the class waits until a pod uses the claim, so that the disk and the pod end up on the same node. (Here no pod comes, and there is no free `shop-disk` disk either.)
+
+### 🔵 Optional 5: challenge
+
+Without looking at the answer: make `standard-retain` the **default** class, prove it with `kubectl get storageclass`, and then put `standard` back as the only default.
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl patch storageclass standard -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+kubectl patch storageclass standard-retain -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+kubectl get storageclass
+kubectl patch storageclass standard-retain -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+kubectl patch storageclass standard -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+kubectl get storageclass
+```
+
+**What this does:**
+
+- The first two `kubectl patch` lines: Take the default mark away from `standard` and give it to `standard-retain`. The mark is the annotation `storageclass.kubernetes.io/is-default-class`.
+- `kubectl get storageclass`: Shows `(default)` next to `standard-retain`.
+- The last two `kubectl patch` lines: Put it back on `standard`.
+- `kubectl get storageclass`: Shows `(default)` next to `standard` again.
+
+Take the mark away first, then give it: with two defaults, Kubernetes uses the newest one, which can surprise you.
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pvc no-class keep-me waiting -n dev --ignore-not-found
+kubectl get pv -o name | grep pvc- | while read pv; do
+  [ "$(kubectl get $pv -o jsonpath='{.spec.storageClassName}')" = standard-retain ] && kubectl delete $pv
+done
+kubectl delete storageclass standard-retain --ignore-not-found
+kubectl get pv
+```
+
+**What this does:**
+
+- `kubectl delete pvc ...`: Deletes the claims of this practice.
+- `kubectl get pv -o name | grep pvc- | while ...`: Deletes every dynamic volume of the class `standard-retain` (the one `Retain` kept).
+- `kubectl delete storageclass standard-retain ...`: Deletes the class.
+- `kubectl get pv`: Lists the disks that are left.
+
+**👀 You should see** only the three Shop disks, `shop-dev-pv`, `shop-uat-pv` and `shop-prod-pv`, all `Bound`.
 
 **Next:** [Lab 7.4: Resource quotas](./lab-7.4-resource-quotas.md)

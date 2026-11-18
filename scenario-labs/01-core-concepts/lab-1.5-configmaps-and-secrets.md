@@ -50,6 +50,23 @@ Context "minikube" modified.
 
 ### Step 1: create the ConfigMap with the backend settings
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl create configmap backend-config \
+  --from-literal=PGRST_DB_URI=postgres://shop@db:5432/shop \
+  --from-literal=PGRST_DB_ANON_ROLE=shop \
+  --from-literal=PGRST_DB_SCHEMAS=public \
+  --from-literal=PGRST_ADMIN_SERVER_PORT=3001 \
+  --from-literal=PGRST_LOG_LEVEL=info
+```
+
+**What this does:**
+
+- `kubectl create configmap backend-config ...`: Creates the ConfigMap `backend-config`. Each `--from-literal=KEY=value` becomes one line under `data`.
+
+💡 Add `--dry-run=client -o yaml` to print the YAML without creating anything. With `> file.yaml` at the end, that is the fastest way to start a YAML file in the exam.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -124,6 +141,20 @@ dev-pass-123
 ### Step 3: give both to the backend
 
 This file is the backend Deployment from Lab 1.3, with these lines added at the end:
+
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl set env deployment/backend --from=configmap/backend-config
+kubectl set env deployment/backend --from=secret/db-secret --keys=password --prefix=PG
+```
+
+**What this does:**
+
+- `kubectl set env deployment/backend --from=configmap/backend-config`: Gives the backend every key of the ConfigMap `backend-config` as a setting.
+- `kubectl set env ... --from=secret/db-secret --keys=password --prefix=PG`: Gives the backend the key `password` of the Secret `db-secret`. kubectl writes the key in capitals and puts `PG` in front: `PGPASSWORD`.
+
+One difference: `kubectl set env` writes one `env` line per key, where the file uses one `envFrom` for the whole ConfigMap. The pod gets the same settings.
 
 **📖 Read only (do not paste):**
 
@@ -221,6 +252,12 @@ server {
 ### Step 6: mount the files in the frontend
 
 This file is the frontend Deployment from Lab 1.3, with the ConfigMap mounted as two files:
+
+**⌨️ Command line option:** none for these lines. kubectl has no command that adds a volume to a Deployment. The command-line way is to open the Deployment in the editor and type the lines yourself:
+
+```bash
+kubectl edit deployment frontend
+```
 
 **📖 Read only (do not paste):**
 

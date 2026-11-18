@@ -52,6 +52,12 @@ Context "minikube" modified.
 
 This file is the backend Deployment from Lab 1.5, with these lines added:
 
+**⌨️ Command line option:** none for these lines. kubectl has no command that adds a liveness or readiness probe (`kubectl set probe` exists only in OpenShift's `oc`, not in kubectl). The command-line way is to open the Deployment in the editor and type the lines yourself:
+
+```bash
+kubectl edit deployment backend
+```
+
 **📖 Read only (do not paste):**
 
 ```yaml

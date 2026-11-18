@@ -45,6 +45,20 @@ Context "minikube" modified.
 
 ## Step 1: create the backend Deployment
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl create deployment backend --image=postgrest/postgrest:v12.2.3 --replicas=2 --port=3000
+```
+
+**What this does:**
+
+- `kubectl create deployment backend ...`: Creates the Deployment `backend` with 2 pods, the same image and port. The label `app=backend` and the selector are added for you.
+
+One difference: kubectl names the container after the image (`postgrest`); the file names it `backend`.
+
+💡 Add `--dry-run=client -o yaml` to print the YAML without creating anything. With `> file.yaml` at the end, that is the fastest way to start a YAML file in the exam.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash

@@ -203,4 +203,156 @@ minikube ssh -- "sudo crictl ps --name kube-apiserver -q | xargs sudo crictl log
 
 ✅ **Check:** you found the same request in the logs of the Ingress controller, the frontend and the backend, and you read the kubelet's log on a node.
 
+## More practice
+
+The Shop part of the lab is done. These exercises use small test pods in `dev`, and the clean-up at the end removes them.
+
+### 🟡 Practice 1: the options of `kubectl logs` you use most
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl logs -n prod -l app=backend --since=10m --timestamps --prefix | tail -4
+kubectl logs -n prod deployment/frontend --tail=20 | grep -c "GET /api/"
+```
+
+**What this does:**
+
+- `kubectl logs -n prod -l app=backend --since=10m --timestamps --prefix`: Shows the log lines of **all** PROD backend pods from the last 10 minutes. `--timestamps` adds the time Kubernetes received each line; `--prefix` adds the pod name. `| tail -4` keeps the last 4 lines.
+- `kubectl logs -n prod deployment/frontend --tail=20 | grep -c "GET /api/"`: Counts how many of the last 20 lines of one frontend pod are requests for `/api/`.
+
+**👀 You should see** four lines that each start with `[pod/backend-...]` and a time, then a number.
+
+| Option | Use it for |
+| --- | --- |
+| `--tail=N` | Only the last N lines |
+| `--since=10m`, `--since-time=...` | Only what is new |
+| `-f` | Keep following (stop with Ctrl+C) |
+| `-l app=x --prefix` | All pods with a label, each line with its pod name |
+| `-c name`, `--all-containers` | Pods with more than one container |
+| `--previous` | The container **before** the last restart |
+
+### 🟡 Practice 2: the log of a container that crashed
+
+When a container crashes and restarts, `kubectl logs` shows the **new** one. The error is often in the old one.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run crasher -n dev --image=busybox:1.36 -- sh -c 'echo "starting, attempt at $(date +%T)"; echo "error: cannot open /etc/app/config" >&2; sleep 5; exit 1'
+sleep 40
+kubectl get pod crasher -n dev
+kubectl logs crasher -n dev
+kubectl logs crasher -n dev --previous
+```
+
+**What this does:**
+
+- `kubectl run crasher ...`: Starts a pod that prints two lines, waits 5 seconds and stops with an error. Kubernetes restarts it again and again.
+- `sleep 40`: Waits 40 seconds, so that it crashes a few times.
+- `kubectl get pod crasher -n dev`: Shows the pod.
+- `kubectl logs crasher -n dev`: Shows the log of the container that runs now.
+- `kubectl logs crasher -n dev --previous`: Shows the log of the container before it.
+
+**👀 You should see** `CrashLoopBackOff` or `Error` with a `RESTARTS` number above 0, and two logs with **different** times. Both contain the error: the program writes it to `stderr`, and Kubernetes keeps `stdout` and `stderr` together.
+
+### 🟡 Practice 3: a pod with two containers
+
+**⌨️ Command line option:** none. `kubectl run` makes a pod with one container; for two, the YAML is the only way.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: two
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do echo app: working; sleep 5; done"]
+  - name: helper
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do echo helper: checking; sleep 5; done"]
+YAML
+kubectl wait pod/two -n dev --for=condition=Ready --timeout=60s
+kubectl logs two -n dev --tail=1
+kubectl logs two -n dev -c helper --tail=1
+kubectl logs two -n dev --all-containers --prefix --tail=1
+```
+
+**What this does:**
+
+- `kubectl apply -n dev -f - <<'YAML' ...`: Creates the pod `two` from the YAML between the two `YAML` lines: two containers, `app` and `helper`.
+- `kubectl wait pod/two ...`: Waits until the pod is ready (at most 60 seconds).
+- `kubectl logs two -n dev --tail=1`: Asks for the log without saying which container.
+- `kubectl logs two -n dev -c helper --tail=1`: Asks for the log of the container `helper`.
+- `kubectl logs two -n dev --all-containers --prefix --tail=1`: Asks for the logs of both, each line with its pod and container name.
+
+**👀 You should see** first a line `Defaulted container "app" out of: app, helper`, then the helper's line, then one line of each, marked with `[pod/two/app]` and `[pod/two/helper]`. The exam often has pods with a second container: always check with `-c`.
+
+### 🔵 Optional 4: events, the cluster's own short log
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl events -n dev --for pod/crasher | tail -4
+kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | tail -5
+```
+
+**What this does:**
+
+- `kubectl events -n dev --for pod/crasher`: Shows only the events of the pod `crasher`. `| tail -4` keeps the last 4.
+- `kubectl get events -A --field-selector type=Warning ...`: Shows the **warnings** of all namespaces, newest last.
+
+**👀 You should see** `BackOff` warnings for `crasher` (`Back-off restarting failed container`). Events are kept for one hour only: for older problems you need the logs.
+
+### 🔵 Optional 5: the same crash, seen by the kubelet
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+NODE=$(kubectl get pod crasher -n dev -o jsonpath='{.spec.nodeName}'); echo $NODE
+minikube ssh -n $NODE -- "sudo journalctl -u kubelet --since '-5 min' --no-pager | grep crasher | tail -3"
+```
+
+**What this does:**
+
+- `NODE=$(...)`: Keeps the name of the node where `crasher` runs in the variable `NODE`, and prints it.
+- `minikube ssh -n $NODE -- "sudo journalctl -u kubelet ... | grep crasher | tail -3"`: On that node, reads the kubelet's log of the last 5 minutes, and keeps the last 3 lines about `crasher`.
+
+**👀 You should see** long lines from the kubelet about the container of `crasher` that is in back-off. The application log says **why** the program stopped; the kubelet log says what Kubernetes **did** about it.
+
+### 🔵 Optional 6: challenge
+
+Without looking at the answer: for each PROD backend pod, print its name and how many log lines it wrote in the last 10 minutes. Which one got the most work?
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+for p in $(kubectl get pods -n prod -l app=backend -o name); do
+  echo "$p $(kubectl logs -n prod $p --since=10m | wc -l)"
+done
+```
+
+**What this does:** For every PROD backend pod: prints its name and the number of its log lines (`wc -l`) of the last 10 minutes.
+
+**👀 You should see** one line per pod, with numbers close to each other: the Service spreads the requests (Lab 3.2).
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pod crasher two -n dev --now --ignore-not-found
+```
+
+**What this does:** Deletes the two test pods, at once.
+
 **Next:** [Lab 6.2: Cluster-wide logging](./lab-6.2-cluster-wide-logging.md)

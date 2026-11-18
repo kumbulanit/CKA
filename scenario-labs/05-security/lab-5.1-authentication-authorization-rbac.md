@@ -251,4 +251,210 @@ Good. The backend only needs its database. It has no business with the Kubernete
 
 ✅ **Check:** Step 2 gives `yes, yes, no, no, no`.
 
+## More practice
+
+The Shop part of the lab is done. The clean-up at the end removes everything these exercises create, so Thabo has exactly the rights of Step 2 again. Lab 5.2 needs that.
+
+### 🟡 Practice 1: everything Thabo may do, and where it comes from
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl auth can-i --list -n prod --as=thabo | head -15
+kubectl get rolebindings -A -o wide | grep -E "NAMESPACE|thabo"
+```
+
+**What this does:**
+
+- `kubectl auth can-i --list -n prod --as=thabo`: Lists everything `thabo` may do in `prod`: one line per kind of object, with the verbs. `| head` shows the first 15 lines.
+- `kubectl get rolebindings -A -o wide | grep ...`: Lists the RoleBindings in all namespaces, with the role and the users, and keeps only the header and the lines with `thabo`.
+
+**👀 You should see** only `get`, `list` and `watch` in the `prod` list, and three RoleBindings: `thabo-edit` in `dev`, `thabo-pod-reader` in `uat`, and `thabo-view` in `prod`.
+
+`can-i` answers "may he?", and `get rolebindings` answers "why?". In real life you need both.
+
+### 🟡 Practice 2: a ClusterRole for the nodes, and a classic mistake
+
+Thabo wants to see the nodes. Nodes are not in a namespace. Make a ClusterRole, and first bind it the **wrong** way, with a RoleBinding:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create clusterrole node-reader --verb=get,list,watch --resource=nodes
+kubectl create rolebinding thabo-nodes-wrong -n dev --clusterrole=node-reader --user=thabo
+kubectl auth can-i list nodes --as=thabo
+```
+
+**What this does:**
+
+- `kubectl create clusterrole node-reader ...`: Creates a ClusterRole called `node-reader`: it allows `get,list,watch` on `nodes`.
+- `kubectl create rolebinding thabo-nodes-wrong -n dev ...`: Gives `thabo` that role, but only **in the namespace `dev`**.
+- `kubectl auth can-i list nodes --as=thabo`: Asks: may `thabo` list nodes?
+
+**👀 You should see** `no` (and a warning that nodes are not namespaced). A RoleBinding only gives rights **inside one namespace**, and nodes are in none. For objects outside the namespaces, you need a **ClusterRoleBinding**:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete rolebinding thabo-nodes-wrong -n dev
+kubectl create clusterrolebinding thabo-node-reader --clusterrole=node-reader --user=thabo
+kubectl auth can-i list nodes --as=thabo
+kubectl auth can-i delete nodes --as=thabo
+```
+
+**What this does:**
+
+- `kubectl delete rolebinding thabo-nodes-wrong -n dev`: Deletes the wrong binding.
+- `kubectl create clusterrolebinding thabo-node-reader ...`: Gives `thabo` the role `node-reader` in the **whole cluster**.
+- `kubectl auth can-i list nodes --as=thabo`: Asks: may `thabo` list nodes?
+- `kubectl auth can-i delete nodes --as=thabo`: Asks: may `thabo` delete nodes?
+
+**👀 You should see** `yes`, then `no`.
+
+| Binding | Role | Gives |
+| --- | --- | --- |
+| RoleBinding | Role | That role, in that namespace |
+| RoleBinding | ClusterRole | The ClusterRole's rights, but only in that namespace (as `edit` and `view` in Step 1) |
+| ClusterRoleBinding | ClusterRole | The rights everywhere, and on objects outside namespaces (nodes, PVs, namespaces) |
+
+### 🟡 Practice 3: give a role to a group
+
+Binding every person one by one does not scale. Bind a **group** instead. (Lab 5.2 shows where the group comes from: the `O=` in the certificate.)
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create rolebinding shop-devs-view -n uat --clusterrole=view --group=shop-devs
+kubectl auth can-i list services -n uat --as=lerato
+kubectl auth can-i list services -n uat --as=lerato --as-group=shop-devs
+```
+
+**What this does:**
+
+- `kubectl create rolebinding shop-devs-view ...`: Gives every member of the group `shop-devs` the role `view` in `uat`.
+- `kubectl auth can-i ... --as=lerato`: Asks for the user `lerato`, with no groups.
+- `kubectl auth can-i ... --as=lerato --as-group=shop-devs`: Asks for `lerato` as a member of `shop-devs`.
+
+**👀 You should see** `no`, then `yes`. Lerato is not named anywhere. Her group is enough.
+
+### 🟡 Practice 4: the `403` of a ServiceAccount in the wrong namespace
+
+A very common mistake. A ServiceAccount `reporter` lives in `dev`, and must read the pods in `uat`. The binding is made with the wrong namespace:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create serviceaccount reporter -n dev
+kubectl create rolebinding reporter-pods -n uat --role=pod-reader --serviceaccount=default:reporter
+kubectl auth can-i list pods -n uat --as=system:serviceaccount:dev:reporter
+```
+
+**What this does:**
+
+- `kubectl create serviceaccount reporter -n dev`: Creates the ServiceAccount `reporter` in `dev`.
+- `kubectl create rolebinding reporter-pods -n uat ... --serviceaccount=default:reporter`: Gives the role `pod-reader` in `uat` to the ServiceAccount `reporter` of the namespace **`default`**. That is the mistake.
+- `kubectl auth can-i ... --as=system:serviceaccount:dev:reporter`: Asks for the real ServiceAccount, the one in `dev`.
+
+**👀 You should see** `no`. Find the mistake:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl get rolebinding reporter-pods -n uat -o wide
+```
+
+**What this does:** Shows the RoleBinding `reporter-pods`, with its role and who gets it.
+
+**👀 You should see** `default/reporter` in the column `SERVICEACCOUNTS`. A ServiceAccount's full name includes its namespace: `system:serviceaccount:<namespace>:<name>`. `default:reporter` and `dev:reporter` are two different identities. Fix it:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete rolebinding reporter-pods -n uat
+kubectl create rolebinding reporter-pods -n uat --role=pod-reader --serviceaccount=dev:reporter
+kubectl auth can-i list pods -n uat --as=system:serviceaccount:dev:reporter
+```
+
+**What this does:**
+
+- `kubectl delete rolebinding reporter-pods -n uat`: Deletes the wrong binding.
+- `kubectl create rolebinding reporter-pods ... --serviceaccount=dev:reporter`: Makes it again, for the ServiceAccount `reporter` of `dev`.
+- `kubectl auth can-i ...`: Asks again.
+
+**👀 You should see** `yes`. Note where each part lives: the Role and the RoleBinding are in `uat` (where the pods are), and the ServiceAccount is in `dev`.
+
+### 🔵 Optional 5: use the ServiceAccount's token for real
+
+`can-i` only asks. Now call the API with the ServiceAccount's own token, as a program in a pod would:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+TOKEN=$(kubectl create token reporter -n dev)
+curl -s --cacert ~/.minikube/ca.crt -H "Authorization: Bearer $TOKEN" \
+  https://$(minikube ip):8443/api/v1/namespaces/uat/pods | jq -r '.items[].metadata.name'
+curl -s --cacert ~/.minikube/ca.crt -H "Authorization: Bearer $TOKEN" \
+  https://$(minikube ip):8443/api/v1/namespaces/uat/services | jq -r '.message'
+```
+
+**What this does:**
+
+- `TOKEN=$(kubectl create token reporter -n dev)`: Makes a short-lived token (1 hour) for the ServiceAccount `reporter` of `dev`, and keeps it in the variable `TOKEN`.
+- First `curl ...`: Asks the API server for the pods in `uat`, logging in with the token. `jq` keeps only the pod names.
+- Second `curl ...`: Asks for the Services in `uat`. `jq` keeps only the error message.
+
+**👀 You should see** the names of the UAT pods, then a message that ends with `cannot list resource "services" in API group "" in the namespace "uat"`. The Role `pod-reader` gives pods, and nothing else.
+
+Inside a pod, the same token is a file: `/var/run/secrets/kubernetes.io/serviceaccount/token`, and the API server's address is `https://kubernetes.default.svc`.
+
+### 🔵 Optional 6: challenge
+
+Without looking at the answer: the PROD backend (ServiceAccount `backend` in `prod`) must be able to **read one ConfigMap only**: `backend-config` in `prod`. Not other ConfigMaps, and not change it. Check with `kubectl auth can-i`.
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create role read-backend-config -n prod --verb=get --resource=configmaps --resource-name=backend-config
+kubectl create rolebinding backend-read-config -n prod --role=read-backend-config --serviceaccount=prod:backend
+kubectl auth can-i get configmap/backend-config -n prod --as=system:serviceaccount:prod:backend
+kubectl auth can-i get configmap/frontend-config -n prod --as=system:serviceaccount:prod:backend
+kubectl auth can-i update configmap/backend-config -n prod --as=system:serviceaccount:prod:backend
+```
+
+**What this does:**
+
+- `kubectl create role read-backend-config ... --resource-name=backend-config`: Creates a Role that allows `get` on the ConfigMap `backend-config` **only**.
+- `kubectl create rolebinding backend-read-config ...`: Gives that Role to the ServiceAccount `backend` of `prod`.
+- The three `kubectl auth can-i ...`: Ask: may it read `backend-config`? Read `frontend-config`? Change `backend-config`?
+
+**👀 You should see** `yes`, `no`, `no`.
+
+`--resource-name` works with `get`, `update`, `patch` and `delete`, but not with `list`: a list cannot be cut down to one name.
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete clusterrolebinding thabo-node-reader --ignore-not-found
+kubectl delete clusterrole node-reader --ignore-not-found
+kubectl delete rolebinding thabo-nodes-wrong -n dev --ignore-not-found
+kubectl delete rolebinding shop-devs-view reporter-pods -n uat --ignore-not-found
+kubectl delete serviceaccount reporter -n dev --ignore-not-found
+kubectl delete rolebinding backend-read-config -n prod --ignore-not-found
+kubectl delete role read-backend-config -n prod --ignore-not-found
+kubectl auth can-i list nodes --as=thabo
+```
+
+**What this does:**
+
+- The `kubectl delete ...` lines: Delete everything this practice made. `--ignore-not-found` skips what you did not make.
+- `kubectl auth can-i list nodes --as=thabo`: Asks again: may `thabo` list nodes?
+
+**👀 You should see** `no` at the end: Thabo has the rights of Step 2 again.
+
 **Next:** [Lab 5.2: TLS access to the API](./lab-5.2-tls-access-to-the-api.md)

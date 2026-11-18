@@ -183,4 +183,176 @@ So a node keeps at most 5 files of 10 MB for each container. Older lines are thr
 
 ✅ **Check:** you can say where a container's log is stored, and why `kubectl logs` is not enough for PROD.
 
+## More practice
+
+The Shop part of the lab is done. These exercises use test pods in `dev`, and the clean-up at the end removes them.
+
+### 🟡 Practice 1: the two log folders on a node
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+minikube ssh -n minikube-m03 -- "sudo ls -l /var/log/containers | grep _prod_ | head -3"
+```
+
+**What this does:** On the node `minikube-m03`, lists the files in `/var/log/containers`, keeps those of `prod` and shows the first 3.
+
+**👀 You should see** short names that point (`->`) to files in `/var/log/pods/...`. `/var/log/containers` holds one link per container, named `<pod>_<namespace>_<container>-<id>.log`. Logging agents read this folder, because the name tells them the pod and namespace.
+
+### 🟡 Practice 2: one log file per start of a container
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run restarter -n dev --image=busybox:1.36 --overrides='{"spec":{"nodeSelector":{"kubernetes.io/hostname":"minikube-m02"}}}' -- sh -c 'echo "started at $(date +%T)"; sleep 10; exit 1'
+sleep 60
+kubectl get pod restarter -n dev
+minikube ssh -n minikube-m02 -- "sudo sh -c 'ls /var/log/pods/dev_restarter_*/restarter/'"
+```
+
+**What this does:**
+
+- `kubectl run restarter ...`: Starts a pod on `minikube-m02` that prints the time, waits 10 seconds and stops with an error, so it is restarted again and again.
+- `sleep 60`: Waits 60 seconds.
+- `kubectl get pod restarter -n dev`: Shows the pod and its `RESTARTS`.
+- `minikube ssh -n minikube-m02 -- ...`: On the node, lists the log files of the container `restarter`.
+
+**👀 You should see** a few numbered files such as `2.log  3.log`: one per start. The kubelet keeps the current one and the one before (that is what `--previous` reads), and removes older ones.
+
+### 🟡 Practice 3: the sidecar pattern: a program that only writes to a file
+
+Some programs write their log to a file, not to the screen. Then `kubectl logs` shows nothing. The fix: a second container (a **sidecar**) that reads the file and prints it. This is a classic exam task.
+
+**⌨️ Command line option:** none. A pod with two containers and a shared volume needs YAML.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: file-logger
+spec:
+  containers:
+  - name: app                       # writes its log to a file only
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do echo \"$(date +%T) order saved\" >> /var/log/app/app.log; sleep 3; done"]
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/app
+  - name: log-streamer              # the sidecar: prints the file to its own stdout
+    image: busybox:1.36
+    command: ["sh", "-c", "tail -n +1 -F /var/log/app/app.log"]
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/app
+  volumes:
+  - name: logs
+    emptyDir: {}                    # a folder both containers share
+YAML
+kubectl wait pod/file-logger -n dev --for=condition=Ready --timeout=60s
+sleep 10
+kubectl logs file-logger -n dev -c app
+kubectl logs file-logger -n dev -c log-streamer --tail=3
+```
+
+**What this does:**
+
+- `kubectl apply -n dev -f - <<'YAML' ...`: Creates the pod `file-logger` from the YAML: the container `app` writes to a file, the container `log-streamer` prints that file, and both mount the same `emptyDir` folder.
+- `kubectl wait pod/file-logger ...`: Waits until the pod is ready.
+- `sleep 10`: Waits 10 seconds, so that there are some lines.
+- `kubectl logs file-logger -n dev -c app`: Shows the log of `app`.
+- `kubectl logs file-logger -n dev -c log-streamer --tail=3`: Shows the last 3 lines of the sidecar.
+
+**👀 You should see** nothing for `app`, and lines like `14:02:11 order saved` from `log-streamer`. Now a node agent can collect these lines too.
+
+### 🔵 Optional 4: build a tiny node-level agent
+
+A real agent (Fluent Bit, the Loki agent) is a **DaemonSet** that reads `/var/log` on every node. Build a very small one that prints the last PROD line of every node:
+
+**⌨️ Command line option:** none. kubectl has no `create daemonset`. The exam trick: `kubectl create deployment log-agent --image=busybox:1.36 --dry-run=client -o yaml > ds.yaml`, then change `kind: Deployment` to `kind: DaemonSet` and remove `replicas` and `strategy`.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: log-agent
+spec:
+  selector:
+    matchLabels:
+      app: log-agent
+  template:
+    metadata:
+      labels:
+        app: log-agent
+    spec:
+      tolerations:
+      - operator: Exists              # run on every node, also the PROD node
+      containers:
+      - name: agent
+        image: busybox:1.36
+        command: ["sh", "-c", "tail -n 1 -F /var/log/containers/*_prod_*.log"]
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+          readOnly: true
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log              # the node's own log folder
+YAML
+kubectl rollout status daemonset/log-agent -n dev
+kubectl get pods -n dev -l app=log-agent -o wide
+curl -s -o /dev/null http://shop.local/api/items
+sleep 3
+kubectl logs -n dev -l app=log-agent --prefix --tail=2
+```
+
+**What this does:**
+
+- `kubectl apply -n dev -f - <<'YAML' ...`: Creates the DaemonSet `log-agent`: one pod per node, which mounts the node's `/var/log` (read only) and follows the PROD log files.
+- `kubectl rollout status daemonset/log-agent -n dev`: Waits until a pod runs on every node.
+- `kubectl get pods -n dev -l app=log-agent -o wide`: Shows the agent pods and their nodes.
+- `curl -s -o /dev/null http://shop.local/api/items`: Sends one request to the PROD Shop.
+- `sleep 3`: Waits 3 seconds.
+- `kubectl logs -n dev -l app=log-agent --prefix --tail=2`: Shows the last 2 lines of every agent.
+
+**👀 You should see** one agent pod per node. An agent on a node with no PROD pod only says it cannot open the file, and keeps trying. The lines in the logs are the **raw** log lines from the files: a time, `stdout` or `stderr`, a letter `F`, then the line itself. A real agent reads the same files, but sends the lines to a central store instead of printing them.
+
+### 🔵 Optional 5: challenge
+
+Without looking at the answer: the PROD frontend writes its access log to the screen. Find, **on the node**, the size of all PROD frontend log files together.
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+minikube ssh -n minikube-m03 -- "sudo du -ch /var/log/pods/prod_frontend-*/ | tail -1"
+```
+
+**What this does:** On the node `minikube-m03`, adds up the size of the log folders of the PROD frontend pods (`du -ch`), and shows only the total.
+
+**👀 You should see** a small size and the word `total`. Each container may grow to `containerLogMaxSize` (10Mi by default) times `containerLogMaxFiles` (5) before the oldest file is removed (Step 5).
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pod restarter file-logger -n dev --now --ignore-not-found
+kubectl delete daemonset log-agent -n dev --ignore-not-found
+```
+
+**What this does:**
+
+- `kubectl delete pod restarter file-logger ...`: Deletes the two test pods, at once.
+- `kubectl delete daemonset log-agent -n dev ...`: Deletes the DaemonSet and its pods.
+
 **Next:** [Lab 6.3: Metrics Server](./lab-6.3-metrics-server.md)

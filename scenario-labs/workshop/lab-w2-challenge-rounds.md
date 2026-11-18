@@ -165,6 +165,8 @@ A new pod with the label `app=reports` must be allowed to reach the **database**
 
 <details><summary>Show the answer</summary>
 
+**⌨️ Command line option:** none. kubectl has no command that creates a NetworkPolicy, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
+
 ```bash
 cat <<'YAML' | kubectl apply -n dev -f -
 apiVersion: networking.k8s.io/v1

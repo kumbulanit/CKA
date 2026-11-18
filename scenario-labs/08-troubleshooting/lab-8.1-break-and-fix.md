@@ -489,4 +489,383 @@ All 8 checks passed. The Shop works.
 
 ✅ **Check:** all six faults are fixed and `./check-shop.sh dev` ends with `The Shop works.`
 
+## More practice: five more faults
+
+Five more rounds, in the same way: put the fault in, find it, fix it, say what was wrong. These faults are not in `break.sh`: you put each one in with the commands under **Put the fault in**. Open that box, copy and paste without reading the commands (or let your neighbour do it), and close it again.
+
+🟡 Faults 7 to 9 are intermediate. 🔵 Faults 10 and 11 are harder. Each ends with the Shop working again.
+
+---
+
+### 🟡 Fault 7: a release that never finishes
+
+<details><summary>Put the fault in</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl set env deployment/backend PGRST_DB_URI=postgres://shop@database:5432/shop >/dev/null
+echo "A new backend release is rolling out."
+```
+
+</details>
+
+Then:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl rollout status deployment/backend --timeout=90s
+./check-shop.sh dev
+```
+
+**What this does:**
+
+- `kubectl rollout status deployment/backend --timeout=90s`: Waits for the backend release, at most 90 seconds.
+- `./check-shop.sh dev`: Checks the Shop.
+
+The release times out, but the Shop still works. Why, and what is wrong with the release?
+
+<details><summary>Hint</summary>
+
+Compare the old and the new backend pods. One new pod is `Running` but `0/1`. What does its log say? Where does that setting come from: the ConfigMap, or the Deployment itself?
+
+</details>
+
+<details><summary>Answer</summary>
+
+**Find** (📋 copy and paste into your terminal):
+
+```bash
+kubectl get pods -l app=backend
+kubectl logs -l app=backend --tail=2 --prefix
+kubectl set env deployment/backend --list | grep PGRST_DB_URI
+```
+
+**What this does:**
+
+- `kubectl get pods -l app=backend`: Lists the backend pods: the two old ones are `1/1`, one new one is `0/1`.
+- `kubectl logs -l app=backend --tail=2 --prefix`: Shows the last 2 log lines of each backend pod.
+- `kubectl set env deployment/backend --list | grep PGRST_DB_URI`: Lists the settings of the Deployment and keeps the one for the database address.
+
+The new pod cannot find the host `database`: the Service is called `db`. The setting was added straight to the Deployment, and a setting in `env` wins over the same name from the ConfigMap (`envFrom`). The rollout waits, because the new pod never gets ready, and the old pods keep serving: that is why the Shop still works.
+
+**Fix** (📋 copy and paste into your terminal):
+
+```bash
+kubectl set env deployment/backend PGRST_DB_URI-
+kubectl rollout status deployment/backend
+```
+
+**What this does:**
+
+- `kubectl set env deployment/backend PGRST_DB_URI-`: Removes the setting from the Deployment (the minus at the end means "remove"). The value from the ConfigMap counts again.
+- `kubectl rollout status deployment/backend`: Waits until the release is done.
+
+**In one sentence:** a wrong setting stopped a release halfway, and the readiness probe kept the bad pod away from the users.
+
+</details>
+
+---
+
+### 🟡 Fault 8: a pod that never starts
+
+<details><summary>Put the fault in</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl patch deployment frontend -p '{"spec":{"template":{"spec":{"nodeSelector":{"disk":"gold"}}}}}' >/dev/null
+echo "A new frontend release is rolling out."
+```
+
+</details>
+
+Then:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl get pods -l app=frontend
+```
+
+**What this does:** Lists the frontend pods.
+
+One frontend pod stays `Pending`. Find out why, and fix it.
+
+<details><summary>Hint</summary>
+
+`Pending` means the scheduler found no node. `kubectl describe pod` says which rule no node fits.
+
+</details>
+
+<details><summary>Answer</summary>
+
+**Find** (📋 copy and paste into your terminal):
+
+```bash
+kubectl describe pod -l app=frontend | grep -A2 FailedScheduling
+kubectl get deployment frontend -o jsonpath='{.spec.template.spec.nodeSelector}{"\n"}'
+kubectl get nodes -L disk
+```
+
+**What this does:**
+
+- `kubectl describe pod -l app=frontend | grep -A2 FailedScheduling`: Shows why the scheduler did not place the pod.
+- `kubectl get deployment frontend -o jsonpath=...`: Prints the node selector of the frontend.
+- `kubectl get nodes -L disk`: Lists the nodes with a column for the label `disk`.
+
+The scheduler says `didn't match Pod's node affinity/selector`. The frontend asks for `disk=gold`, and no node has that label.
+
+**Fix** (📋 copy and paste into your terminal):
+
+```bash
+kubectl patch deployment frontend --type=json -p '[{"op":"remove","path":"/spec/template/spec/nodeSelector"}]'
+kubectl rollout status deployment/frontend
+```
+
+**What this does:**
+
+- `kubectl patch deployment frontend --type=json ... "op":"remove" ...`: Removes the node selector from the frontend.
+- `kubectl rollout status deployment/frontend`: Waits until the release is done.
+
+(Labelling a node `disk=gold` would also make the pod start. Decide which is right: was the rule a mistake, or is the label missing?)
+
+**In one sentence:** the pods asked for a node label that no node has.
+
+</details>
+
+---
+
+### 🟡 Fault 9: the Service points at the wrong port
+
+<details><summary>Put the fault in</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl patch service backend -p '{"spec":{"ports":[{"port":3000,"targetPort":3999}]}}' >/dev/null
+echo "Fault 9 is in."
+```
+
+</details>
+
+Then:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+./check-shop.sh dev
+```
+
+**What this does:** Checks the Shop.
+
+All pods are fine, the Service has two pods behind it, and still no items. Find it and fix it.
+
+<details><summary>Hint</summary>
+
+Walk the path: frontend → Service `backend` → backend pods. The Service has endpoints, so the selector is right. Look at the **port** in the endpoints, and at the port the backend container listens on.
+
+</details>
+
+<details><summary>Answer</summary>
+
+**Find** (📋 copy and paste into your terminal):
+
+```bash
+kubectl get endpointslices -l kubernetes.io/service-name=backend
+kubectl get deployment backend -o jsonpath='{.spec.template.spec.containers[0].ports}{"\n"}'
+kubectl exec deployment/frontend -- curl -s -m 3 http://backend:3000/items || echo "no answer"
+```
+
+**What this does:**
+
+- `kubectl get endpointslices -l kubernetes.io/service-name=backend`: Shows the addresses and the **port** behind the Service `backend`.
+- `kubectl get deployment backend -o jsonpath=...`: Prints the port the backend container listens on.
+- `kubectl exec deployment/frontend -- curl ...`: From a frontend pod, asks the backend Service for the items.
+
+The endpoints use port `3999`, but the backend listens on `3000`. The Service's `targetPort` is wrong.
+
+**Fix** (📋 copy and paste into your terminal):
+
+```bash
+kubectl patch service backend -p '{"spec":{"ports":[{"port":3000,"targetPort":3000}]}}'
+./check-shop.sh dev
+```
+
+**What this does:**
+
+- `kubectl patch service backend ...`: Sets the `targetPort` back to `3000`.
+- `./check-shop.sh dev`: Checks the Shop.
+
+**In one sentence:** the Service sent the traffic to a port where nothing listens.
+
+</details>
+
+---
+
+### 🔵 Fault 10: the frontend keeps crashing
+
+<details><summary>Put the fault in</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl get configmap frontend-config -o yaml | sed 's/listen 80;/listne 80;/' | kubectl apply -f - >/dev/null
+kubectl delete pod -l app=frontend --wait=false >/dev/null
+echo "Fault 10 is in."
+```
+
+</details>
+
+Then:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+sleep 20
+kubectl get pods -l app=frontend
+```
+
+**What this does:** Waits 20 seconds and lists the frontend pods.
+
+Both frontend pods are in `CrashLoopBackOff` or `Error`. The image is the same as yesterday. Find it and fix it.
+
+<details><summary>Hint</summary>
+
+A container that crashes at start writes the reason in its log. Use `--previous` if the current container has not written anything yet.
+
+</details>
+
+<details><summary>Answer</summary>
+
+**Find** (📋 copy and paste into your terminal):
+
+```bash
+kubectl logs deployment/frontend --previous --tail=3
+kubectl get configmap frontend-config -o jsonpath='{.data.default\.conf}' | head -3
+```
+
+**What this does:**
+
+- `kubectl logs deployment/frontend --previous --tail=3`: Shows the last 3 lines of the frontend container before its last restart.
+- `kubectl get configmap frontend-config -o jsonpath=...`: Prints the first lines of the nginx settings in the ConfigMap.
+
+nginx says `unknown directive "listne"`: the settings file in the ConfigMap has a typing mistake. nginx stops at once, and Kubernetes restarts it again and again.
+
+**Fix** (📋 copy and paste into your terminal):
+
+```bash
+kubectl get configmap frontend-config -o yaml | sed 's/listne 80;/listen 80;/' | kubectl apply -f -
+kubectl rollout restart deployment/frontend
+kubectl rollout status deployment/frontend
+./check-shop.sh dev
+```
+
+**What this does:**
+
+- `kubectl get configmap ... | sed ... | kubectl apply -f -`: Corrects the word in the ConfigMap.
+- `kubectl rollout restart deployment/frontend`: Starts new frontend pods. (The file is mounted with `subPath`, so running pods do not see a changed ConfigMap.)
+- `kubectl rollout status deployment/frontend`: Waits until they are ready.
+- `./check-shop.sh dev`: Checks the Shop.
+
+**In one sentence:** a broken settings file in a ConfigMap made the program stop at start.
+
+</details>
+
+---
+
+### 🔵 Fault 11: the backend cannot log in to the database
+
+<details><summary>Put the fault in</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create secret generic db-secret --from-literal=password=summer2026 --dry-run=client -o yaml | kubectl apply -f - >/dev/null 2>&1
+kubectl delete pod -l app=backend --wait=false >/dev/null
+echo "Fault 11 is in."
+```
+
+</details>
+
+Then:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+sleep 30
+./check-shop.sh dev
+```
+
+**What this does:** Waits 30 seconds and checks the Shop.
+
+The backend pods run, but are not ready. Nothing in the Deployments changed. Find it and fix it.
+
+<details><summary>Hint</summary>
+
+Read the backend's log. Then think: where does the backend get its password, where did the database get its password, and **when** did each of them read it?
+
+</details>
+
+<details><summary>Answer</summary>
+
+**Find** (📋 copy and paste into your terminal):
+
+```bash
+kubectl logs -l app=backend --tail=2 --prefix
+kubectl get secret db-secret -o jsonpath='{.data.password}' | base64 -d; echo
+kubectl get secret db-secret -o jsonpath='{.metadata.managedFields[*].time}{"\n"}'
+```
+
+**What this does:**
+
+- `kubectl logs -l app=backend --tail=2 --prefix`: Shows the last 2 log lines of each backend pod.
+- `kubectl get secret db-secret ... | base64 -d`: Prints the password in the Secret.
+- `kubectl get secret db-secret -o jsonpath='{.metadata.managedFields[*].time}'`: Prints when the Secret was last changed.
+
+The backend says `password authentication failed for user "shop"`. Somebody changed the password in the Secret a few minutes ago. The database took its password **once**, when its disk was new (Lab 1.6), so it still has the old one: `dev-pass-123`. New backend pods read the new, wrong one.
+
+**Fix** (📋 copy and paste into your terminal):
+
+```bash
+kubectl create secret generic db-secret --from-literal=password=dev-pass-123 --dry-run=client -o yaml | kubectl apply -f -
+kubectl rollout restart deployment/backend
+kubectl rollout status deployment/backend
+./check-shop.sh dev
+```
+
+**What this does:**
+
+- `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -`: Puts the old password back in the Secret. (This is how to **change** a Secret with a command: `create` alone refuses because it already exists.)
+- `kubectl rollout restart deployment/backend`: Starts new backend pods, which read the Secret again.
+- `kubectl rollout status deployment/backend`: Waits until they are ready.
+- `./check-shop.sh dev`: Checks the Shop.
+
+**In one sentence:** the password in the Secret no longer matched the password in the database. To really change a database password, change it **in the database** first, then in the Secret.
+
+</details>
+
+---
+
+### 🔵 Exam rehearsal: five faults, 20 minutes
+
+Like the exam: many problems, little time. Start a timer for 20 minutes, then:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+./break.sh all
+./check-shop.sh dev
+```
+
+**What this does:**
+
+- `./break.sh all`: Puts faults 1 to 5 into the Shop in `dev`, all at once.
+- `./check-shop.sh dev`: Checks the Shop.
+
+Fix them in any order. Go from the outside in: first what you see in `kubectl get pods`, then Services and endpoints, then quotas and network policies. You are done when `./check-shop.sh dev` ends with `The Shop works.`
+
+If you get stuck, the answers of Faults 1 to 5 above still apply. If DEV is beyond repair: `./deploy-shop.sh dev`.
+
 **That is the end of the course.** You built the Shop, looked after the cluster under it, connected it, placed it, secured it, watched it, gave it storage, and repaired it. Every topic of the outline was part of it.

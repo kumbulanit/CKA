@@ -161,6 +161,8 @@ DEV can read PROD. That is not what you want.
 
 ### Step 5: close everything in PROD (default deny)
 
+**⌨️ Command line option:** none. kubectl has no command that creates a NetworkPolicy, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -224,6 +226,8 @@ command terminated with exit code 28
 `000` means: no answer at all. Nobody can reach any PROD pod now, not even the Shop's own frontend. PROD is safe, but closed. Now you open only what is needed.
 
 ### Step 7: open the three paths
+
+**⌨️ Command line option:** none. kubectl has no command that creates a NetworkPolicy, so the YAML is the only way. In the exam, copy an example from the Kubernetes documentation and change it.
 
 **📋 Copy and paste into your terminal:**
 

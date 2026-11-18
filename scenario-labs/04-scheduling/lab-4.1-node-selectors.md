@@ -83,6 +83,18 @@ minikube-m03   Ready    worker          6h7m   v1.36.5   prod
 
 ## Step 3: look at the node selector
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl patch deployment frontend -n prod -p '{"spec":{"template":{"spec":{"nodeSelector":{"env":"prod"}}}}}'
+```
+
+**What this does:**
+
+- `kubectl patch deployment frontend -n prod -p '...'`: The same patch, written on the command line as JSON instead of in a file.
+
+💡 For a single pod, `kubectl run` takes it too: `--overrides='{"spec":{"nodeSelector":{"env":"prod"}}}'` (you use this in Step 5).
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -186,5 +198,157 @@ A node selector is a **hard rule**. That is its strength, and its risk: if `mini
 💡 **Exam tip:** every node already has useful labels. See them with `kubectl get nodes --show-labels`. The label `kubernetes.io/hostname` is the node's name.
 
 ✅ **Check:** both PROD frontend pods run on `minikube-m03`.
+
+## More practice
+
+The Shop part of the lab is done. These exercises use small test pods in `dev`, and each one cleans up after itself, so the Shop stays as it is.
+
+### 🟡 Practice 1: skip the scheduler with `nodeName`
+
+A pod with `nodeName` is not scheduled at all: it goes straight to that node's kubelet.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run pinned -n dev --image=busybox:1.36 --overrides='{"spec":{"nodeName":"minikube-m02"}}' -- sleep 3600
+sleep 5
+kubectl get pod pinned -n dev -o wide
+kubectl get events -n dev --field-selector involvedObject.name=pinned | grep -c Scheduled
+```
+
+**What this does:**
+
+- `kubectl run pinned ... --overrides='{"spec":{"nodeName":"minikube-m02"}}'`: Starts the pod `pinned` with `nodeName: minikube-m02` already filled in.
+- `sleep 5`: Waits 5 seconds, to give Kubernetes time.
+- `kubectl get pod pinned -n dev -o wide`: Shows the pod and its node.
+- `kubectl get events ... | grep -c Scheduled`: Counts the `Scheduled` events of the pod. The scheduler writes one each time it places a pod.
+
+**👀 You should see** the pod `Running` on `minikube-m02`, and the count `0`: the scheduler never touched this pod.
+
+| | `nodeSelector` | `nodeName` |
+| --- | --- | --- |
+| Who chooses | The scheduler, among the nodes with the label | You, by name |
+| If the node is full or gone | `Pending`, with a reason in `describe` | The kubelet refuses it, or it waits forever |
+| Used for | Normal work | Tests and emergencies only |
+
+### 🟡 Practice 2: use a label every node already has
+
+You do not always need your own label. Every node has `kubernetes.io/hostname`:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl get nodes -L kubernetes.io/hostname,kubernetes.io/os
+kubectl run by-hostname -n dev --image=busybox:1.36 --overrides='{"spec":{"nodeSelector":{"kubernetes.io/hostname":"minikube"}}}' -- sleep 3600
+sleep 5
+kubectl get pod by-hostname -n dev -o wide
+```
+
+**What this does:**
+
+- `kubectl get nodes -L ...`: Lists the nodes with two extra columns: the labels `kubernetes.io/hostname` and `kubernetes.io/os`.
+- `kubectl run by-hostname ...`: Starts a pod with the node selector `kubernetes.io/hostname=minikube`.
+- `sleep 5`: Waits 5 seconds, to give Kubernetes time.
+- `kubectl get pod by-hostname -n dev -o wide`: Shows the pod and its node.
+
+**👀 You should see** the pod on the node `minikube`. Unlike `nodeName`, this went through the scheduler: it still checks room, taints and the rest.
+
+### 🟡 Practice 3: fix a `Pending` pod by labelling a node
+
+A `Pending` pod is not lost: the scheduler tries again when the cluster changes.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run wants-ssd -n dev --image=busybox:1.36 --overrides='{"spec":{"nodeSelector":{"disk":"ssd"}}}' -- sleep 3600
+sleep 5
+kubectl get pod wants-ssd -n dev
+```
+
+**What this does:** Starts a pod that wants a node with the label `disk=ssd` (no node has it yet), waits 5 seconds and shows it.
+
+**👀 You should see** `Pending`. Now give a node the label:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl label node minikube-m02 disk=ssd
+sleep 5
+kubectl get pod wants-ssd -n dev -o wide
+```
+
+**What this does:**
+
+- `kubectl label node minikube-m02 disk=ssd`: Puts the label `disk=ssd` on the node `minikube-m02`.
+- `sleep 5`: Waits 5 seconds, to give Kubernetes time.
+- `kubectl get pod wants-ssd -n dev -o wide`: Shows the pod and its node.
+
+**👀 You should see** the pod `Running` on `minikube-m02`. You did not touch the pod.
+
+### 🔵 Optional 4: remove the label from under a running pod
+
+What happens to the pod if the label goes away?
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl label node minikube-m02 disk-
+sleep 10
+kubectl get pod wants-ssd -n dev -o wide
+```
+
+**What this does:**
+
+- `kubectl label node minikube-m02 disk-`: Removes the label `disk` from the node (the minus at the end means "remove").
+- `sleep 10`: Waits 10 seconds, to give Kubernetes time.
+- `kubectl get pod wants-ssd -n dev -o wide`: Shows the pod and its node.
+
+**👀 You should see** the pod still `Running` on `minikube-m02`. The scheduler only looks at the label when it **places** a pod. A pod that runs is not moved. You meet this again in Lab 4.2 as `IgnoredDuringExecution`.
+
+### 🔵 Optional 5: challenge
+
+Without looking at the answer: make a Deployment `ssd-web` in `dev` with 3 pods of `nginx:1.27-alpine` that may run **only** on nodes with the label `disk=ssd`. Then label `minikube` with `disk=ssd` and check that all 3 pods run there.
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create deployment ssd-web -n dev --image=nginx:1.27-alpine --replicas=3
+kubectl patch deployment ssd-web -n dev -p '{"spec":{"template":{"spec":{"nodeSelector":{"disk":"ssd"}}}}}'
+kubectl label node minikube disk=ssd
+kubectl rollout status deployment/ssd-web -n dev
+kubectl get pods -n dev -l app=ssd-web -o wide
+```
+
+**What this does:**
+
+- `kubectl create deployment ssd-web ...`: Creates the Deployment `ssd-web` with 3 pods.
+- `kubectl patch deployment ssd-web ...`: Adds the node selector `disk=ssd` to its pods.
+- `kubectl label node minikube disk=ssd`: Gives the node `minikube` the label.
+- `kubectl rollout status deployment/ssd-web -n dev`: Waits until the new pods are ready.
+- `kubectl get pods -n dev -l app=ssd-web -o wide`: Shows the pods and their nodes.
+
+**👀 You should see** all 3 `ssd-web` pods on `minikube`.
+
+In the exam, the quick way is often `kubectl create deployment ... --dry-run=client -o yaml > ssd-web.yaml`, then add the two `nodeSelector` lines in the file, then `kubectl apply -f ssd-web.yaml`.
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pod pinned by-hostname wants-ssd -n dev --now --ignore-not-found
+kubectl delete deployment ssd-web -n dev --ignore-not-found
+kubectl label node minikube minikube-m02 disk- 2>/dev/null; true
+```
+
+**What this does:**
+
+- `kubectl delete pod pinned by-hostname wants-ssd ...`: Deletes the three test pods, at once. `--ignore-not-found` skips the ones you did not make.
+- `kubectl delete deployment ssd-web ...`: Deletes the Deployment of the challenge, if you made it.
+- `kubectl label node minikube minikube-m02 disk-`: Removes the label `disk` from both nodes. The rest of the line hides the message for a node that has no such label.
 
 **Next:** [Lab 4.2: Affinity and anti-affinity](./lab-4.2-affinity-and-anti-affinity.md)

@@ -53,6 +53,18 @@ Context "minikube" modified.
 
 ### Step 1: look at the rule
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl patch deployment frontend -n prod -p '{"spec":{"template":{"spec":{"nodeSelector":null,"affinity":{"nodeAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"weight":100,"preference":{"matchExpressions":[{"key":"env","operator":"In","values":["prod"]}]}}]}}}}}}'
+```
+
+**What this does:**
+
+- `kubectl patch deployment frontend -n prod -p '...'`: The same patch, written on the command line as JSON instead of in a file. Run it again with `backend` for the backend.
+
+kubectl has no flag for affinity, so it is a patch or `kubectl edit`. For long rules like this one, the file is easier to read.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -137,6 +149,16 @@ Look at the `NODE` column. Maybe they are on different nodes, maybe on the same 
 
 ### Step 4: look at the rule
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl patch deployment backend -n dev -p '{"spec":{"template":{"spec":{"affinity":{"podAntiAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"weight":100,"podAffinityTerm":{"topologyKey":"kubernetes.io/hostname","labelSelector":{"matchLabels":{"app":"backend"}}}}]}}}}}}'
+```
+
+**What this does:**
+
+- `kubectl patch deployment backend -n dev -p '...'`: The same patch, written on the command line as JSON instead of in a file.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
@@ -200,5 +222,239 @@ Now one broken node can never take both backend pods.
 💡 **Exam tip:** the long names are easier in two halves. First half: `required` (a rule) or `preferred` (a wish). Second half, always the same: `DuringSchedulingIgnoredDuringExecution`. Find the layout with `kubectl explain pod.spec.affinity.nodeAffinity`.
 
 ✅ **Check:** the two DEV backend pods are on different nodes, and the PROD frontend and backend are on `minikube-m03`.
+
+## More practice
+
+The Shop part of the lab is done. These exercises use test pods in `dev`, and the clean-up at the end removes them, so the Shop stays as it is.
+
+### 🟡 Practice 1: a hard node rule with a list of values
+
+`requiredDuring...` is a **rule**, like a node selector. But it can say more: here, "a node with `disk=ssd` **or** `disk=nvme`".
+
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl run fast-disk -n dev --image=busybox:1.36 --overrides='{"spec":{"affinity":{"nodeAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"disk","operator":"In","values":["ssd","nvme"]}]}]}}}}}' -- sleep 3600
+```
+
+**What this does:**
+
+- `kubectl run fast-disk ... --overrides='...'`: Starts the pod `fast-disk` with the node affinity written as JSON.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fast-disk
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: disk
+            operator: In
+            values: ["ssd", "nvme"]     # one of these is enough
+  containers:
+  - name: fast-disk
+    image: busybox:1.36
+    command: ["sleep", "3600"]
+YAML
+sleep 5
+kubectl get pod fast-disk -n dev
+```
+
+**What this does:** Creates what is in the YAML between the two `YAML` lines, in the namespace `dev`, waits 5 seconds and shows the pod.
+
+**👀 You should see** `Pending`: no node has the label `disk` yet. Now give one node `disk=nvme`:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl label node minikube-m02 disk=nvme
+sleep 5
+kubectl get pod fast-disk -n dev -o wide
+```
+
+**What this does:**
+
+- `kubectl label node minikube-m02 disk=nvme`: Puts the label `disk=nvme` on the node `minikube-m02`.
+- `sleep 5`: Waits 5 seconds, to give Kubernetes time.
+- `kubectl get pod fast-disk -n dev -o wide`: Shows the pod and its node.
+
+**👀 You should see** the pod `Running` on `minikube-m02`. A node selector could not say "ssd **or** nvme".
+
+### 🟡 Practice 2: keep away from a label with `DoesNotExist`
+
+The operators are `In`, `NotIn`, `Exists`, `DoesNotExist`, `Gt` and `Lt`. Here: never on a node that has the label `env` (the PROD node).
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create deployment not-prod -n dev --image=nginx:1.27-alpine --replicas=4
+kubectl patch deployment not-prod -n dev -p '{"spec":{"template":{"spec":{"affinity":{"nodeAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"env","operator":"DoesNotExist"}]}]}}}}}}}'
+kubectl rollout status deployment/not-prod -n dev
+kubectl get pods -n dev -l app=not-prod -o wide
+```
+
+**What this does:**
+
+- `kubectl create deployment not-prod ...`: Creates the Deployment `not-prod` with 4 pods.
+- `kubectl patch deployment not-prod ...`: Adds the rule: only nodes **without** the label `env`.
+- `kubectl rollout status deployment/not-prod -n dev`: Waits until the new pods are ready.
+- `kubectl get pods -n dev -l app=not-prod -o wide`: Shows the pods and their nodes.
+
+**👀 You should see** the 4 pods on `minikube` and `minikube-m02`, never on `minikube-m03`.
+
+📖 **Read only:** the same rule as YAML, in the pod template:
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: env
+          operator: DoesNotExist     # no value: only "is the label there or not"
+```
+
+### 🟡 Practice 3: pod affinity: run next to another pod
+
+Pod **affinity** is the opposite of what you did in Part B: "put me on the same node as pods with this label".
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl run cache -n dev --image=busybox:1.36 --labels=app=cache -- sleep 3600
+kubectl wait pod/cache -n dev --for=condition=Ready --timeout=60s
+kubectl get pod cache -n dev -o wide
+```
+
+**What this does:**
+
+- `kubectl run cache ... --labels=app=cache`: Starts a pod `cache` with the label `app=cache`.
+- `kubectl wait pod/cache ...`: Waits until the pod is ready (at most 60 seconds).
+- `kubectl get pod cache -n dev -o wide`: Shows the pod and its node. Remember the node.
+
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl run near-cache -n dev --image=busybox:1.36 --overrides='{"spec":{"affinity":{"podAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":[{"topologyKey":"kubernetes.io/hostname","labelSelector":{"matchLabels":{"app":"cache"}}}]}}}}' -- sleep 3600
+```
+
+**What this does:**
+
+- `kubectl run near-cache ... --overrides='...'`: Starts the pod `near-cache` with the pod affinity written as JSON.
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl apply -n dev -f - <<'YAML'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: near-cache
+spec:
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname   # "near" means: the same node
+        labelSelector:
+          matchLabels:
+            app: cache
+  containers:
+  - name: near-cache
+    image: busybox:1.36
+    command: ["sleep", "3600"]
+YAML
+sleep 5
+kubectl get pods cache near-cache -n dev -o wide
+```
+
+**What this does:** Creates the pod `near-cache` from the YAML between the two `YAML` lines, waits 5 seconds and shows both pods with their nodes.
+
+**👀 You should see** `near-cache` on the **same node** as `cache`. If `cache` is deleted, `near-cache` keeps running (`IgnoredDuringExecution`), but a new `near-cache` would stay `Pending`.
+
+### 🔵 Optional 4: a hard anti-affinity rule with too many pods
+
+In Part B the rule was a wish. What if it is a **rule**, and there are more pods than nodes?
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl create deployment one-per-node -n dev --image=nginx:1.27-alpine --replicas=4
+kubectl patch deployment one-per-node -n dev -p '{"spec":{"template":{"spec":{"affinity":{"podAntiAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":[{"topologyKey":"kubernetes.io/hostname","labelSelector":{"matchLabels":{"app":"one-per-node"}}}]}}}}}}'
+sleep 20
+kubectl get pods -n dev -l app=one-per-node -o wide
+```
+
+**What this does:**
+
+- `kubectl create deployment one-per-node ...`: Creates the Deployment `one-per-node` with 4 pods.
+- `kubectl patch deployment one-per-node ...`: Adds the **rule**: never two of these pods on the same node.
+- `sleep 20`: Waits 20 seconds, to give Kubernetes time.
+- `kubectl get pods -n dev -l app=one-per-node -o wide`: Shows the pods and their nodes.
+
+**👀 You should see** one `Running` pod per node that can take it, and the rest `Pending`. Ask why:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl describe pod -n dev -l app=one-per-node | grep FailedScheduling | tail -1
+```
+
+**What this does:** Shows the details of these pods, keeps only the `FailedScheduling` lines, and shows the last one.
+
+**👀 You should see** a message with `didn't match pod anti-affinity rules`.
+
+| | `preferred...` (a wish) | `required...` (a rule) |
+| --- | --- | --- |
+| More pods than nodes | Some pods share a node | The extra pods stay `Pending` |
+| Good for | Spreading a normal app | A database or a cluster that must never share a node |
+
+(Pods that stay `Pending` also make `kubectl rollout status` wait forever. That is why this exercise uses `sleep`.)
+
+### 🔵 Optional 5: challenge
+
+Without looking at the answer: make the pods of `not-prod` (Practice 2) **prefer**, with weight 50, a node that already runs a DEV `db` pod. Keep the `DoesNotExist` rule.
+
+<details><summary>Show the answer</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl patch deployment not-prod -n dev -p '{"spec":{"template":{"spec":{"affinity":{"podAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"weight":50,"podAffinityTerm":{"topologyKey":"kubernetes.io/hostname","labelSelector":{"matchLabels":{"app":"db"}}}}]}}}}}}'
+kubectl rollout status deployment/not-prod -n dev
+kubectl get pods -n dev -l 'app in (db,not-prod)' -o wide
+```
+
+**What this does:**
+
+- `kubectl patch deployment not-prod ...`: Adds a pod affinity wish next to the node affinity rule. The patch adds `podAffinity` and keeps `nodeAffinity`.
+- `kubectl rollout status deployment/not-prod -n dev`: Waits until the new pods are ready.
+- `kubectl get pods -n dev -l 'app in (db,not-prod)' -o wide`: Shows the `db` pod and the `not-prod` pods with their nodes.
+
+**👀 You should see** most `not-prod` pods on the node of the `db` pod, as long as that node is not the PROD node. A wish never breaks the rule.
+
+</details>
+
+🧹 **Clean up the practice:**
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl delete pod fast-disk cache near-cache -n dev --now --ignore-not-found
+kubectl delete deployment not-prod one-per-node -n dev --ignore-not-found
+kubectl label node minikube-m02 disk- 2>/dev/null; true
+```
+
+**What this does:**
+
+- `kubectl delete pod fast-disk cache near-cache ...`: Deletes the three test pods, at once.
+- `kubectl delete deployment not-prod one-per-node ...`: Deletes the two test Deployments and their pods.
+- `kubectl label node minikube-m02 disk-`: Removes the label `disk` from the node `minikube-m02`.
 
 **Next:** [Lab 4.3: Taints and tolerations](./lab-4.3-taints-and-tolerations.md)

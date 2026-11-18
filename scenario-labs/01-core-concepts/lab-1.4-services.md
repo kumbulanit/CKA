@@ -45,6 +45,22 @@ Context "minikube" modified.
 
 ## Step 1: look at the two Services
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl create service clusterip backend --tcp=3000:3000
+kubectl create service nodeport frontend --tcp=80:80 --node-port=30080
+```
+
+**What this does:**
+
+- `kubectl create service clusterip backend --tcp=3000:3000`: Creates the Service `backend` of type ClusterIP, port 3000 to the pods' port 3000. The selector `app=backend` is added for you (it is the name).
+- `kubectl create service nodeport frontend ...`: Creates the Service `frontend` of type NodePort, port 80, open on every node at port 30080. The selector is `app=frontend`.
+
+💡 `kubectl expose deployment backend --port=3000` also works, and takes the selector from the Deployment. But `expose` cannot choose the node port.
+
+💡 Add `--dry-run=client -o yaml` to print the YAML without creating anything. With `> file.yaml` at the end, that is the fastest way to start a YAML file in the exam.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash

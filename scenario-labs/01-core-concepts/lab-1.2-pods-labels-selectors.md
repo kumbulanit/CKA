@@ -45,6 +45,18 @@ Context "minikube" modified.
 
 ## Step 1: look at the file
 
+**⌨️ Command line option** *(read only: the same as the YAML below, made with a command)*:
+
+```bash
+kubectl run backend --image=postgrest/postgrest:v12.2.3 --labels=app=backend --port=3000
+```
+
+**What this does:**
+
+- `kubectl run backend ...`: Creates the pod `backend` with the same image, label (`app=backend`) and port as the file.
+
+💡 Add `--dry-run=client -o yaml` to print the YAML without creating anything. With `> file.yaml` at the end, that is the fastest way to start a YAML file in the exam.
+
 **📋 Copy and paste into your terminal:**
 
 ```bash
