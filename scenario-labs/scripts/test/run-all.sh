@@ -83,8 +83,8 @@ if [ "${FRESH:-1}" = 1 ] && [ -z "$FROM" ]; then
   p ">>> fresh cluster (Lab 2.1: minikube delete, then setup.sh)"
   minikube delete > "$T/logs/delete.log" 2>&1
   sudo sed -i '/shop\.local/d' /etc/hosts
-  rm -rf ~/thabo ~/exam
-  kubectl config delete-context thabo >/dev/null 2>&1; kubectl config delete-user thabo >/dev/null 2>&1
+  rm -rf ~/thabo ~/exam ~/lerato ~/mallory ~/ci-bot
+  for u in thabo lerato; do kubectl config delete-context $u >/dev/null 2>&1; kubectl config delete-user $u >/dev/null 2>&1; done
   start=$(date +%s)
   (cd "$L/.." && sudo ./setup.sh) > "$T/logs/setup.log" 2>&1 || { p "!!! setup.sh failed"; tail -5 "$T/logs/setup.log" | tee -a "$T/progress.txt"; exit 1; }
   p "    setup.sh $(( $(date +%s) - start ))s: $(grep '==> OK' "$T/logs/setup.log")"

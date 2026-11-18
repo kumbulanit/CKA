@@ -353,6 +353,7 @@ Lerato joins the team. She gets no RoleBinding of her own: she is in the group `
 mkdir -p ~/lerato
 openssl genrsa -out ~/lerato/lerato.key 2048
 openssl req -new -key ~/lerato/lerato.key -out ~/lerato/lerato.csr -subj "/CN=lerato/O=shop-devs"
+kubectl delete csr lerato --ignore-not-found
 sed -e "s/name: thabo/name: lerato/" -e "s/REQUEST/$(base64 -w0 ~/lerato/lerato.csr)/" developer-csr.yaml | kubectl apply -f -
 kubectl certificate approve lerato
 ```
@@ -362,6 +363,7 @@ kubectl certificate approve lerato
 - `mkdir -p ~/lerato`: Makes the folder `~/lerato`.
 - `openssl genrsa ...`: Makes Lerato's private key.
 - `openssl req ... -subj "/CN=lerato/O=shop-devs"`: Makes her certificate request: user `lerato`, group `shop-devs`.
+- `kubectl delete csr lerato --ignore-not-found`: Removes an old request with this name, if there is one (from an earlier try). A request cannot be changed, only made again.
 - `sed -e ... -e ... developer-csr.yaml | kubectl apply -f -`: Uses the same file as Step 3, with the name `lerato` instead of `thabo` and her request in the place of `REQUEST`, and sends it to the cluster.
 - `kubectl certificate approve lerato`: Approves (signs) her request.
 
@@ -413,7 +415,7 @@ kubectl --context=lerato get pods -n prod
 
 ### 🟡 Practice 3: check a request before you approve it
 
-An administrator approves what is **in** the request, not what its name says. Someone sends a request named `mallory` that asks for the administrator group:
+An administrator approves what is **in** the request, not what its name says. Someone sends a request named `mallory` that asks for the administrator group `system:masters`:
 
 **📋 Copy and paste into your terminal:**
 
@@ -422,16 +424,50 @@ mkdir -p ~/mallory
 openssl genrsa -out ~/mallory/mallory.key 2048
 openssl req -new -key ~/mallory/mallory.key -out ~/mallory/mallory.csr -subj "/CN=mallory/O=system:masters"
 sed -e "s/name: thabo/name: mallory/" -e "s/REQUEST/$(base64 -w0 ~/mallory/mallory.csr)/" developer-csr.yaml | kubectl apply -f -
-kubectl get csr
 ```
 
 **What this does:**
 
 - The `mkdir` and `openssl` lines: Make a key and a request for the user `mallory` in the group `system:masters`.
-- `sed ... | kubectl apply -f -`: Sends it to the cluster as a CertificateSigningRequest named `mallory`.
-- `kubectl get csr`: Lists all certificate requests.
+- `sed ... | kubectl apply -f -`: Tries to send it to the cluster as a CertificateSigningRequest named `mallory`.
 
-**👀 You should see** `mallory` as `Pending`. Look inside before you decide:
+**👀 You should see** *(do not paste)*:
+
+```text
+Error from server (Forbidden): error when creating "STDIN": certificatesigningrequests.certificates.k8s.io "mallory" is forbidden: use of kubernetes.io/kube-apiserver-client signer with system:masters group is not allowed
+```
+
+`system:masters` may do **everything**, and RBAC cannot take that away. So the API server refuses such a request before anyone can approve it.
+
+But `system:masters` is not the only powerful group. Look which groups have the role `cluster-admin`:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl get clusterrolebindings -o wide | grep -E "^NAME|cluster-admin"
+```
+
+**What this does:** Lists the ClusterRoleBindings with their role, users and groups, and keeps the header and the lines with `cluster-admin`.
+
+**👀 You should see** among others the binding `kubeadm:cluster-admins`, which gives `cluster-admin` to the **group** `kubeadm:cluster-admins`. kubeadm (and so minikube) makes it for the administrators' own certificates. The API server does **not** block that group. Try again with it:
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+openssl req -new -key ~/mallory/mallory.key -out ~/mallory/mallory.csr -subj "/CN=mallory/O=kubeadm:cluster-admins"
+kubectl delete csr mallory --ignore-not-found
+sed -e "s/name: thabo/name: mallory/" -e "s/REQUEST/$(base64 -w0 ~/mallory/mallory.csr)/" developer-csr.yaml | kubectl apply -f -
+kubectl get csr mallory
+```
+
+**What this does:**
+
+- `openssl req ... -subj "/CN=mallory/O=kubeadm:cluster-admins"`: Makes a new request: user `mallory`, in the group `kubeadm:cluster-admins`.
+- `kubectl delete csr mallory --ignore-not-found`: Removes an old request `mallory`, if there is one (from an earlier try).
+- `sed ... | kubectl apply -f -`: Sends it to the cluster as the CertificateSigningRequest `mallory`.
+- `kubectl get csr mallory`: Shows it.
+
+**👀 You should see** `mallory` as `Pending`. The name looks harmless. Look inside before you decide:
 
 **📋 Copy and paste into your terminal:**
 
@@ -444,10 +480,10 @@ kubectl get csr mallory -o jsonpath="{.spec.request}" | base64 -d | openssl req 
 **👀 You should see** *(do not paste)*:
 
 ```text
-subject=CN = mallory, O = system:masters
+subject=CN = mallory, O = kubeadm:cluster-admins
 ```
 
-`system:masters` may do **everything**, and RBAC cannot take that away. Refuse it:
+If you approve this, Mallory can do everything in the cluster. Refuse it:
 
 **📋 Copy and paste into your terminal:**
 
@@ -461,7 +497,7 @@ kubectl get csr mallory
 - `kubectl certificate deny mallory`: Refuses the request `mallory`. No certificate is made.
 - `kubectl get csr mallory`: Shows the request.
 
-**👀 You should see** `Denied` in the column `CONDITION`.
+**👀 You should see** `Denied` in the column `CONDITION`. The rule: before `kubectl certificate approve`, always read the `O=` of the request, and check what that group may do.
 
 ### 🔵 Optional 4: a kubeconfig file to give to Thabo
 
@@ -513,6 +549,7 @@ Without looking at the answer: a CI robot `ci-bot` needs a certificate that is v
 mkdir -p ~/ci-bot
 openssl genrsa -out ~/ci-bot/ci-bot.key 2048
 openssl req -new -key ~/ci-bot/ci-bot.key -out ~/ci-bot/ci-bot.csr -subj "/CN=ci-bot"
+kubectl delete csr ci-bot --ignore-not-found
 sed -e "s/name: thabo/name: ci-bot/" -e "s/86400/3600/" -e "s/REQUEST/$(base64 -w0 ~/ci-bot/ci-bot.csr)/" developer-csr.yaml | kubectl apply -f -
 kubectl certificate approve ci-bot
 kubectl get csr ci-bot -o jsonpath="{.status.certificate}" | base64 -d > ~/ci-bot/ci-bot.crt
@@ -525,6 +562,7 @@ kubectl auth can-i create deployments -n prod --as=ci-bot
 **What this does:**
 
 - The `mkdir` and `openssl` lines: Make a key and a request for the user `ci-bot`.
+- `kubectl delete csr ci-bot --ignore-not-found`: Removes an old request with this name, if there is one (from an earlier try). A request cannot be changed, only made again.
 - `sed ... -e "s/86400/3600/" ...`: Uses `developer-csr.yaml` with the name `ci-bot` and `expirationSeconds: 3600` (one hour), and sends it to the cluster.
 - `kubectl certificate approve ci-bot`: Approves it.
 - `kubectl get csr ci-bot ... > ~/ci-bot/ci-bot.crt`: Saves the signed certificate.

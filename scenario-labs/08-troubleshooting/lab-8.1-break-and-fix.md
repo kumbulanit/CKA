@@ -868,4 +868,40 @@ Fix them in any order. Go from the outside in: first what you see in `kubectl ge
 
 If you get stuck, the answers of Faults 1 to 5 above still apply. If DEV is beyond repair: `./deploy-shop.sh dev`.
 
+<details><summary>Answer: the five fixes</summary>
+
+**📋 Copy and paste into your terminal:**
+
+```bash
+kubectl set image deployment/frontend frontend=nginx:1.27-alpine
+kubectl patch service backend -p '{"spec":{"selector":{"app":"backend"}}}'
+kubectl patch deployment backend --type=json -p '[{"op":"replace","path":"/spec/template/spec/containers/0/env/0/valueFrom/secretKeyRef/name","value":"db-secret"}]'
+kubectl patch resourcequota env-quota -p '{"spec":{"hard":{"pods":"10"}}}'
+kubectl apply -f ../03-networking/netpol-allow-app.yaml
+kubectl rollout restart deployment/frontend deployment/backend
+kubectl rollout status deployment/frontend
+kubectl rollout status deployment/backend
+sleep 30
+./check-shop.sh dev
+```
+
+**What this does:**
+
+- `kubectl set image ...`: Fault 1: puts the right frontend image back.
+- `kubectl patch service backend ...`: Fault 2: puts the right selector back on the Service `backend`.
+- `kubectl patch deployment backend ...`: Fault 3: makes the backend use the Secret `db-secret` again.
+- `kubectl patch resourcequota env-quota ...`: Fault 4: gives DEV its budget of 10 pods back.
+- `kubectl apply -f ../03-networking/netpol-allow-app.yaml`: Fault 5: puts the right port back in the network policy.
+- `kubectl rollout restart ...` and `kubectl rollout status ...`: Start new frontend and backend pods with all fixes, and wait until they are ready.
+- `sleep 30`: Gives the backend time to connect to the database.
+- `./check-shop.sh dev`: Checks the Shop.
+
+**👀 You should see** at the end *(do not paste)*:
+
+```text
+All 8 checks passed. The Shop works.
+```
+
+</details>
+
 **That is the end of the course.** You built the Shop, looked after the cluster under it, connected it, placed it, secured it, watched it, gave it storage, and repaired it. Every topic of the outline was part of it.
